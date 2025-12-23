@@ -4,7 +4,7 @@ import os
 import lmdb
 import pickle
 
-root_dir = '/data/datasets/shu_datasets/mat'
+root_dir = '/nas/public/shu_datasets/mat'
 files = [file for file in os.listdir(root_dir)]
 files = sorted(files)
 # print(files)
@@ -20,7 +20,7 @@ dataset = {
     'val': list(),
     'test': list(),
 }
-db = lmdb.open('/data/datasets/shu_datasets/processed', map_size=110612736)
+db = lmdb.open('/nas/public/shu_datasets/processed', map_size=110612736)
 for files_key in files_dict.keys():
     for file in files_dict[files_key]:
         data = scipy.io.loadmat(os.path.join(root_dir, file))

@@ -27,8 +27,8 @@ class CustomDataset(Dataset):
         data = data_dict['X']
         label = data_dict['y']
         data = signal.resample(data, 2000, axis=1)
-        data = data.reshape(16, 10, 200)
-        return data/100, label
+        data=np.clip(data, -1024, 1024)
+        return data, label
 
     def collate(self, batch):
         x_data = np.array([x[0] for x in batch])
@@ -53,18 +53,21 @@ class LoadDataset(object):
                 batch_size=self.params.batch_size,
                 collate_fn=train_set.collate,
                 shuffle=True,
+                num_workers=self.params.num_workers,
             ),
             'val': DataLoader(
                 val_set,
                 batch_size=self.params.batch_size,
                 collate_fn=val_set.collate,
                 shuffle=False,
+                num_workers=self.params.num_workers,
             ),
             'test': DataLoader(
                 test_set,
                 batch_size=self.params.batch_size,
                 collate_fn=test_set.collate,
                 shuffle=False,
+                num_workers=self.params.num_workers,
             ),
         }
         return data_loader

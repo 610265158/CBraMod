@@ -1,0 +1,13 @@
+python finetune_main.py \
+    --downstream_dataset 'Mumtaz2016' \
+    --num_of_classes 1 \
+    --model_dir './models_my' \
+    --num_workers 4 \
+    --datasets_dir "../BigDownstream/MDDPHCED/processed_lmdb_75hz" \
+    --cuda 0 \
+    --lr 0.0005 \
+    --batch_size 32 \
+    --multi_lr False \
+    --epochs 50 \
+    --weight_decay 1e-4 \
+    --clip_value -1

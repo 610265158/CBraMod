@@ -28,7 +28,8 @@ class CustomDataset(Dataset):
         data = data_dict['signal']
         label = int(data_dict['label'][0]-1)
         # data = signal.resample(data, 1000, axis=-1)
-        data=np.clip(data, -1024,1024)
+        data=np.clip(data, -512,512)
+        print(np.max(np.max(data)))
         return data, label
 
     def collate(self, batch):

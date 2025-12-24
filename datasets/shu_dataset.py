@@ -6,7 +6,6 @@ import os
 import random
 import lmdb
 import pickle
-
 class CustomDataset(Dataset):
     def __init__(
             self,
@@ -27,7 +26,7 @@ class CustomDataset(Dataset):
             pair = pickle.loads(txn.get(key.encode()))
         data = pair['sample']
         label = pair['label']
-        # print(label)
+
         data = np.clip(data, -1024, 1024)
         return data, label
 

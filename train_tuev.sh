@@ -5,8 +5,17 @@ python finetune_main.py \
     --num_workers 4 \
     --datasets_dir "../BigDownstream/TUEV_refine/processed" \
     --cuda 0 \
-    --lr 0.0005 \
+    --lr 0.001 \
     --multi_lr False \
     --epochs 50 \
     --weight_decay 1e-4 \
-    --clip_value -1
+    --clip_value 1
+
+
+
+
+#0.86815
+#
+#
+#
+#

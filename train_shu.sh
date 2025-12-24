@@ -5,8 +5,9 @@ python finetune_main.py \
     --num_workers 4 \
     --datasets_dir "../BigDownstream/shu_datasets" \
     --cuda 0 \
-    --lr 0.0005 \
+    --batch_size 16 \
+    --lr 0.001 \
     --multi_lr False \
-    --epochs 50 \
+    --epochs 20 \
     --weight_decay 1e-4 \
     --clip_value -1

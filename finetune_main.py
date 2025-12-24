@@ -53,7 +53,9 @@ def main():
     parser.add_argument('--foundation_dir', type=str,
                         default='pretrained_weights/pretrained_weights.pth',
                         help='foundation_dir')
-
+    parser.add_argument('--early_stop', type=int,
+                        default=10,
+                        help='early_stop')
     params = parser.parse_args()
     print(params)
 

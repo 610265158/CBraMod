@@ -1,13 +1,13 @@
 python finetune_main.py \
-    --downstream_dataset 'SHU-MI' \
+    --downstream_dataset 'MentalArithmetic' \
     --num_of_classes 1 \
     --model_dir './models_my' \
     --num_workers 4 \
-    --datasets_dir "../BigDownstream/shu_datasets" \
+    --datasets_dir "../BigDownstream/mental-arithmetic/processed" \
     --cuda 0 \
-    --batch_size 32 \
     --lr 0.002 \
+    --batch_size 32 \
     --multi_lr False \
-    --epochs 20 \
+    --epochs 50 \
     --weight_decay 5e-2 \
     --clip_value -1

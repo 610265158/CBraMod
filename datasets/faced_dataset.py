@@ -6,7 +6,7 @@ import os
 import random
 import lmdb
 import pickle
-
+from scipy.signal import butter, lfilter
 class CustomDataset(Dataset):
     def __init__(
             self,
@@ -21,13 +21,22 @@ class CustomDataset(Dataset):
     def __len__(self):
         return len((self.keys))
 
+    def butter_bandpass(self, lowcut, highcut, fs, order=5):
+        return butter(order, [lowcut, highcut], fs=fs, btype="band")
+
+    def butter_bandpass_filter(self, data, lowcut, highcut, fs, order=5):
+        b, a = self.butter_bandpass(lowcut, highcut, fs, order=order)
+        y = lfilter(b, a, data)
+        return y
     def __getitem__(self, idx):
         key = self.keys[idx]
         with self.db.begin(write=False) as txn:
             pair = pickle.loads(txn.get(key.encode()))
         data = pair['sample']
         label = pair['label']
-        return data/100, label
+        self.butter_bandpass_filter(data, 0.5, 45, 256, 2)
+        data = np.clip(data, -1024, 1024)
+        return data, label
 
     def collate(self, batch):
         x_data = np.array([x[0] for x in batch])
@@ -52,18 +61,21 @@ class LoadDataset(object):
                 batch_size=self.params.batch_size,
                 collate_fn=train_set.collate,
                 shuffle=True,
+                num_workers=self.params.num_workers,
             ),
             'val': DataLoader(
                 val_set,
                 batch_size=self.params.batch_size,
                 collate_fn=val_set.collate,
                 shuffle=False,
+                num_workers=self.params.num_workers,
             ),
             'test': DataLoader(
                 test_set,
                 batch_size=self.params.batch_size,
                 collate_fn=test_set.collate,
                 shuffle=False,
+                num_workers=self.params.num_workers,
             ),
         }
         return data_loader

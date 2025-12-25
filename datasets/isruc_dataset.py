@@ -25,7 +25,9 @@ class CustomDataset(Dataset):
         # print(label_path)
         seq = np.load(seq_path)
         label = np.load(label_path)
-        return seq/100, label
+
+        data = np.clip(seq, -1024, 1024)
+        return seq, label
 
     def collate(self, batch):
         x_seq = np.array([x[0] for x in batch])
@@ -53,18 +55,21 @@ class LoadDataset(object):
                 batch_size=self.params.batch_size,
                 collate_fn=train_set.collate,
                 shuffle=True,
+                num_workers=self.params.num_workers,
             ),
             'val': DataLoader(
                 val_set,
                 batch_size=1,
                 collate_fn=val_set.collate,
                 shuffle=False,
+                num_workers=self.params.num_workers,
             ),
             'test': DataLoader(
                 test_set,
                 batch_size=1,
                 collate_fn=test_set.collate,
                 shuffle=False,
+                num_workers=self.params.num_workers,
             ),
         }
         return data_loader

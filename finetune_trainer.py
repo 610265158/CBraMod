@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from finetune_evaluator import Evaluator
 
+import torch.nn as nn
 
 class Trainer(object):
     def __init__(self, params, data_loader, model):
@@ -28,43 +29,46 @@ class Trainer(object):
 
         self.best_model_states = None
 
-        backbone_params = []
-        other_params = []
-        for name, param in self.model.named_parameters():
-            if "backbone" in name:
-                backbone_params.append(param)
-
-                if params.frozen:
-                    param.requires_grad = False
-                else:
-                    param.requires_grad = True
-            else:
-                other_params.append(param)
-
-        if self.params.optimizer == 'AdamW':
-            if self.params.multi_lr: # set different learning rates for different modules
-                self.optimizer = torch.optim.AdamW([
-                    {'params': backbone_params, 'lr': self.params.lr},
-                    {'params': other_params, 'lr': self.params.lr * 5}
-                ], weight_decay=self.params.weight_decay)
-            else:
-                self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.params.lr,
-                                                   weight_decay=self.params.weight_decay)
-        else:
-            if self.params.multi_lr:
-                self.optimizer = torch.optim.SGD([
-                    {'params': backbone_params, 'lr': self.params.lr},
-                    {'params': other_params, 'lr': self.params.lr * 5}
-                ],  momentum=0.9, weight_decay=self.params.weight_decay)
-            else:
-                self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.params.lr, momentum=0.9,
-                                                 weight_decay=self.params.weight_decay)
+        self.optimizer = self.configure_optimizers()
 
         self.data_length = len(self.data_loader['train'])
         self.optimizer_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            self.optimizer, T_max=self.params.epochs * self.data_length, eta_min=1e-6
+            self.optimizer, T_max=self.params.epochs , eta_min=1e-6
         )
         print(self.model)
+        self.scaler = torch.amp.GradScaler()
+
+    def configure_optimizers(self, ):
+            """
+            This long function is unfortunately doing something very simple and is being very defensive:
+            We are separating out all parameters of the model into two buckets: those that will experience
+            weight decay for regularization and those that won't (biases, and layernorm/embedding weights).
+            We are then returning the PyTorch optimizer object.
+            """
+
+            # separate out all parameters to those that will and won't experience regularizing weight decay
+
+            @torch.no_grad()
+            def get_wd_params(model: nn.Module):
+                decay, no_decay = [], []
+                for name, param in model.named_parameters():
+                    print('checking {}'.format(name))
+                    if not param.requires_grad:
+                        continue
+                    if 'weight' in name and 'norm' not in name and 'bn' not in name:
+                        decay.append(param)
+                    else:
+                        no_decay.append(param)
+                return decay, no_decay
+
+            decay, no_decay = get_wd_params(self.model)
+            # create the pytorch optimizer object
+            optim_groups = [
+                {"params": decay, "weight_decay": self.params.weight_decay},
+                {"params": no_decay, "weight_decay": 0.0},
+            ]
+            optimizer = torch.optim.AdamW(optim_groups, self.params.lr)
+            return optimizer
 
     def train_for_multiclass(self):
         f1_best = 0
@@ -75,23 +79,28 @@ class Trainer(object):
             self.model.train()
             start_time = timer()
             losses = []
-            for x, y in tqdm(self.data_loader['train'], mininterval=10):
+            for x, y in tqdm(self.data_loader['train']):
                 self.optimizer.zero_grad()
                 x = x.cuda()
                 y = y.cuda()
-                pred = self.model(x)
-                if self.params.downstream_dataset == 'ISRUC':
-                    loss = self.criterion(pred.transpose(1, 2), y)
-                else:
-                    loss = self.criterion(pred, y)
+                with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
+                    pred = self.model(x)
+                    if self.params.downstream_dataset == 'ISRUC':
+                        loss = self.criterion(pred.transpose(1, 2), y)
+                    else:
+                        loss = self.criterion(pred, y)
 
-                loss.backward()
+
                 losses.append(loss.data.cpu().numpy())
+                self.scaler.scale(loss).backward()
+                self.scaler.unscale_(self.optimizer)
+
                 if self.params.clip_value > 0:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.params.clip_value)
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), self.params.clip_value)
-                self.optimizer.step()
-                self.optimizer_scheduler.step()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            self.optimizer_scheduler.step()
 
             optim_state = self.optimizer.state_dict()
 
@@ -122,6 +131,16 @@ class Trainer(object):
                     f1_best = f1
                     cm_best = cm
                     self.best_model_states = copy.deepcopy(self.model.state_dict())
+                acc, kappa, f1, cm = self.test_eval.get_metrics_for_multiclass(self.model)
+                print("***************************Test results************************")
+                print(
+                    "Test Evaluation: acc: {:.5f}, kappa: {:.5f}, f1: {:.5f}".format(
+                        acc,
+                        kappa,
+                        f1,
+                    )
+                )
+                print(cm)
         self.model.load_state_dict(self.best_model_states)
         with torch.no_grad():
             print("***************************Test************************")
@@ -154,17 +173,24 @@ class Trainer(object):
                 self.optimizer.zero_grad()
                 x = x.cuda()
                 y = y.cuda()
-                pred = self.model(x)
+                with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
+                    pred = self.model(x)
 
-                loss = self.criterion(pred, y)
+                    loss = self.criterion(pred, y)
 
-                loss.backward()
+
                 losses.append(loss.data.cpu().numpy())
+
+                self.scaler.scale(loss).backward()
+                self.scaler.unscale_(self.optimizer)
+
+
                 if self.params.clip_value > 0:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.params.clip_value)
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), self.params.clip_value)
-                self.optimizer.step()
-                self.optimizer_scheduler.step()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            self.optimizer_scheduler.step()
 
             optim_state = self.optimizer.state_dict()
 
@@ -195,6 +221,16 @@ class Trainer(object):
                     roc_auc_best = roc_auc
                     cm_best = cm
                     self.best_model_states = copy.deepcopy(self.model.state_dict())
+                acc, pr_auc, roc_auc, cm = self.test_eval.get_metrics_for_binaryclass(self.model)
+                print("***************************Test results************************")
+                print(
+                    "Test Evaluation: acc: {:.5f}, pr_auc: {:.5f}, roc_auc: {:.5f}".format(
+                        acc,
+                        pr_auc,
+                        roc_auc,
+                    )
+                )
+                print(cm)
         self.model.load_state_dict(self.best_model_states)
         with torch.no_grad():
             print("***************************Test************************")

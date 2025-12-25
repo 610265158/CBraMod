@@ -1,43 +1,38 @@
+import timm
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
-from .cbramod import CBraMod
 
 
 class Model(nn.Module):
     def __init__(self, param):
         super().__init__()
-        self.backbone = CBraMod(
-            in_dim=200, out_dim=200, d_model=200,
-            dim_feedforward=800, seq_len=30,
-            n_layer=12, nhead=8
-        )
-        if param.use_pretrained_weights:
-            map_location = torch.device(f'cuda:{param.cuda}')
-            self.backbone.load_state_dict(torch.load(param.foundation_dir, map_location=map_location))
-        self.backbone.proj_out = nn.Identity()
 
-        self.head = nn.Sequential(
-            nn.Linear(6*30*200, 512),
-            nn.GELU(),
-        )
+        self.model = timm.create_model('efficientnet_b0',
+                                       pretrained=True,
+                                       in_chans=1)
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.dropout = nn.Dropout(p=0.5)
+        self.fc1 = nn.Linear(1280, out_features=param.num_of_classes, bias=True)
 
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=512, nhead=4, dim_feedforward=2048, batch_first=True, activation=F.gelu, norm_first=True
-        )
-        self.sequence_encoder = nn.TransformerEncoder(encoder_layer, num_layers=1, enable_nested_tensor=False)
-        self.classifier = nn.Linear(512, param.num_of_classes)
+        self._init_fc_weights()
 
-        # self.apply(_weights_init)
+    def _init_fc_weights(self):
+        nn.init.trunc_normal_(self.fc1.weight, std=0.02)
+        if self.fc1.bias is not None:
+            nn.init.constant_(self.fc1.bias, 0)
 
     def forward(self, x):
-        bz, seq_len, ch_num, epoch_size = x.shape
+        bs = x.size(0)
+        bz, chunk, ch_num, seq_len = x.shape
+        x = x.view(bs*chunk, 1, ch_num, -1)
+        reshaped_tensor = x.view(bs*chunk, 1, ch_num, 500, 12)
+        reshaped_and_permuted_tensor = reshaped_tensor.permute(0, 1, 2, 4, 3)
+        x = reshaped_and_permuted_tensor.reshape(bs*chunk, 1, ch_num * 12, 500)
 
-        x = x.contiguous().view(bz * seq_len, ch_num, 30, 200)
-        epoch_features = self.backbone(x)
-        epoch_features = epoch_features.contiguous().view(bz, seq_len, ch_num*30*200)
-        epoch_features = self.head(epoch_features)
-        seq_features = self.sequence_encoder(epoch_features)
-        out = self.classifier(seq_features)
-        return out
+        x = self.model.forward_features(x)
+        x = self.pool(x)
+        x = x.view(bs*chunk, -1)
+        x = self.dropout(x)
+        x = self.fc1(x)
+        x = x.view(bs, chunk, -1)
+        return x

@@ -1,13 +1,13 @@
 python finetune_main.py \
-    --downstream_dataset 'PhysioNet-MI' \
-    --num_of_classes 4 \
+    --downstream_dataset 'FACED' \
+    --num_of_classes 9 \
     --model_dir './models_my' \
     --num_workers 4 \
-    --datasets_dir "../BigDownstream/eeg-motor-movementimagery-dataset-1.0.0" \
+    --datasets_dir "../BigDownstream/faced/processed" \
     --cuda 0 \
     --lr 0.002 \
     --batch_size 32 \
     --multi_lr False \
-    --epochs 20 \
+    --epochs 50 \
     --weight_decay 5e-2 \
     --clip_value -1

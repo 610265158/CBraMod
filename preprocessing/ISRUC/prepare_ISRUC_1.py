@@ -10,10 +10,10 @@ import xml.etree.ElementTree as ET
 from sklearn.preprocessing import StandardScaler
 
 
-dir_path = r'/data/datasets2/ISRUC_extracted/group1'
+dir_path = r'/nas/public/ISRUC/data-nfs2/hupeng/ISRUC_S1/RawData'
 
-seq_dir = r'/data/datasets/BigDownstream/ISRUC/precessed_filter_35/seq'
-label_dir = r'/data/datasets/BigDownstream/ISRUC/precessed_filter_35/labels'
+seq_dir = r'/nas/public/ISRUC/precessed_filter_35/seq'
+label_dir = r'/nas/public/ISRUC/precessed_filter_35/labels'
 
 psg_f_names = []
 label_f_names = []

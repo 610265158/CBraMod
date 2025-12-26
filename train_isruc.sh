@@ -6,7 +6,7 @@ python finetune_main.py \
     --datasets_dir "../BigDownstream/ISRUC/precessed_filter_35" \
     --cuda 0 \
     --lr 0.002 \
-    --batch_size 32 \
+    --batch_size 16 \
     --multi_lr False \
     --epochs 50 \
     --weight_decay 5e-2 \

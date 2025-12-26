@@ -26,7 +26,7 @@ class CustomDataset(Dataset):
         seq = np.load(seq_path)
         label = np.load(label_path)
 
-        data = np.clip(seq, -1024, 1024)
+        seq = np.clip(seq, -1024, 1024)
         return seq, label
 
     def collate(self, batch):

@@ -6,8 +6,9 @@
 + A solution from vision perspective to solve eeg problem
 
 
-Although numerous methods have been proposed to address EEG-related problems,
-I believe that most existing works suffer from overclaiming issues and 
+Although numerous methods have been proposed to address EEG-related problems, 
+including the 'top' unsupervised method, Labram, Cbramod, EEG-Dino[1,2,3].
+I believe that most existing works(basically all) suffer from overclaiming issues and 
 fail to capture the essential characteristics of EEG data. Based on this
 observation, I developed this project that innovatively employs vision models
 to tackle EEG problems.
@@ -86,3 +87,10 @@ model   | acc     | auc            | pr      | roc     |
 |---------------|------------|-----------|-----------------|----------|-----------|-----------------|
 | b0            | 0.55059    | 0.49360   | 0.55441         |     |      |            |
 | convnext-tiny |   |      |            | 0.40219        | 0.25169         | 0.40166               |
+
+
+
+## ref
+1. Wang, J., Zhao, S., Luo, Z., Zhou, Y., Jiang, H., Li, S., ... & Pan, G. (2024). Cbramod: A criss-cross brain foundation model for eeg decoding. arXiv preprint arXiv:2412.07236.
+2. Wang, X., Liu, X., Liu, X., Si, Q., Xu, Z., Li, Y., & Zhen, X. (2025, September). Eeg-dino: Learning eeg foundation models via hierarchical self-distillation. In International Conference on Medical Image Computing and Computer-Assisted Intervention (pp. 196-205). Cham: Springer Nature Switzerland.
+3. Jiang, W. B., Zhao, L. M., & Lu, B. L. (2024). Large brain model for learning generic representations with tremendous EEG data in BCI. arXiv preprint arXiv:2405.18765.

@@ -39,10 +39,10 @@ Here it goes,
 
 ### 1.4 motor imagery classification.
 
-| 模型 | physionet_acc | physionet_kappa | physionet_weighted_f1 | shu-mi_acc | shu-mi_kappa | shu-mi_weighted_f1 |
-|----|---------------|-----------------|-----------------------|------------|--------------|--------------------|
-| b0 | 0.64018       | 0.52011         | 0.64162               | 0.63499    | 0.71522      | 0.70266            |
-
+| 模型 | physionet  |        |               | shu-mi |        |               |
+| ---- | ----------------- | ------ | ------------- | ------------- | ------ | ------------- |
+|      | acc               | kappa  | weighted_f1   | acc           | kappa  | weighted_f1   |
+| b0   | 0.64018           | 0.52011| 0.64162       | 0.63499       | 0.71522| 0.70266       |
 ### 1.5 MENTAL DISORDER DIAGNOSIS
 
 | model |     acc |   prauc |  rocauc |
@@ -62,11 +62,11 @@ Here it goes,
 | b0    | 0.76129 | 0.83855 | 0.83457 |
 
 ### 1.8 Emotion Recognition
-
-| model         | faced_acc | faced_kappa | faced_weighted_f1 | seedv_acc | seedv_kappa | seedv_weighted_f1 |
-|---------------|-----------|-------------|-------------------|-----------|-------------|-------------------|
-| b0            | 0.55059   | 0.49360     | 0.55441           |           |             |                   |
-| convnext-tiny |           |             |                   | 0.40219   | 0.25169     | 0.40166           |
+|  | faced   |         |             | seed-v  |         |             |
+| ---- |---------|---------|-------------|---------|---------|-------------|
+|      | acc     | kappa   | weighted_f1 | acc     | kappa   | weighted_f1 |
+| b0            | 0.55059 | 0.49360 | 0.55441     | --      | --      | --          |
+| convnext-tiny | --      | --      | --          | 0.40219 | 0.25169 | 0.40166     |
 
 ## 🔨 Setup
 

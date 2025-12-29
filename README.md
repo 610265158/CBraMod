@@ -1,9 +1,9 @@
-<div align="center">
+
 
 # EEG-Vision
 
 
-_A solution from vision perspective to solve eeg problem_
++ A solution from vision perspective to solve eeg problem
 
 
 Although numerous methods have been proposed to address EEG-related problems,

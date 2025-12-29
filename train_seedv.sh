@@ -1,9 +1,9 @@
 python finetune_main.py \
     --downstream_dataset 'SEED-V' \
-    --num_of_classes 6 \
+    --num_of_classes 5 \
     --model_dir './models_my' \
     --num_workers 4 \
-    --datasets_dir "../BigDownstream/TUEV_refine/processed" \
+    --datasets_dir "../BigDownstream/SEED-V/processed" \
     --cuda 0 \
     --lr 0.002 \
     --batch_size 32 \
@@ -11,5 +11,3 @@ python finetune_main.py \
     --epochs 50 \
     --weight_decay 5e-2 \
     --clip_value -1
-
-

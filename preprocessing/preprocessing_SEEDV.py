@@ -23,7 +23,7 @@ labels_of_sessions = {
     '3': [2, 1, 3, 0, 4, 4, 0, 3, 2, 1, 3, 4, 1, 2, 0, ],
 }
 
-root_dir = '/data/datasets/BigDownstream/SEED-V/files'
+root_dir = '/nas/public/SEED-V/EEG_raw'
 files = [file for file in os.listdir(root_dir)]
 files = sorted(files)
 print(files)
@@ -40,11 +40,15 @@ dataset = {
     'test': list(),
 }
 
-db = lmdb.open('/data/datasets/BigDownstream/SEED-V/processed', map_size=15614542346)
+db = lmdb.open('/nas/public/SEED-V/processed', map_size=15614542346)
 
 for file in files:
     raw = mne.io.read_raw_cnt(os.path.join(root_dir, file), preload=True)
-    raw.drop_channels(useless_ch)
+
+    for cc in useless_ch:
+        if cc in raw.ch_names:
+            raw.drop_channels(cc)
+    # raw.drop_channels(useless_ch)
     # raw.set_eeg_reference(ref_channels='average')
     raw.resample(200)
     raw.filter(l_freq=0.3, h_freq=75)

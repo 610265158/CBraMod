@@ -3,8 +3,8 @@
 + A solution from vision perspective to solve eeg problem
 
 Although numerous methods have been proposed to address EEG-related problems,
-including the 'top' unsupervised method, Labram, Cbramod, EEG-Dino[1,2,3].
-I believe that most existing works(basically all) suffer from overclaiming issues and
+including the 'top' unsupervised method,  **Labram, Cbramod, EEG-Dino[1,2,3]**.
+I believe that most existing works(basically all) suffer from **overclaiming** issues and
 fail to capture the essential characteristics of EEG data. Based on this
 observation, I developed this project that innovatively employs vision models
 to tackle EEG problems.
@@ -12,7 +12,9 @@ to tackle EEG problems.
 This project builds upon the Cbramod framework and
 conducts comprehensive comparative experiments across the 12 downstream tasks
 claimed in the Cbramod paper, obtaining corresponding experimental results.
-The results will tell the story.
+The results will tell the story. 
+
+**Please beat existing baselines first before claiming SOTA**
 
 ## 🚀 Result
 

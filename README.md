@@ -19,24 +19,6 @@ claimed in the Cbramod paper, obtaining corresponding experimental results.
 The results will tell the story.
 
 
-## 🔨 Setup
-Install [Python](https://www.python.org/downloads/).
-
-Install [PyTorch](https://pytorch.org/get-started/locally/).
-
-Install other requirements:
-```commandline
-pip install -r requirements.txt
-``` 
-
-
-## 🚢 Train
-```commandline
-bash train_tuab.sh
-```
-We have released a pretrained checkpoint on [Hugginface🤗](https://huggingface.co/weighting666/CBraMod).
-
-
 
 ## 🚀 Result
 Here it goes,
@@ -88,6 +70,24 @@ model   | acc     | auc            | pr      | roc     |
 | b0            | 0.55059    | 0.49360   | 0.55441         |     |      |            |
 | convnext-tiny |   |      |            | 0.40219        | 0.25169         | 0.40166               |
 
+
+
+## 🔨 Setup
+Install [Python](https://www.python.org/downloads/).
+
+Install [PyTorch](https://pytorch.org/get-started/locally/).
+
+Install other requirements:
+```commandline
+pip install -r requirements.txt
+``` 
+
+
+## 🚢 Train
+```commandline
+bash train_tuab.sh
+```
+We have released a pretrained checkpoint on [Hugginface🤗](https://huggingface.co/weighting666/CBraMod).
 
 
 ## ref

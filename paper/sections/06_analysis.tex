@@ -1,0 +1,98 @@
+\section{Representation Geometry Analysis}
+\label{sec:analysis}
+
+\draftnote{The numerical controls in this section used the superseded
+contiguous-chunk adapter whenever $P>1$.  They motivate the experimental
+design but do not establish the behavior of phase-interleaved folding.}
+
+\subsection{Is a taller input sufficient?}
+
+Folding changes at least three factors simultaneously: image height, horizontal
+length, and local adjacency.  We use two controls to separate them.  Channel
+repeat increases height without adding distinct samples.  Reduced height
+stride keeps the input unchanged but preserves more vertical feature positions.
+Table~\ref{tab:geometry-pilot} reports historical validation-selected
+single-seed pilots.  They are exploratory, use the old adapter for folded
+conditions, and are not included in the corrected result count.
+
+\begin{table}[t]
+\centering
+\caption{Geometry controls with EfficientNet-B0.  Binary rows report PR/ROC;
+BCIC2020-3 reports $\kappa$/F1.  ``Repeat'' uses $P=1$ and repeats each channel
+four times.  ``Stride 8'' reduces only vertical downsampling.}
+\label{tab:geometry-pilot}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Dataset & Unfolded $P=1$ & Repeat $\times4$ & Height stride 8 & Selected fold \\
+\midrule
+MentalArithmetic & .7278/.7831 & .5144/.7632 & .5881/.7471 & \good{.7978/.9190} ($P=4$) \\
+BCIC2020-3 & .5033/.6025 & \good{.5917/.6736} & .5283/.6222 & .5267/.6224 ($P=2$) \\
+Mumtaz2016 & .9617/.9666 & .9551/.9479 & .9643/.9658 & \good{.9778/.9761} ($P=2$) \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Under the historical contiguous-chunk implementation, the controls rejected a
+universal ``more rows is better'' explanation.  Repeat
+strongly improves BCIC2020-3 but damages MentalArithmetic; stride reduction is
+neutral on Mumtaz2016 and harmful on MentalArithmetic.  Folding is best on two
+of the three tasks, while repeat is best on BCIC2020-3.  The representation
+therefore appeared to interact with task structure rather than acting as a
+generic resolution multiplier.  The matched-height tests must be repeated
+before making this claim for phase-interleaved folding.
+
+On FACED, repeat $\times2$ improves $\kappa$ from .3639 to .3823 under a strict
+$P=1$ control, showing that delaying vertical collapse can matter.  It still
+falls far short of the .5041 \cbramod{} reference.  Better resolution is thus
+helpful but insufficient when the missing information is electrode identity or
+cross-subject spatial structure.
+
+\subsection{The fold factor is a structural hyperparameter}
+
+The visual aspect ratio before padding is
+
+\begin{equation}
+  \frac{W}{H}=\frac{T}{CP^2}.
+\end{equation}
+
+Increasing $P$ changes this ratio quadratically, but a square image is not the
+objective.  Large $P$ also makes each horizontal step span more original
+samples and increases the distance across phase-wrap boundaries.  Consistent
+with this trade-off, the
+selected recipes span $P\in\{1,2,4,8\}$: PhysioNet-MI prefers no folding,
+BCIC2020-3 also uses $P=1$, CHB-MIT, TUAB, FACED, Mumtaz2016, and
+MentalArithmetic use $P=2$, TUEV and SHU-MI use $P=4$, and ISRUC and SEED-V use
+$P=8$.
+
+This variability suggests that $P$ should eventually be predicted from signal
+and architecture properties rather than tuned independently for every dataset.
+A candidate rule could depend on $(C,T)$, total height stride, sampling rate,
+and the temporal support of discriminative events.  Testing such a rule on held
+out datasets would make the geometry claim substantially stronger.
+
+\subsection{Artificial versus physical neighborhoods}
+
+Folding preserves channel order but does not encode channel names or 3D
+locations.  Permuting electrodes changes the model even if the underlying set
+of waveforms is identical.  This position sensitivity can be beneficial when a
+fixed montage is used consistently, but it limits transfer across acquisition
+setups.  In contrast, \reve{} assigns explicit physical coordinates and is
+designed for montage changes.
+
+The next model should therefore keep the cheap folding operator while adding a
+minimal topology signal: a channel-ID embedding, coordinate-valued planes, or a
+small channel mixer before folding.  A decisive experiment is a channel-order
+stress test: train with one order, evaluate under known permutations, and
+compare row-order encoding with physical-coordinate encoding.
+
+\subsection{ImageNet initialization versus architecture}
+
+The current study uses ImageNet weights in every formal run.  It therefore does
+not yet distinguish the contribution of EfficientNet architecture from natural
+image pretraining.  Random initialization, frozen linear probing, and matched
+training-budget controls are required.  If random initialization approaches the
+pretrained result, the primary contribution is architectural geometry; if the
+gap remains large, the one-channel adaptation is successfully reusing generic
+visual filters despite the modality shift.

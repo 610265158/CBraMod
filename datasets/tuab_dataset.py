@@ -4,9 +4,11 @@ import numpy as np
 from utils.util import to_tensor
 import os
 import random
-import lmdb
 import pickle
 from scipy import signal
+
+from datasets.sampling import make_eval_loader, make_train_loader
+from datasets.shape_utils import clip_eeg
 
 class CustomDataset(Dataset):
     def __init__(
@@ -27,7 +29,7 @@ class CustomDataset(Dataset):
         data = data_dict['X']
         label = data_dict['y']
         # data = signal.resample(data, 2000, axis=-1)
-        data = np.clip(data, -1024, 1024)
+        data = clip_eeg(data)
         return data, label
 
     def collate(self, batch):
@@ -48,26 +50,8 @@ class LoadDataset(object):
         print(len(train_set), len(val_set), len(test_set))
         print(len(train_set) + len(val_set) + len(test_set))
         data_loader = {
-            'train': DataLoader(
-                train_set,
-                batch_size=self.params.batch_size,
-                collate_fn=train_set.collate,
-                shuffle=True,
-                num_workers=self.params.num_workers,
-            ),
-            'val': DataLoader(
-                val_set,
-                batch_size=self.params.batch_size,
-                collate_fn=val_set.collate,
-                shuffle=False,
-                num_workers=self.params.num_workers,
-            ),
-            'test': DataLoader(
-                test_set,
-                batch_size=self.params.batch_size,
-                collate_fn=test_set.collate,
-                shuffle=False,
-                num_workers=self.params.num_workers,
-            ),
+            'train': make_train_loader(train_set, self.params, train_set.collate),
+            'val': make_eval_loader(val_set, self.params, val_set.collate),
+            'test': make_eval_loader(test_set, self.params, test_set.collate),
         }
         return data_loader

@@ -2,7 +2,12 @@ import mne
 import numpy as np
 import os
 import pickle
+import shutil
+from scipy import signal as scipy_signal
 from tqdm import tqdm
+
+if not hasattr(np, "in1d"):
+    np.in1d = np.isin
 
 """
 https://github.com/Abhishaike/EEG_Event_Classification
@@ -109,24 +114,59 @@ def convert_signals(signals, Rawdata):
 
 def readEDF(fileName):
     Rawdata = mne.io.read_raw_edf(fileName, preload=True)
-    Rawdata.resample(200)
-    Rawdata.filter(l_freq=0.3, h_freq=75)
-    Rawdata.notch_filter((60))
-
-    _, times = Rawdata[:]
+    sfreq = Rawdata.info["sfreq"]
     signals = Rawdata.get_data(units='uV')
+    if sfreq != 200:
+        target_points = int(round(signals.shape[1] * 200 / sfreq))
+        signals = scipy_signal.resample(signals, target_points, axis=1)
+
+    sos = scipy_signal.butter(5, [0.3, 75], btype="band", fs=200, output="sos")
+    try:
+        signals = scipy_signal.sosfiltfilt(sos, signals, axis=1)
+    except ValueError:
+        signals = scipy_signal.sosfilt(sos, signals, axis=1)
+
+    b_notch, a_notch = scipy_signal.iirnotch(60, 30, fs=200)
+    try:
+        signals = scipy_signal.filtfilt(b_notch, a_notch, signals, axis=1)
+    except ValueError:
+        signals = scipy_signal.lfilter(b_notch, a_notch, signals, axis=1)
+
+    times = np.arange(signals.shape[1]) / 200
     RecFile = fileName[0:-3] + "rec"
-    eventData = np.genfromtxt(RecFile, delimiter=",")
+    eventData = read_event_data(RecFile)
     Rawdata.close()
     return [signals, times, eventData, Rawdata]
 
 
-def load_up_objects(BaseDir, Features, OffendingChannels, Labels, OutDir):
+def read_event_data(rec_file):
+    eventData = np.genfromtxt(rec_file, delimiter=",")
+    return np.atleast_2d(eventData)
+
+
+def output_complete(out_dir, fname, num_events):
+    base = fname.split(".")[0]
+    return all(
+        os.path.exists(os.path.join(out_dir, base + "-" + str(idx) + ".pkl"))
+        for idx in range(num_events)
+    )
+
+
+def load_up_objects(BaseDir, Features, OffendingChannels, Labels, OutDir, skip_existing=True):
     for dirName, subdirList, fileList in tqdm(os.walk(BaseDir)):
         print("Found directory: %s" % dirName)
         for fname in fileList:
             if fname[-4:] == ".edf":
                 print("\t%s" % fname)
+                RecFile = os.path.join(dirName, fname[0:-3] + "rec")
+                try:
+                    event = read_event_data(RecFile)
+                except (ValueError, OSError):
+                    print("could not read events in " + RecFile)
+                    continue
+                if skip_existing and output_complete(OutDir, fname, event.shape[0]):
+                    print("\tskipping complete file")
+                    continue
                 try:
                     [signals, times, event, Rawdata] = readEDF(
                         dirName + "/" + fname
@@ -164,73 +204,112 @@ def save_pickle(object, filename):
 TUEV dataset is downloaded from https://isip.piconepress.com/projects/tuh_eeg/html/downloads.shtml
 """
 
-root = "/data/zcb/data/TUEV/edf"
-target = "/data/datasets/BigDownstream/TUEV_refine"
-
-train_out_dir = os.path.join(target, "processed_train")
-eval_out_dir = os.path.join(target, "processed_eval")
-
-if not os.path.exists(train_out_dir):
-    os.makedirs(train_out_dir)
-if not os.path.exists(eval_out_dir):
-    os.makedirs(eval_out_dir)
-
-BaseDirTrain = os.path.join(root, "train")
-fs = 200
-TrainFeatures = np.empty(
-    (0, 16, fs)
-)  # 0 for lack of intialization, 22 for channels, fs for num of points
-TrainLabels = np.empty([0, 1])
-TrainOffendingChannel = np.empty([0, 1])
-load_up_objects(
-    BaseDirTrain, TrainFeatures, TrainLabels, TrainOffendingChannel, train_out_dir
-)
-
-BaseDirEval = os.path.join(root, "eval")
-fs = 200
-EvalFeatures = np.empty(
-    (0, 16, fs)
-)  # 0 for lack of intialization, 22 for channels, fs for num of points
-EvalLabels = np.empty([0, 1])
-EvalOffendingChannel = np.empty([0, 1])
-load_up_objects(
-    BaseDirEval, EvalFeatures, EvalLabels, EvalOffendingChannel, eval_out_dir
-)
+def env_flag(name, default=True):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.lower() not in ("0", "false", "no")
 
 
-#transfer to train, eval, and test
-root = "/data/datasets/BigDownstream/TUEV_refine"
-# seed = 4523
-# np.random.seed(seed)
-
-train_files = os.listdir(os.path.join(root, "processed_train"))
-train_val_sub = list(set([f.split("_")[0] for f in train_files]))
-print("train val sub:", train_val_sub)
-test_files = os.listdir(os.path.join(root, "processed_eval"))
-
-train_val_sub.sort(key=lambda x: x)
-
-train_sub = train_val_sub[: int(len(train_val_sub) * 0.8)]
-val_sub = train_val_sub[int(len(train_val_sub) * 0.8) :]
-print("train sub:", train_sub)
-print("val sub:", val_sub)
-
-val_files = [f for f in train_files if f.split("_")[0] in val_sub]
-train_files = [f for f in train_files if f.split("_")[0] in train_sub]
+def parse_splits(value):
+    return {split.strip() for split in value.split(",") if split.strip()}
 
 
-if not os.path.exists(os.path.join(root, 'processed', 'processed_train')):
-    os.makedirs(os.path.join(root, 'processed', 'processed_train'))
-if not os.path.exists(os.path.join(root, 'processed', 'processed_eval')):
-    os.makedirs(os.path.join(root, 'processed', 'processed_eval'))
-if not os.path.exists(os.path.join(root, 'processed', 'processed_test')):
-    os.makedirs(os.path.join(root, 'processed', 'processed_test'))
+def copy_if_needed(src, dst):
+    if os.path.exists(dst) and os.path.getsize(src) == os.path.getsize(dst):
+        return
+    shutil.copy2(src, dst)
 
-for file in tqdm(train_files):
-    os.system(f"cp {os.path.join(root, 'processed_train', file)} {os.path.join(root, 'processed', 'processed_train')}")
-for file in tqdm(val_files):
-    os.system(f"cp {os.path.join(root, 'processed_train', file)} {os.path.join(root, 'processed', 'processed_eval')}")
-for file in tqdm(test_files):
-    os.system(f"cp {os.path.join(root, 'processed_eval', file)} {os.path.join(root, 'processed', 'processed_test')}")
 
-print('Done!')
+def finalize_splits(target):
+    train_files = os.listdir(os.path.join(target, "processed_train"))
+    train_val_sub = list(set([f.split("_")[0] for f in train_files]))
+    print("train val sub:", train_val_sub)
+    test_files = os.listdir(os.path.join(target, "processed_eval"))
+
+    train_val_sub.sort(key=lambda x: x)
+
+    train_sub = train_val_sub[: int(len(train_val_sub) * 0.8)]
+    val_sub = train_val_sub[int(len(train_val_sub) * 0.8) :]
+    print("train sub:", train_sub)
+    print("val sub:", val_sub)
+
+    val_files = [f for f in train_files if f.split("_")[0] in val_sub]
+    train_files = [f for f in train_files if f.split("_")[0] in train_sub]
+
+    for split in ("processed_train", "processed_eval", "processed_test"):
+        os.makedirs(os.path.join(target, "processed", split), exist_ok=True)
+
+    for file in tqdm(train_files):
+        copy_if_needed(
+            os.path.join(target, "processed_train", file),
+            os.path.join(target, "processed", "processed_train", file),
+        )
+    for file in tqdm(val_files):
+        copy_if_needed(
+            os.path.join(target, "processed_train", file),
+            os.path.join(target, "processed", "processed_eval", file),
+        )
+    for file in tqdm(test_files):
+        copy_if_needed(
+            os.path.join(target, "processed_eval", file),
+            os.path.join(target, "processed", "processed_test", file),
+        )
+
+
+def main():
+    root = os.environ.get("TUEV_ROOT", "/data/zcb/data/TUEV/edf")
+    target = os.environ.get("TUEV_TARGET", "/data/datasets/BigDownstream/TUEV_refine")
+    process_splits = parse_splits(os.environ.get("TUEV_PROCESS_SPLITS", "train,eval"))
+    skip_existing = env_flag("TUEV_SKIP_EXISTING", True)
+
+    mne.set_log_level(os.environ.get("MNE_LOG_LEVEL", "WARNING"))
+
+    train_out_dir = os.path.join(target, "processed_train")
+    eval_out_dir = os.path.join(target, "processed_eval")
+
+    os.makedirs(train_out_dir, exist_ok=True)
+    os.makedirs(eval_out_dir, exist_ok=True)
+
+    fs = 200
+
+    if "train" in process_splits:
+        BaseDirTrain = os.path.join(root, "train")
+        TrainFeatures = np.empty(
+            (0, 16, fs)
+        )  # 0 for lack of intialization, 22 for channels, fs for num of points
+        TrainLabels = np.empty([0, 1])
+        TrainOffendingChannel = np.empty([0, 1])
+        load_up_objects(
+            BaseDirTrain,
+            TrainFeatures,
+            TrainLabels,
+            TrainOffendingChannel,
+            train_out_dir,
+            skip_existing=skip_existing,
+        )
+
+    if "eval" in process_splits:
+        BaseDirEval = os.path.join(root, "eval")
+        EvalFeatures = np.empty(
+            (0, 16, fs)
+        )  # 0 for lack of intialization, 22 for channels, fs for num of points
+        EvalLabels = np.empty([0, 1])
+        EvalOffendingChannel = np.empty([0, 1])
+        load_up_objects(
+            BaseDirEval,
+            EvalFeatures,
+            EvalLabels,
+            EvalOffendingChannel,
+            eval_out_dir,
+            skip_existing=skip_existing,
+        )
+
+    if env_flag("TUEV_FINALIZE", True):
+        finalize_splits(target)
+
+    print("Done!")
+
+
+if __name__ == "__main__":
+    main()

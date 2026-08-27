@@ -4,9 +4,21 @@ import numpy as np
 from utils.util import to_tensor
 import os
 import random
-import lmdb
 import pickle
 from scipy import signal
+
+from datasets.sampling import make_eval_loader, make_train_loader
+from datasets.shape_utils import clip_eeg
+
+
+CORRUPT_FILES = {
+    'chb04_19-3563520.pkl',
+    'chb06_03-3571200.pkl',
+    'chb09_15-1973760.pkl',
+    'chb22_30-87040.pkl',
+    'chb23_16-2457600.pkl',
+}
+
 
 class CustomDataset(Dataset):
     def __init__(
@@ -15,7 +27,12 @@ class CustomDataset(Dataset):
             mode='train',
     ):
         super(CustomDataset, self).__init__()
-        self.files = [os.path.join(data_dir, mode, file) for file in os.listdir(os.path.join(data_dir, mode))]
+        mode_dir = os.path.join(data_dir, mode)
+        self.files = [
+            os.path.join(mode_dir, file)
+            for file in os.listdir(mode_dir)
+            if file not in CORRUPT_FILES
+        ]
 
 
     def __len__(self):
@@ -23,11 +40,15 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, idx):
         file = self.files[idx]
-        data_dict = pickle.load(open(file, 'rb'))
+        try:
+            with open(file, 'rb') as f:
+                data_dict = pickle.load(f)
+        except Exception as exc:
+            raise RuntimeError(f'Failed to load CHB-MIT sample: {file}') from exc
         data = data_dict['X']
         label = data_dict['y']
         data = signal.resample(data, 2000, axis=1)
-        data=np.clip(data, -1024, 1024)
+        data = clip_eeg(data)
         return data, label
 
     def collate(self, batch):
@@ -48,26 +69,8 @@ class LoadDataset(object):
         print(len(train_set), len(val_set), len(test_set))
         print(len(train_set) + len(val_set) + len(test_set))
         data_loader = {
-            'train': DataLoader(
-                train_set,
-                batch_size=self.params.batch_size,
-                collate_fn=train_set.collate,
-                shuffle=True,
-                num_workers=self.params.num_workers,
-            ),
-            'val': DataLoader(
-                val_set,
-                batch_size=self.params.batch_size,
-                collate_fn=val_set.collate,
-                shuffle=False,
-                num_workers=self.params.num_workers,
-            ),
-            'test': DataLoader(
-                test_set,
-                batch_size=self.params.batch_size,
-                collate_fn=test_set.collate,
-                shuffle=False,
-                num_workers=self.params.num_workers,
-            ),
+            'train': make_train_loader(train_set, self.params, train_set.collate),
+            'val': make_eval_loader(val_set, self.params, val_set.collate),
+            'test': make_eval_loader(test_set, self.params, test_set.collate),
         }
         return data_loader

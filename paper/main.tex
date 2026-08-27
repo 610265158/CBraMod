@@ -1,0 +1,73 @@
+\documentclass[10pt]{article}
+
+% Drop the official ICLR style file into paper/ when it becomes available.
+% The source remains locally compilable without it.
+\IfFileExists{iclr2027_conference.sty}{
+  \usepackage{iclr2027_conference,times}
+}{
+  \usepackage[margin=0.82in]{geometry}
+}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{multirow}
+\usepackage{natbib}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{../figure/}{figures/}}
+\setlist[itemize]{leftmargin=*,topsep=3pt,itemsep=2pt}
+\setlist[enumerate]{leftmargin=*,topsep=3pt,itemsep=2pt}
+
+\newcommand{\method}{\textsc{EEG-Vision}}
+\newcommand{\cbramod}{\textsc{CBraMod}}
+\newcommand{\reve}{\textsc{REVE}}
+\newcommand{\labram}{\textsc{LaBraM}}
+\newcommand{\biot}{\textsc{BIOT}}
+\newcommand{\good}[1]{\textbf{#1}}
+\newcommand{\pending}[1]{\textcolor{orange!80!black}{\textit{#1}}}
+\newcommand{\draftnote}[1]{%
+  \begin{center}
+  \fcolorbox{orange!70!black}{orange!7}{%
+    \begin{minipage}{0.94\linewidth}\small\textbf{Draft note.} #1\end{minipage}}
+  \end{center}}
+\newcommand{\eg}{e.g.,\ }
+\newcommand{\ie}{i.e.,\ }
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{hypothesis}{Hypothesis}
+
+\input{results}
+
+\title{Is Vision Pretraining a Free Lunch for EEG Decoding?\\
+Lossless Temporal Folding Across 11 Benchmarks}
+
+\author{Anonymous Authors\\
+\texttt{anonymous@submission.invalid}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_method}
+\input{sections/04_experiments}
+\input{sections/05_results}
+\input{sections/06_analysis}
+\input{sections/07_discussion}
+\input{sections/08_conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

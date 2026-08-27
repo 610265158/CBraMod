@@ -10,5 +10,6 @@ pyEDFlib
 scikit_learn
 scipy
 torchinfo
+timm
 tqdm
 umap_learn

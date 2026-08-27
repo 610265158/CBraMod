@@ -1,17 +1,12 @@
 import pickle
 import os
+import argparse
 import numpy as np
 from tqdm import tqdm
 import multiprocessing as mp
 
-root = "/data/datasets/BigDownstream/chb-mit/processed"
-out = "/data/datasets/BigDownstream/chb-mit/processed_seg"
-
-# root = 'clean_signals'
-# out = 'clean_segments'
-
-if not os.path.exists(out):
-    os.makedirs(out)
+root = os.environ.get("CHB_CLEAN_PATH", "/data/datasets/BigDownstream/chb-mit/processed")
+out = os.environ.get("CHB_SEG_PATH", "/data/datasets/BigDownstream/chb-mit/processed_seg")
 
 # dump chb23 and chb24 to test, ch21 and ch22 to val, and the rest to train
 test_pats = ["chb23", "chb24"]
@@ -57,9 +52,45 @@ channels = [
     "P4-O2",
 ]
 SAMPLING_RATE = 256
+SEGMENT_POINTS = SAMPLING_RATE * 10
+SEIZURE_AUG_STEP = SAMPLING_RATE * 5
 
 
-def sub_to_segments(folder, out_folder):
+def segment_path(out_folder, filename):
+    return os.path.join(out_folder, filename)
+
+
+def expected_segment_filenames(record_file, signal_points, seizure_times):
+    stem = record_file.split(".")[0]
+    filenames = []
+    for i in range(0, signal_points, SEGMENT_POINTS):
+        if i + SEGMENT_POINTS <= signal_points:
+            filenames.append(f"{stem}-{i}.pkl")
+
+    for idx, seizure_time in enumerate(seizure_times):
+        for i in range(
+            max(0, seizure_time[0] - SAMPLING_RATE),
+            min(seizure_time[1] + SAMPLING_RATE, signal_points),
+            SEIZURE_AUG_STEP,
+        ):
+            filenames.append(f"{stem}-s-{idx}-add-{i}.pkl")
+    return filenames
+
+
+def outputs_complete(out_folder, record_file, signal_points, seizure_times):
+    return all(
+        os.path.exists(segment_path(out_folder, filename))
+        for filename in expected_segment_filenames(record_file, signal_points, seizure_times)
+    )
+
+
+def dump_segment(out_path, segment, label, skip_existing):
+    if skip_existing and os.path.exists(out_path):
+        return
+    pickle.dump({"X": segment, "y": label}, open(out_path, "wb"))
+
+
+def sub_to_segments(folder, out_folder, skip_existing=True):
     print(f"Processing {folder}...")
     # each recording
     for f in tqdm(os.listdir(os.path.join(root, folder))):
@@ -91,79 +122,105 @@ def sub_to_segments(folder, out_folder):
        'T8-P8-2': array([44.73748474,  0.1953602 ,  0.1953602 , ..., 16.996337  , 22.46642247, 26.37362637]), 
        'metadata': {'seizures': 0, 'times': [], 'channels': ['FP1-F7', 'F7-T7', 'T7-P7', 'P7-O1', 'FP1-F3', 'F3-C3', 'C3-P3', 'P3-O1', 'FP2-F4', 'F4-C4', 'C4-P4', 'P4-O2', 'FP2-F8', 'F8-T8', 'T8-P8', 'P8-O2', 'FZ-CZ', 'CZ-PZ', 'P7-T7', 'T7-FT9', 'FT9-FT10', 'FT10-T8', 'T8-P8-2']}}
         """
-        signal = []
-        for channel in channels:
-            if channel in record:
-                signal.append(record[channel])
-            else:
-                raise ValueError(f"Channel {channel} not found in record {record}")
-        signal = np.array(signal)
-
         if "times" in record["metadata"]:
             seizure_times = record["metadata"]["times"]
         else:
             seizure_times = []
 
+        missing_channels = [channel for channel in channels if channel not in record]
+        if missing_channels:
+            raise ValueError(f"Channels {missing_channels} not found in record {f}")
+
+        signal_points = len(record[channels[0]])
+        if skip_existing and outputs_complete(out_folder, f, signal_points, seizure_times):
+            print(f"Skipping complete recording {folder}/{f}")
+            continue
+
+        signal = np.array([record[channel] for channel in channels])
+
         # split the signal into segments on the second dimension by SAMPLING_RATE * 10 seconds
-        for i in range(0, signal.shape[1], SAMPLING_RATE * 10):
-            segment = signal[:, i : i + 10 * SAMPLING_RATE]
-            if segment.shape[1] == 10 * SAMPLING_RATE:
+        for i in range(0, signal.shape[1], SEGMENT_POINTS):
+            segment = signal[:, i : i + SEGMENT_POINTS]
+            if segment.shape[1] == SEGMENT_POINTS:
                 # judge whether the segment contains seizures
                 label = 0
 
                 for seizure_time in seizure_times:
                     if (
-                        i < seizure_time[0] < i + 10 * SAMPLING_RATE
-                        or i < seizure_time[1] < i + 10 * SAMPLING_RATE
+                        i < seizure_time[0] < i + SEGMENT_POINTS
+                        or i < seizure_time[1] < i + SEGMENT_POINTS
                     ):
                         label = 1
                         break
 
                 # save the segment
-                pickle.dump(
-                    {"X": segment, "y": label},
-                    open(
-                        os.path.join(out_folder, f"{f.split('.')[0]}-{i}.pkl"),
-                        "wb",
-                    ),
+                dump_segment(
+                    os.path.join(out_folder, f"{f.split('.')[0]}-{i}.pkl"),
+                    segment,
+                    label,
+                    skip_existing,
                 )
 
         for idx, seizure_time in enumerate(seizure_times):
             for i in range(
                 max(0, seizure_time[0] - SAMPLING_RATE),
                 min(seizure_time[1] + SAMPLING_RATE, signal.shape[1]),
-                5 * SAMPLING_RATE,
+                SEIZURE_AUG_STEP,
             ):
-                segment = signal[:, i : i + 10 * SAMPLING_RATE]
+                segment = signal[:, i : i + SEGMENT_POINTS]
                 label = 1
                 # save the segment
-                pickle.dump(
-                    {"X": segment, "y": label},
-                    open(
-                        os.path.join(
-                            out_folder, f"{f.split('.')[0]}-s-{idx}-add-{i}.pkl"
-                        ),
-                        "wb",
+                dump_segment(
+                    os.path.join(
+                        out_folder, f"{f.split('.')[0]}-s-{idx}-add-{i}.pkl"
                     ),
+                    segment,
+                    label,
+                    skip_existing,
                 )
 
 
-# parallel parameters
-folders = os.listdir(root)
-out_folders = []
-for folder in folders:
-    if folder in test_pats:
-        out_folder = os.path.join(out, "test")
-    elif folder in val_pats:
-        out_folder = os.path.join(out, "val")
-    else:
-        out_folder = os.path.join(out, "train")
+def main():
+    global root, out
+    parser = argparse.ArgumentParser(description="Segment cleaned CHB-MIT pkl files.")
+    parser.add_argument("--root", default=root, help="Input cleaned CHB-MIT pkl directory.")
+    parser.add_argument("--out", default=out, help="Output segmented CHB-MIT directory.")
+    parser.add_argument(
+        "--processes",
+        type=int,
+        default=int(os.environ.get("CHB_SEG_PROCESSES", max(1, mp.cpu_count() // 2))),
+        help="Number of worker processes.",
+    )
+    parser.add_argument(
+        "--no-skip-existing",
+        action="store_true",
+        help="Overwrite existing output files instead of resuming partial runs.",
+    )
+    args = parser.parse_args()
 
-    if not os.path.exists(out_folder):
-        os.makedirs(out_folder)
+    root = args.root
+    out = args.out
+    os.makedirs(out, exist_ok=True)
 
-    out_folders.append(out_folder)
+    folders = os.listdir(root)
+    out_folders = []
+    for folder in folders:
+        if folder in test_pats:
+            out_folder = os.path.join(out, "test")
+        elif folder in val_pats:
+            out_folder = os.path.join(out, "val")
+        else:
+            out_folder = os.path.join(out, "train")
 
-# process in parallel
-with mp.Pool(mp.cpu_count()) as pool:
-    res = pool.starmap(sub_to_segments, zip(folders, out_folders))
+        os.makedirs(out_folder, exist_ok=True)
+        out_folders.append(out_folder)
+
+    with mp.Pool(args.processes) as pool:
+        pool.starmap(
+            sub_to_segments,
+            [(folder, out_folder, not args.no_skip_existing) for folder, out_folder in zip(folders, out_folders)],
+        )
+
+
+if __name__ == "__main__":
+    main()

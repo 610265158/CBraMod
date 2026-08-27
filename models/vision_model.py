@@ -1,0 +1,112 @@
+"""Phase-folded EEG classifier with a timm vision backbone."""
+
+import torch.nn as nn
+
+from configs.downstream import get_dataset_config
+from datasets.shape_utils import DEFAULT_EEG_SCALE_DIVISOR
+
+from .eeg_vision_adapter import PhaseFoldAdapter, repeat_eeg_channels
+from .vision_backbone import configure_height_stride, create_backbone, encode_vision
+from .vision_backbone import load_backbone_checkpoint
+
+
+class Model(nn.Module):
+    """Phase fold -> vision backbone -> global average pool -> linear head."""
+
+    def __init__(self, param):
+        super().__init__()
+        config = get_dataset_config(param.downstream_dataset)['vision']
+        fold_factor = getattr(param, 'vision_fold_factor', None)
+        if fold_factor is None:
+            fold_factor = config['adapter']['fold_factor']
+
+        self.adapter = PhaseFoldAdapter(
+            fold_factor=fold_factor,
+            pad_multiple=(getattr(param, 'vision_height_stride', 32), 32),
+        )
+        self._configure_input(param)
+
+        backbone_name = getattr(param, 'backbone_name', None) or config['backbone_name']
+        self.backbone = create_backbone(
+            backbone_name,
+            pretrained=getattr(param, 'use_pretrained_weights', True),
+            drop_path_rate=getattr(param, 'drop_path_rate', 0.0),
+        )
+        checkpoint = getattr(param, 'vision_pretrained_checkpoint', None)
+        if checkpoint:
+            load_backbone_checkpoint(self.backbone, checkpoint)
+            print('Loaded EEG-Vision pretrained backbone: {}'.format(checkpoint))
+
+        configure_height_stride(
+            self.backbone,
+            getattr(param, 'vision_height_stride', 32),
+            backbone_name,
+        )
+        self.frozen_backbone = bool(getattr(param, 'frozen', False))
+        if self.frozen_backbone:
+            self._freeze_backbone()
+
+        feature_dim = _feature_dim(self.backbone)
+        self.dropout = nn.Dropout(getattr(param, 'dropout', 0.1))
+        self.head = nn.Linear(feature_dim, param.num_of_classes)
+        if config.get('init_head', True):
+            _init_head(self.head, getattr(param, 'vision_head_init', 'trunc_normal'))
+        self.squeeze_binary = config.get('squeeze_binary', False)
+
+    def forward(self, eeg):
+        eeg = self._prepare_input(eeg)
+        features = self.dropout(encode_vision(eeg, self.adapter, self.backbone))
+        logits = self.head(features)
+        if self.squeeze_binary and logits.size(-1) == 1:
+            return logits[..., 0]
+        return logits
+
+    def train(self, mode=True):
+        super().train(mode)
+        if self.frozen_backbone:
+            self.backbone.eval()
+        return self
+
+    def _configure_input(self, param):
+        self.dataset_mean = getattr(param, 'eeg_dataset_mean', None)
+        self.dataset_std = getattr(param, 'eeg_dataset_std', None)
+        self.target_std = getattr(param, 'eeg_target_std', 1.0)
+        self.channel_repeat = getattr(param, 'vision_channel_repeat', 1)
+
+        if (self.dataset_mean is None) != (self.dataset_std is None):
+            raise ValueError('--eeg_dataset_mean and --eeg_dataset_std must be set together')
+        if self.dataset_std is not None and self.dataset_std <= 0:
+            raise ValueError('--eeg_dataset_std must be positive')
+        if self.target_std <= 0:
+            raise ValueError('--eeg_target_std must be positive')
+        if self.channel_repeat < 1:
+            raise ValueError('--vision_channel_repeat must be at least 1')
+
+    def _prepare_input(self, eeg):
+        if self.dataset_std is not None:
+            raw_eeg = eeg * DEFAULT_EEG_SCALE_DIVISOR
+            eeg = self.target_std * (raw_eeg - self.dataset_mean) / self.dataset_std
+        return repeat_eeg_channels(eeg, self.channel_repeat)
+
+    def _freeze_backbone(self):
+        self.backbone.requires_grad_(False)
+        self.backbone.eval()
+        parameter_count = sum(parameter.numel() for parameter in self.backbone.parameters())
+        print('Linear probe: froze backbone parameters ({:,})'.format(parameter_count))
+
+
+def _feature_dim(backbone):
+    classifier = backbone.get_classifier() if hasattr(backbone, 'get_classifier') else None
+    return getattr(classifier, 'in_features', None) or backbone.num_features
+
+
+def _init_head(head, mode):
+    if mode == 'trunc_normal':
+        nn.init.trunc_normal_(head.weight, std=0.02)
+    elif mode == 'zero':
+        nn.init.zeros_(head.weight)
+    elif mode == 'xavier_uniform':
+        nn.init.xavier_uniform_(head.weight)
+    else:
+        raise ValueError('Unsupported vision head initialization: {}'.format(mode))
+    nn.init.zeros_(head.bias)

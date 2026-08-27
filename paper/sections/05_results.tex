@@ -1,0 +1,86 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{Main comparison}
+
+Table~\ref{tab:main-results} summarizes the corrected phase-interleaved
+results.  EfficientNet-B0 improves the primary metric over the published
+\cbramod{} reference on five datasets (CHB-MIT, TUEV, ISRUC, BCIC2020-3, and
+MentalArithmetic), is effectively tied on PhysioNet-MI and SEED-V, and is
+lower on TUAB, SHU-MI, Mumtaz2016, and FACED.  These comparisons use published
+CBraMod references rather than same-pipeline reruns, so they should be read as
+evidence of competitiveness rather than a definitive paired ranking.
+
+\begin{table*}[t]
+\centering
+\caption{Corrected phase-interleaved EfficientNet-B0 results versus published
+\cbramod{} references.  Binary tasks report PR-AUC/AUROC; multiclass tasks
+report $\kappa$/weighted F1.  Our values are mean$\pm$standard deviation across
+seeds 3407--3409.  $\Delta$ is the primary-metric difference in percentage
+points.}
+\label{tab:main-results}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccll}
+\toprule
+Dataset & Metrics & Published \cbramod{} & \method{} (EfficientNet-B0) & $\Delta$ & Current reading \\
+\midrule
+CHB-MIT & PR/ROC & \cbCHB & \good{\ourCHB} & \good{\deltaCHB} & exceeds \\
+TUAB & PR/ROC & \cbTUAB & \ourTUAB & \deltaTUAB & below \\
+TUEV & $\kappa$/F1 & \cbTUEV & \good{\ourTUEV} & \good{\deltaTUEV} & exceeds \\
+ISRUC & $\kappa$/F1 & \cbISRUC & \good{\ourISRUC} & \good{\deltaISRUC} & exceeds \\
+FACED & $\kappa$/F1 & \cbFACED & \ourFACED & \deltaFACED & clear deficit \\
+SEED-V & $\kappa$/F1 & \cbSEEDV & \ourSEEDV & \deltaSEEDV & near parity \\
+PhysioNet-MI & $\kappa$/F1 & \cbPhysio & \good{\ourPhysio} & \good{\deltaPhysio} & parity \\
+SHU-MI & PR/ROC & \cbSHU & \ourSHU & \deltaSHU & below \\
+BCIC2020-3 & $\kappa$/F1 & \cbBCIC & \good{\ourBCIC} & \good{\deltaBCIC} & exceeds \\
+Mumtaz2016 & PR/ROC & \cbMumtaz & \ourMumtaz & \deltaMumtaz & below near ceiling \\
+MentalArithmetic & PR/ROC & \cbMental & \good{\ourMental} & \good{\deltaMental} & exceeds \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\paragraph{Reliable gains.}
+TUEV is the clearest confirmation that the result is not one favorable seed:
+all three $\kappa$ values (.6871, .7566, and .7053) exceed the .6744 reference,
+and the mean F1 also improves.  ISRUC, CHB-MIT, and BCIC2020-3 provide further
+primary-metric gains of 1.95, 7.37, and 9.23 percentage points, respectively.
+MentalArithmetic gains 2.45 PR-AUC points and 4.61 AUROC points, although its
+standard deviation remains the largest in the table.
+
+\paragraph{Near parity.}
+PhysioNet-MI is effectively tied in $\kappa$ and improves F1 from .6427 to
+.6448.  This result uses $P=1$, showing that folding is not forced when the
+unfolded 64-row geometry is already compatible with the CNN.  SEED-V is also at
+parity (mean $\kappa$ .2565 versus .2569, with a slightly higher F1), which is
+why we report the three-seed mean rather than a best-seed value.
+
+\paragraph{Where generic geometry is insufficient.}
+FACED remains the largest gap, with a 13.71-point $\kappa$ deficit.  The result
+cannot be explained by model size alone because the same encoder is competitive
+on another emotion dataset, SEED-V.  FACED may depend more strongly on subject
+shift, amplitude distribution, physical electrode topology, or spatially
+distributed affective patterns.  Mumtaz2016 is less diagnostic because both
+methods operate near the ceiling, but \cbramod{} remains consistently higher.
+
+\subsection{Result stability}
+
+The standard deviations reveal two regimes.  ISRUC, Mumtaz2016, TUAB, and
+SEED-V are comparatively stable under seed changes, while TUEV, FACED, SHU-MI,
+and especially MentalArithmetic are more sensitive.  MentalArithmetic has only
+1,343 training examples and 172 validation examples; its validation-selected
+checkpoint can therefore change substantially with minibatch order and
+initialization.  The reported .6512 PR-AUC is the three-seed mean, not an
+exploratory best-seed or best-epoch value.
+
+\subsection{Parameter efficiency}
+
+After removing the unused ImageNet classifier, EfficientNet-B0 contains
+approximately 4.01M encoder parameters, plus a small task head.  This is close
+to the reported 4.9M parameters of \cbramod{}, but our model uses no EEG
+self-supervised pretraining.  \reve{}-Base is substantially larger and is
+pretrained on a much broader EEG corpus.  The comparison therefore isolates a
+useful point: at compact scale and under full fine-tuning, input geometry and
+generic convolutional features can account for a large fraction of downstream
+performance.  It does not address frozen transfer, where large EEG foundation
+models are expected to retain an advantage.

@@ -1,0 +1,200 @@
+\section{Model Families}
+\label{app:model-families}
+
+\begin{table}[h]
+\centering
+\caption{Conceptual scope of the three model families discussed in the paper.}
+\small
+\begin{tabularx}{\linewidth}{lXXX}
+\toprule
+ & \method{} & \cbramod{} & \reve{}-Base \\
+\midrule
+Input & phase-folded raw waveform & raw patches + FFT magnitude & raw waveform patches \\
+Encoder & EfficientNet-B0 & criss-cross transformer & coordinate-aware transformer \\
+EEG pretraining & none & TUH EEG & 92 EEG datasets \\
+Nominal size & 5.3M$^\dagger$ & about 4.9M & about 69M \\
+Spatial identity & row order & learned fixed-order encoding & physical coordinates \\
+Main target & full fine-tuning & compact EEG transfer & montage-flexible transfer \\
+\bottomrule
+\end{tabularx}
+
+\vspace{2pt}
+\footnotesize $^\dagger$The timm model has 5.29M parameters including its unused
+1.28M ImageNet classifier; the feature encoder used here has 4.01M parameters.
+\end{table}
+
+\section{Dataset-Specific Recipes}
+\label{app:recipes}
+
+Table~\ref{tab:recipes} is the source of truth for the formal EfficientNet-B0
+runs.  ``Folded'' is the non-padded image shape; padding is symmetric and uses
+zeros.  All runs use average pooling, a linear head, ImageNet initialization,
+AdamW, cosine decay, dropout .1, and float16 mixed precision.
+
+\begin{table*}[h]
+\centering
+\caption{Finalized phase-interleaved downstream recipes.  ``Select'' is the
+validation metric used to save the checkpoint.}
+\label{tab:recipes}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrlll}
+\toprule
+Dataset & $P$ & Folded $H\times W$ & Epochs & LR & WD & Select & Special setting \\
+\midrule
+CHB-MIT & 2 & $32\times1000$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & --- \\
+TUAB & 2 & $32\times1000$ & 5 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & grad clip 1 \\
+TUEV & 4 & $64\times250$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
+ISRUC & 8 & $48\times750$ & 50 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & mirror $p=.5$ \\
+FACED & 2 & $64\times1000$ & 50 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
+SEED-V & 8 & $496\times25$ & 50 & $5\cdot10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
+PhysioNet-MI & 1 & $64\times800$ & 30 & $2\cdot10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
+SHU-MI & 4 & $128\times200$ & 20 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & clip 512, divide 64 \\
+BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
+Mumtaz2016 & 2 & $38\times500$ & 30 & $5\cdot10^{-4}$ & $5\cdot10^{-2}$ & PR-AUC & --- \\
+MentalArithmetic & 2 & $40\times500$ & 10 & $5\cdot10^{-4}$ & $10^{-2}$ & PR-AUC & --- \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+ISRUC mirror augmentation swaps left/right channel pairs according to the known
+montage.  No finalized run uses time roll or random amplitude scaling.  SHU-MI
+uses its documented input-scale exception; all other datasets use the default
+clip-to-1024 and divide-by-32 preprocessing.
+
+\section{Per-Seed Test Values}
+\label{app:per-seed}
+
+\begin{table*}[h]
+\centering
+\caption{Corrected phase-interleaved validation-selected test values.  Each
+checkpoint is evaluated once on test, and each cell reports the same metric
+pair as the main table.}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+Dataset & Metrics & Seed 3407 & Seed 3408 & Seed 3409 \\
+\midrule
+CHB-MIT & PR/ROC & .48090/.90161 & .42558/.91119 & .42145/.92480 \\
+TUAB & PR/ROC & .88650/.87779 & .88581/.87940 & .88152/.87751 \\
+TUEV & $\kappa$/F1 & .68710/.83240 & .75656/.87256 & .70530/.84046 \\
+ISRUC & $\kappa$/F1 & .76239/.81730 & .77839/.82397 & .75022/.79910 \\
+FACED & $\kappa$/F1 & .39297/.47101 & .38057/.45414 & .32736/.40821 \\
+SEED-V & $\kappa$/F1 & .24491/.40159 & .26001/.41536 & .26468/.41578 \\
+PhysioNet-MI & $\kappa$/F1 & .52444/.64685 & .53637/.65420 & .50598/.63330 \\
+SHU-MI & PR/ROC & .71226/.70032 & .69027/.68997 & .64812/.63658 \\
+BCIC2020-3 & $\kappa$/F1 & .52500/.62020 & .52500/.62161 & .49167/.59398 \\
+Mumtaz2016 & PR/ROC & .97603/.97586 & .97342/.96885 & .97167/.96877 \\
+MentalArithmetic & PR/ROC & .73476/.87630 & .57663/.80266 & .64232/.83087 \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\section{Padded Image Shapes}
+
+\begin{table}[h]
+\centering
+\caption{Backbone input shapes after zero padding to multiples of 32.}
+\small
+\begin{tabular}{lcc}
+\toprule
+Dataset & Before padding & After padding \\
+\midrule
+CHB-MIT / TUAB & $32\times1000$ & $32\times1024$ \\
+TUEV & $64\times250$ & $64\times256$ \\
+ISRUC & $48\times750$ & $64\times768$ \\
+FACED & $64\times1000$ & $64\times1024$ \\
+SEED-V & $496\times25$ & $512\times32$ \\
+PhysioNet-MI & $64\times800$ & $64\times800$ \\
+SHU-MI & $128\times200$ & $128\times224$ \\
+BCIC2020-3 & $64\times600$ & $64\times608$ \\
+Mumtaz2016 & $38\times500$ & $64\times512$ \\
+MentalArithmetic & $40\times500$ & $64\times512$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Formal Evaluation Protocol}
+\label{app:protocol}
+
+The executable protocol is:
+
+\begin{enumerate}
+    \item Verify every configured dataset path with
+    \texttt{experiments/run\_downstream.sh --check\_only --all}.
+    \item Smoke-test the current code using a CPU, random-initialized one-batch
+    forward pass.
+    \item During recipe search, set \texttt{test\_each\_epoch=false} and
+    \texttt{run\_final\_test=false}.  Rank candidates by mean best validation
+    metric across two search seeds.
+    \item Freeze the winning recipe before the formal runs.
+    \item Train seeds 3407, 3408, and 3409 with
+    \texttt{test\_each\_epoch=false}.  Save the best validation checkpoint.
+    \item Restore that checkpoint and evaluate the test set exactly once.
+    \item Aggregate the three final test values as mean and population standard
+    deviation.  Do not choose a seed or epoch using test performance.
+\end{enumerate}
+
+All downstream training is launched through
+\texttt{bash experiments/run\_downstream.sh}; direct invocation of the legacy
+entrypoint can silently change path resolution.
+
+\section{Additional Visualizations}
+
+Figure~\ref{fig:waveforms} shows representative raw EEG traces rendered in an
+MNE-like layout.  The figure is diagnostic rather than a training input.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{downstream_waveforms_mne/all_datasets_mne_overview.png}
+\caption{Representative waveforms from the 11 downstream datasets.  Datasets
+differ greatly in channel count, duration, and amplitude distribution, which
+motivates an adapter that does not assume a single fixed image size.}
+\label{fig:waveforms}
+\end{figure}
+
+Figure~\ref{fig:repeat} illustrates why channel repetition and temporal folding
+must not be conflated.  Repeat creates identical neighboring bands, whereas
+folding places distinct temporal phases in those rows.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.9\linewidth]{channel_repeat_faced_sample.png}
+\caption{A FACED example with consecutive channel repeat factors 1, 2, and 4.
+Repetition changes sampling density along image height but adds no signal
+content.}
+\label{fig:repeat}
+\end{figure}
+
+\section{Submission-Critical Experiments}
+\label{app:critical}
+
+The following items are required before treating this draft as an ICLR-ready
+empirical paper:
+
+\begin{enumerate}
+    \item reproduce \cbramod{} under identical splits, preprocessing, seeds,
+    and validation-only selection;
+    \item run random-initialized EfficientNet-B0 and frozen ImageNet linear
+    probes on all datasets;
+    \item compare $P=1,2,4,8$ under a fixed optimization budget on a
+    representative subset;
+    \item add EEGNet and DeepConvNet with matched validation tuning;
+    \item report parameters, FLOPs, peak memory, examples/second, and wall time;
+    \item evaluate channel permutation, channel dropout, and missing-electrode
+    robustness;
+    \item use subject-level bootstrap confidence intervals or paired tests;
+    \item freeze a prospective protocol that has not been chosen using the
+    current test sets.
+\end{enumerate}
+
+\section{Data and Code Reproducibility Statement}
+
+The codebase records exact dataset paths, input shapes, preprocessing, seeds,
+training arguments, logs, and validation-selected checkpoints.  Public data
+licenses and access conditions differ by benchmark; no dataset is redistributed
+with the paper.  Final release artifacts should include preprocessing hashes,
+split manifests, environment versions, and commands for every table row.  TUAB
+and TUEV version numbers must be included because sample counts differ across
+releases and historical pipelines.

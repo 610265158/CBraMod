@@ -1,0 +1,249 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{Problem setting}
+
+For a regular dataset, an EEG segment is
+$\mathbf{X}\in\mathbb{R}^{C\times T}$, where $C$ is the number of channels
+and $T$ the number of time samples.  A minibatch has shape
+$B\times C\times T$.  ISRUC is the sole sequence exception: every record
+contains $S=20$ consecutive sleep epochs and has shape
+$B\times S\times C\times T$.  We temporarily merge $B$ and $S$ during visual
+encoding and restore the sequence dimension before computing the loss.
+
+The objective is deliberately conventional.  Binary tasks use one logit and
+binary cross entropy.  Multiclass tasks use cross entropy with label smoothing.
+The contribution lies in the interface between $\mathbf{X}$ and a generic 2D
+backbone.
+
+\subsection{Lossless temporal folding}
+
+Choose an integer fold factor $P$ such that $P\mid T$ and define
+$W=T/P$.  The folding operator $F_P$ maps the waveform to a single-channel
+image $\mathbf{I}\in\mathbb{R}^{1\times(CP)\times W}$:
+
+\begin{equation}
+\label{eq:fold}
+  \mathbf{I}_{1,cP+p,w}
+  = \mathbf{X}_{c,wP+p},
+  \quad
+  0\leq c<C,\ 0\leq p<P,\ 0\leq w<W.
+\end{equation}
+
+Rows are ordered by electrode and then by within-group temporal phase.  Thus
+all $P$ phase rows from the same electrode remain adjacent.  For example, one
+channel with $T=16$ and $P=4$ becomes
+
+\begin{center}
+\small
+$\begin{bmatrix}
+x_0&x_4&x_8&x_{12}\\
+x_1&x_5&x_9&x_{13}\\
+x_2&x_6&x_{10}&x_{14}\\
+x_3&x_7&x_{11}&x_{15}
+\end{bmatrix}$.
+\end{center}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{lossless_temporal_folding.pdf}
+\caption{Phase-interleaved lossless temporal folding.  Panels A--C illustrate
+the index mapping for one channel with $T=16$ and $P=4$: reshaping to $(W,P)$
+and transposing to $(P,W)$ groups samples by $t\bmod P$.  Panel D applies the
+same operation to a real five-second, 16-channel TUEV segment sampled at
+200\,Hz.  The pipeline tensor changes from $16\times1000$ to
+$64\times250$.  The tensor map marks each four-row electrode group, and the
+lower inset enlarges the four colored temporal-phase rows of one real electrode.
+All 16,000 values are retained exactly.  Folding changes only
+their two-dimensional adjacency, without interpolation or learnable
+parameters.}
+\label{fig:temporal-folding}
+\end{figure*}
+
+The ``top view'' in Fig.~\ref{fig:side-top-view} is a geometric metaphor for
+the convolutional input raster, not a claim that the network performs a literal
+projection or that folding makes the signal two-dimensional in a physical
+sense.  Humans usually inspect an EEG trace along its original time axis;
+convolutions instead respond to the local neighborhoods induced by the raster
+indexing.  The purpose of folding is to place short within-channel temporal
+segments into contiguous vertical neighborhoods before the visual backbone's
+strided stages reduce spatial resolution.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{side_top_view_folding.pdf}
+\caption{The same EEG can be read from two complementary viewpoints.  In the
+side view (left), a human follows amplitude as a continuous function of time.
+After lossless $P=4$ folding (right), the identical samples form a two-dimensional
+phase--time texture: samples with phases $p=0,1,2,3$ become adjacent vertical
+rows, while each column advances by four original samples.  The upper row is a
+controlled spike--slow-wave example and the lower row is a real five-second
+F7--T7 segment from a CHB-MIT seizure recording.  The arrows indicate a change
+of representation and local adjacency, not a change in the signal itself.}
+\label{fig:side-top-view}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{seizure_lossless_folding.pdf}
+\caption{A real seizure example processed by the same visual interface.  The
+10-second CHB-MIT seizure segment is labeled ictal and is resampled from 2560 to
+2000 samples before the standard clipping and scaling.  Panel A shows all 16
+bipolar channels; panel B enlarges the F7--T7 channel in the visibly rhythmic
+interval.  Panel C is the exact $64\times500$ phase-interleaved tensor after
+$P=4$ folding, and panel D expands its four adjacent phase rows.  The
+transformation retains all 32,000 values and changes only their two-dimensional
+adjacency.}
+\label{fig:seizure-folding}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{synthetic_folding_patterns.pdf}
+\caption{Controlled synthetic morphologies showing how lossless $P=4$
+folding exposes different temporal motifs to a 2D CNN.  From top to bottom:
+spike--slow-wave complexes, a recruited rhythmic ictal oscillation, and
+periodic discharges.  Each row contains exactly 1,000 samples before and
+after the bijective rearrangement.  The folded maps and phase rows preserve
+the characteristic sharp transients, slow after-waves, periodic spacing, and
+amplitude envelope; they do not constitute clinical templates or diagnostic
+criteria.}
+\label{fig:synthetic-folding-patterns}
+\end{figure*}
+
+\begin{proposition}[Information preservation]
+$F_P$ is a bijection between $\mathbb{R}^{C\times T}$ and
+$\mathbb{R}^{(CP)\times(T/P)}$.
+\end{proposition}
+
+\begin{proof}
+Every original index $(c,t)$ has a unique decomposition
+$t=wP+p$, where $p=t\bmod P$ and $w=\lfloor t/P\rfloor$.  Equation
+\ref{eq:fold} therefore maps it to exactly one output index.  The inverse is
+$\mathbf{X}_{c,wP+p}=\mathbf{I}_{1,cP+p,w}$.  No value is duplicated,
+averaged, interpolated, or discarded.
+\end{proof}
+
+Folding is consequently not a filter and should not be described as denoising.
+It changes only the neighborhoods on which the following network operates.
+
+\subsection{What locality means after folding}
+
+Consider two folded pixels from the same electrode,
+$\mathbf{I}_{cP+p,w}$ and $\mathbf{I}_{cP+p',w'}$.  Their Manhattan distance
+in the image is
+
+\begin{equation}
+  d_{\mathrm{img}}=|p-p'|+|w-w'|,
+\end{equation}
+
+while their temporal separation in the original waveform is
+
+\begin{equation}
+  d_{\mathrm{time}}=|(w-w')P+(p-p')|.
+\end{equation}
+
+A vertical one-pixel step within an electrode therefore connects consecutive
+samples, whereas a horizontal one-pixel step connects samples $P$ time points
+apart.  A $k\times k$ convolution combines offsets of the form
+$\Delta t=P\Delta w+\Delta p$ within one local receptive field.  For example,
+a $3\times3$ kernel at $P=4$ can directly combine offsets
+$\{-5,-4,-3,-1,0,1,3,4,5\}$.  This is a polyphase view of the waveform: each
+column holds a group of $P$ consecutive samples, and each row follows one
+temporal phase across groups.
+
+Figure~\ref{fig:receptive-field-mechanism} summarizes this mechanism and its
+interaction with the hierarchical receptive fields of EfficientNet-B0.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{receptive_field_mechanism.pdf}
+\caption{Why phase-folded EEG is compatible with a 2D CNN. Folding is a
+lossless permutation that places temporal phase rows next to one another. A
+local 2D kernel therefore acts as a structured multi-lag temporal operator
+with offsets $\Delta t=P\Delta w+\Delta p$. Deeper receptive fields integrate
+progressively longer waveform, rhythm, and cross-electrode context; global
+pooling then aggregates evidence over the complete segment. Time spans are
+illustrative for $P=4$ at 200\,Hz.}
+\label{fig:receptive-field-mechanism}
+\end{figure*}
+
+The rasterization introduces a phase-wrap boundary.  The original consecutive
+pair at phases $P-1$ and $0$ lies across adjacent columns rather than adjacent
+rows.  Large $P$ therefore increases height and temporal offset diversity, but
+also makes this wrap less local to a small square kernel.
+
+At the boundary between the last phase row of electrode $c$ and the first
+phase row of electrode $c+1$, vertical locality becomes cross-electrode and
+slightly time-shifted.  This is useful only when the chosen channel order has
+meaningful structure.  It also exposes a limitation: the adapter does not know
+physical electrode coordinates and cannot distinguish a physiological
+neighborhood from an arbitrary row ordering.
+
+\subsection{Downsampling and signal occupancy}
+
+EfficientNet-B0 has a nominal total spatial stride of 32.  With no folding,
+many datasets provide fewer than 32 channel rows.  The implementation pads
+height and width to multiples of 32, so the padded dimensions are
+
+\begin{equation}
+  H_{\mathrm{pad}}=32\left\lceil\frac{CP}{32}\right\rceil,
+  \qquad
+  W_{\mathrm{pad}}=32\left\lceil\frac{T/P}{32}\right\rceil.
+\end{equation}
+
+The fraction of non-padding rows is
+
+\begin{equation}
+  \rho_H(P)=\frac{CP}{H_{\mathrm{pad}}}.
+\end{equation}
+
+For a 16-channel recording, $P=1$ occupies only half of a 32-row padded input,
+whereas $P=2$ occupies every row.  More generally, increasing $P$ delays the
+collapse of signal-bearing height positions through the convolutional stages.
+This does not guarantee improvement: an excessively large $P$ coarsens the
+horizontal time step, increases phase-wrap distance, and creates more
+artificial vertical boundaries.
+
+\begin{hypothesis}[Geometry alignment]
+Temporal folding helps when it improves signal occupancy and exposes useful
+within-electrode phase and $P$-spaced relations before hierarchical
+downsampling.  Gains
+should not be universal, and should weaken when physical electrode topology or
+long uninterrupted horizontal context is more important.
+\end{hypothesis}
+
+\subsection{Visual encoder and classifier}
+
+The main model is intentionally small:
+
+\begin{center}
+\fbox{%
+\begin{minipage}{0.91\linewidth}
+\centering
+$[B,C,T]$
+$\xrightarrow{\;F_P\;}$
+$[B,1,CP,T/P]$
+$\xrightarrow{\;\text{zero pad}\;}$
+$\xrightarrow{\;\text{ImageNet EfficientNet-B0}\;}$
+$\xrightarrow{\;\text{global average pool}\;}$
+$\xrightarrow{\;\text{linear}\;}$ logits.
+\end{minipage}}
+\end{center}
+
+We instantiate the timm EfficientNet-B0 with one input channel and ImageNet
+weights \citep{wightman2019timm}.  The natural-image classifier is not used;
+the feature encoder contains approximately 4.0M parameters.  A dropout layer
+and task-specific linear classifier are trained together with the backbone.
+The architecture contains no EEG-specific self-supervised weights, Fourier
+features, attention layer, or learned positional embedding.
+
+\subsection{Input amplitude handling}
+
+Unless stated otherwise, samples are converted to float32, clipped to
+$[-1024,1024]$, and divided by 32.  This bounds the default visual input to
+$[-32,32]$.  SHU-MI is the sole experiment-specific exception in the finalized
+table: it is clipped to $[-512,512]$ and divided by 64.  The selected SHU-MI
+recipe uses no random amplitude scaling.  This exception is reported explicitly
+because input amplitude is a material hyperparameter for transferred vision
+backbones.

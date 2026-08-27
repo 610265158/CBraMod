@@ -1,0 +1,83 @@
+\section{Introduction}
+
+Electroencephalography (EEG) datasets vary simultaneously in montage, channel
+count, sampling rate, recording length, subject population, and label space.
+Recent EEG foundation models address this heterogeneity with large-scale
+self-supervised pretraining and specialized tokenization or attention
+mechanisms \citep{yang2024biot,jiang2024labram,wang2024cbramod,elouahidi2025reve}.
+Their success has made ``more EEG pretraining'' a natural explanation for
+improved transfer.  Yet the downstream architecture and the geometry presented
+to that architecture are often changed at the same time.  This makes it hard to
+separate the benefit of domain pretraining from the benefit of a better
+representation interface.
+
+This motivates our central question: \emph{is vision pretraining a free lunch
+for EEG decoding?}  We use ``free lunch'' in a deliberately restricted sense:
+reusing publicly available visual weights without collecting EEG pretraining
+data or running an EEG self-supervised pretraining stage.  It does not mean
+zero computation, universal improvement, or deployment without task-specific
+fine-tuning.
+
+We study this confound using a deliberately ordinary visual backbone.  A raw
+EEG segment is naturally a matrix with electrodes as rows and time samples as
+columns.  Directly passing this matrix to a two-dimensional CNN is unattractive:
+the input is extremely wide, often only 6--64 rows high, and standard vision
+networks reduce both spatial axes by a factor near 32.  The electrode dimension
+can therefore collapse after only a few stages, while a large fraction of the
+spatial computation is spent traversing a long time axis.  Resizing the matrix
+would change values; a spectrogram would discard phase and introduce analysis
+choices; repeating rows would increase resolution without adding information.
+
+Our alternative is a lossless index transformation.  For fold factor $P$, we
+reshape each channel into groups of $P$ consecutive samples and transpose the
+within-group phase into the row axis, mapping $C\times T$ to
+$(CP)\times(T/P)$.  We call this operation \emph{temporal folding}.  It has no
+learned parameters and is exactly invertible.  However, it changes what a
+local convolution means: a vertical step within an electrode advances by one
+sample, whereas a horizontal step advances by $P$ samples.  A small 2D kernel
+therefore combines fine temporal differences with $P$-spaced context, while
+the taller representation carries more nonzero rows through the height
+hierarchy.
+
+This viewpoint leads to three questions:
+
+\begin{enumerate}
+    \item When can a lossless geometry adapter make generic ImageNet
+    pretraining competitive across heterogeneous EEG tasks?
+    \item Are gains explained only by a taller image, or by the particular
+    adjacency induced by folding?
+    \item On which tasks does an artificial row geometry fail, revealing the
+    need for channel identity, physical coordinates, or EEG pretraining?
+\end{enumerate}
+
+We study these questions with one EfficientNet-B0 across 11 downstream
+benchmarks, using three seeds, validation checkpoint selection, and one final
+test evaluation.  The corrected phase-interleaved benchmark exceeds the
+published \cbramod{} primary metric on five datasets, reaches near parity on
+two, and is lower on four.  Historical channel-repetition and reduced-stride
+pilots are retained only as exploratory controls and are not mixed with these
+formal results.
+
+Our contributions are:
+
+\begin{itemize}
+    \item \textbf{A lossless EEG--vision interface.}  We formulate temporal
+    folding as a bijective channel--time reindexing requiring no interpolation,
+    filtering, or learned adapter.
+    \item \textbf{A geometry account of CNN transfer.}  We characterize how
+    folding remaps temporal distance, increases signal occupancy after padding,
+    and changes the receptive field induced by hierarchical 2D convolution.
+    \item \textbf{A broad controlled benchmark.}  We evaluate one
+    ImageNet-pretrained EfficientNet-B0 family across 11 datasets under a
+    validation-selected three-seed protocol.
+    \item \textbf{Boundary evidence.}  Repeat, stride, and task-level analyses
+    identify when generic visual locality is useful and when missing electrode
+    topology remains a limiting factor.
+\end{itemize}
+
+The intended claim is not that a small CNN universally replaces EEG foundation
+models, nor that vision weights provide a universal free lunch.  Rather,
+off-the-shelf vision pretraining is a surprisingly strong prior on several EEG
+tasks once the representation geometry is aligned, and this baseline is
+necessary before downstream gains can be attributed to domain-specific
+pretraining.

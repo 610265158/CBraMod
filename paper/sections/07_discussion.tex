@@ -1,0 +1,56 @@
+\section{Discussion, Limitations, and Broader Impact}
+
+\subsection{What can be concluded about EEG foundation models?}
+
+The study is designed around a narrow but important question: full fine-tuning
+performance alone may not identify the source of a foundation model's gains.
+The corrected phase-interleaved benchmark shows that a compact generic encoder
+can be competitive on several tasks, while the deficits on FACED, TUAB, SHU-MI,
+and Mumtaz2016 reject a universal replacement claim.  More generally, new
+foundation models should compare against strong architecture-and-geometry
+controls, not only task-specific networks with weaker transfer recipes.
+
+In the terminology of our title, vision pretraining is a \emph{conditional}
+free lunch: its weights are available without additional EEG pretraining, but
+their value depends on input geometry, downstream optimization, and task
+characteristics.  Five gains, two near ties, and four deficits across the 11
+benchmarks make this conditionality empirically visible.
+
+The results do \emph{not} show that EEG pretraining is unnecessary.  This work
+does not yet evaluate few-shot learning, missing-channel robustness, frozen
+features, cross-montage transfer, or pretraining-data efficiency.  These are
+precisely the settings in which large, coordinate-aware EEG models should be
+most valuable.  A fair interpretation is that generic visual priors are an
+unexpectedly strong component under end-to-end supervised adaptation.
+
+\subsection{Threats to validity}
+
+\begin{itemize}
+    \item \textbf{Baseline comparability.}  The \cbramod{} column contains
+    published references, not same-split three-seed reproductions.  TUAB and
+    TUEV dataset versions and splits are particularly sensitive.
+    \item \textbf{Development-set contamination.}  Formal runs evaluate the
+    test set once, but some candidate recipes were inspired by earlier test-
+    visible exploration.  A prospectively frozen rerun is needed for the final
+    paper.
+    \item \textbf{Dataset-specific recipes.}  The encoder is fixed, but $P$,
+    optimization, input scale, and augmentation vary by dataset.  This is a
+    tuned downstream protocol, not zero-shot universality.
+    \item \textbf{Incomplete controls.}  Random initialization, EEGNet,
+    DeepConvNet, identical-pipeline foundation baselines, FLOPs, throughput,
+    and memory are not yet in the main table.
+    \item \textbf{Statistical uncertainty.}  Three seeds are informative but
+    limited, especially for MentalArithmetic.  Subject-level bootstrap
+    intervals and paired tests would better reflect evaluation uncertainty.
+\end{itemize}
+
+\subsection{Broader impact}
+
+A small vision backbone may reduce the hardware barrier for EEG research and
+deployment.  However, high benchmark performance does not imply clinical
+readiness.  EEG datasets encode acquisition-site, demographic, device, and
+labeling biases; a model can exploit these shortcuts.  Clinical use would
+require external validation, calibration, uncertainty reporting, subgroup
+analysis, and human oversight.  The invertibility of folding also means it does
+not provide privacy protection: identifiable or sensitive waveform information
+remains present in the transformed input.

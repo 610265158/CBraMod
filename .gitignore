@@ -1,1 +1,33 @@
 .idea
+
+# Python cache/build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Runtime logs and local experiment outputs
+experiments/logs/
+experiments/checkpoints/
+experiments/runs/
+experiments/wandb/
+experiment_logs/
+models_my/
+models_my_parallel/
+runs/
+wandb/
+
+# Local environment files
+.env
+.venv/
+venv/
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.pdf
+paper/*.synctex.gz

@@ -1,0 +1,25 @@
+\begin{abstract}
+Large EEG foundation models combine domain-specific architectures with
+thousands of hours of self-supervised pretraining.  We ask whether
+off-the-shelf vision pretraining can provide a ``free lunch'' for EEG
+decoding: competitive transfer without any EEG-specific pretraining.  Our
+answer depends critically on how raw EEG is presented to the visual encoder.
+We introduce \method{}, a parameter-free adapter that bijectively folds
+an EEG matrix from $C\times T$ to $(CP)\times(T/P)$.  The transform preserves
+every waveform sample, but places consecutive temporal phases on adjacent rows
+while a horizontal step advances by $P$ samples.  It also delays collapse of
+the electrode axis under hierarchical downsampling.  A
+one-channel EfficientNet-B0 followed by global pooling and a linear head is
+then fine-tuned end to end, without EEG pretraining or spectral conversion.
+Our evaluation covers 11 benchmarks spanning clinical detection, sleep,
+emotion, motor imagery, imagined speech, depression, and mental workload.
+Under a validation-selected three-seed protocol, the compact visual model
+exceeds published \cbramod{} primary metrics on five datasets, is within 0.1
+percentage points on two, and trails on four.  The largest gains are 9.23
+$\kappa$ points on BCIC2020-3 and 7.37 PR-AUC points on CHB-MIT, while FACED
+exposes a 13.71-point $\kappa$ deficit.  These published-reference comparisons
+are not a substitute for same-pipeline foundation-model reproductions.  The
+results show that vision pretraining is not a universal free lunch, but can
+become a strong, readily available prior when paired with suitable input
+geometry.
+\end{abstract}

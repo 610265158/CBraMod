@@ -1,7 +1,10 @@
 import os
+import argparse
 from collections import defaultdict
-import pyedflib
-import pyedflib.highlevel as hl
+try:
+    import pyedflib.highlevel as hl
+except ModuleNotFoundError:
+    hl = None
 import numpy as np
 import copy
 import shutil
@@ -9,6 +12,21 @@ import bz2
 import pickle
 import _pickle as cPickle
 import multiprocessing as mp
+import mne
+
+if not hasattr(np, "in1d"):
+    np.in1d = np.isin
+
+mne.set_log_level(os.environ.get("MNE_LOG_LEVEL", "WARNING"))
+
+
+def normalize_mne_channel_name(name):
+    stem, sep, suffix = name.rpartition("-")
+    if sep and suffix.isdigit():
+        if suffix == "0":
+            return stem
+        return f"{stem}-{int(suffix) + 1}"
+    return name
 
 
 # Pickle a file and then compress it into a file with extension
@@ -63,12 +81,19 @@ def process_metadata(summary, filename):
 
 # Keep some channels from a .edf and ignore the others
 def drop_channels(edf_source, edf_target=None, to_keep=None, to_drop=None):
-    signals, signal_headers, header = hl.read_edf(
-        edf_source, ch_nrs=to_keep, digital=False
-    )
+    if hl is not None:
+        signals, signal_headers, header = hl.read_edf(
+            edf_source, ch_nrs=to_keep, digital=False
+        )
+        labels = [header.get("label") for header in signal_headers]
+    else:
+        raw = mne.io.read_raw_edf(edf_source, preload=True)
+        signals = raw.get_data(picks=to_keep, units="uV")
+        labels = [normalize_mne_channel_name(raw.ch_names[i]) for i in to_keep]
+        raw.close()
+
     clean_file = {}
-    for signal, header in zip(signals, signal_headers):
-        channel = header.get("label")
+    for signal, channel in zip(signals, labels):
         if channel in clean_file.keys():
             channel = channel + "-2"
         clean_file[channel] = signal
@@ -112,10 +137,17 @@ def process_files(pacient, valid_channels, channels, start, end):
 
         # Check with (cleaned) reference file  if we have to remove more channels
         try:
-            signals, signal_headers, header = hl.read_edf(filename, digital=False)
+            if hl is not None:
+                signals, signal_headers, header = hl.read_edf(filename, digital=False)
+                labels = [h.get("label") for h in signal_headers]
+            else:
+                raw = mne.io.read_raw_edf(filename, preload=False)
+                labels = [normalize_mne_channel_name(name) for name in raw.ch_names]
+                raw.close()
+
             n = 0
-            for h in signal_headers:
-                if h.get("label") in valid_channels:
+            for label in labels:
+                if label in valid_channels:
                     if n not in to_keep:
                         to_keep.append(n)
                 n = n + 1
@@ -131,7 +163,7 @@ def process_files(pacient, valid_channels, channels, start, end):
             try:
                 print(
                     "Removing",
-                    len(signal_headers) - len(to_keep),
+                    len(labels) - len(to_keep),
                     "channels from file ",
                     "chb{p}_{n}.edf".format(p=pacient, n=num),
                 )
@@ -231,53 +263,76 @@ def start_process(pacient, num, start, end, sum_ind):
 
 
 # PARAMETERS
-signals_path = r"/data/datasets/chb-mit-scalp-eeg-database-1.0.0"  # Path to the data main directory
-clean_path = r"/data/datasets/BigDownstream/chb-mit/processed"  # Path where to store clean data
-
-if not os.path.exists(clean_path):
-    os.makedirs(clean_path)
-
-# Clean pacients one by one manually with these parameters
-pacient = "04"
-num = "01"  # Reference file
-summary_index = 0  # Index of channels summary reference
-start = 28  # Number of first file to process
-end = 28  # Number of last file to process
-# Start the process
-# start_process(pacient, num, start, end, summary_index)
+signals_path = None
+clean_path = None
 
 
-# FULL DATA PROCESS
-parameters = [
-    ("01", "01", 2, 46, 0),
-    ("02", "01", 2, 35, 0),
-    ("03", "01", 2, 38, 0),
-    ("05", "01", 2, 39, 0),
-    ("06", "01", 2, 24, 0),
-    ("07", "01", 2, 19, 0),
-    ("08", "02", 3, 29, 0),
-    ("10", "01", 2, 89, 0),
-    ("11", "01", 2, 99, 0),
-    ("14", "01", 2, 42, 0),
-    ("20", "01", 2, 68, 0),
-    ("21", "01", 2, 33, 0),
-    ("22", "01", 2, 77, 0),
-    ("23", "06", 7, 20, 0),
-    ("24", "01", 3, 21, 0),
-    ("04", "07", 1, 43, 1),
-    ("09", "02", 1, 19, 1),
-    ("15", "02", 1, 63, 1),
-    ("16", "01", 2, 19, 0),
-    ("18", "02", 1, 36, 1),
-    ("19", "02", 1, 30, 1),
-]
+def main():
+    global signals_path, clean_path
+    parser = argparse.ArgumentParser(description="Preprocess CHB-MIT EDF files.")
+    parser.add_argument(
+        "--signals_path",
+        default=os.environ.get(
+            "CHB_SIGNALS_PATH", "/data/datasets/chb-mit-scalp-eeg-database-1.0.0"
+        ),
+        help="Path to the CHB-MIT raw data directory.",
+    )
+    parser.add_argument(
+        "--clean_path",
+        default=os.environ.get(
+            "CHB_CLEAN_PATH", "/data/datasets/BigDownstream/chb-mit/processed"
+        ),
+        help="Path where cleaned pkl files will be written.",
+    )
+    parser.add_argument(
+        "--processes",
+        type=int,
+        default=int(os.environ.get("CHB_PROCESSES", max(1, mp.cpu_count() // 2))),
+        help="Number of worker processes.",
+    )
+    args = parser.parse_args()
 
-# parameters = [
-#     ("12", "")
-# ]
+    signals_path = args.signals_path
+    clean_path = args.clean_path
+    os.makedirs(clean_path, exist_ok=True)
+
+    # Clean pacients one by one manually with these parameters
+    pacient = "04"
+    num = "01"  # Reference file
+    summary_index = 0  # Index of channels summary reference
+    start = 28  # Number of first file to process
+    end = 28  # Number of last file to process
+    # Start the process
+    # start_process(pacient, num, start, end, summary_index)
+
+    # FULL DATA PROCESS
+    parameters = [
+        ("01", "01", 2, 46, 0),
+        ("02", "01", 2, 35, 0),
+        ("03", "01", 2, 38, 0),
+        ("05", "01", 2, 39, 0),
+        ("06", "01", 2, 24, 0),
+        ("07", "01", 2, 19, 0),
+        ("08", "02", 3, 29, 0),
+        ("10", "01", 2, 89, 0),
+        ("11", "01", 2, 99, 0),
+        ("14", "01", 2, 42, 0),
+        ("20", "01", 2, 68, 0),
+        ("21", "01", 2, 33, 0),
+        ("22", "01", 2, 77, 0),
+        ("23", "06", 7, 20, 0),
+        ("24", "01", 3, 21, 0),
+        ("04", "07", 1, 43, 1),
+        ("09", "02", 1, 19, 1),
+        ("15", "02", 1, 63, 1),
+        ("16", "01", 2, 19, 0),
+        ("18", "02", 1, 36, 1),
+        ("19", "02", 1, 30, 1),
+    ]
+
+    with mp.Pool(args.processes) as pool:
+        pool.starmap(start_process, parameters)
 
 
-
-
-with mp.Pool(mp.cpu_count()) as pool:
-    res = pool.starmap(start_process, parameters)
+if __name__ == "__main__":
+    main()

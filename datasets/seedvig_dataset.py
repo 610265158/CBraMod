@@ -4,8 +4,10 @@ import numpy as np
 from utils.util import to_tensor
 import os
 import random
-import lmdb
 import pickle
+from datasets.lmdb_utils import open_lmdb
+from datasets.sampling import make_eval_loader, make_train_loader
+from datasets.shape_utils import as_channel_time, clip_eeg
 
 class CustomDataset(Dataset):
     def __init__(
@@ -14,7 +16,7 @@ class CustomDataset(Dataset):
             mode='train',
     ):
         super(CustomDataset, self).__init__()
-        self.db = lmdb.open(data_dir, readonly=True, lock=False, readahead=True, meminit=False)
+        self.db = open_lmdb(data_dir)
         with self.db.begin(write=False) as txn:
             self.keys = pickle.loads(txn.get('__keys__'.encode()))[mode]
 
@@ -29,12 +31,12 @@ class CustomDataset(Dataset):
         label = pair['label']
         # print(key)
         # print(data.shape)
-        return data/100, label
+        return clip_eeg(data), label
 
     def collate(self, batch):
         x_data = np.array([x[0] for x in batch])
         y_label = np.array([x[1] for x in batch])
-        return to_tensor(x_data), to_tensor(y_label)
+        return to_tensor(as_channel_time(x_data)), to_tensor(y_label)
 
 
 class LoadDataset(object):
@@ -48,23 +50,8 @@ class LoadDataset(object):
         test_set = CustomDataset(self.datasets_dir, mode='test')
         print(len(train_set), len(val_set), len(test_set))
         data_loader = {
-            'train': DataLoader(
-                train_set,
-                batch_size=self.params.batch_size,
-                collate_fn=train_set.collate,
-                shuffle=True,
-            ),
-            'val': DataLoader(
-                val_set,
-                batch_size=self.params.batch_size,
-                collate_fn=val_set.collate,
-                shuffle=False,
-            ),
-            'test': DataLoader(
-                test_set,
-                batch_size=self.params.batch_size,
-                collate_fn=test_set.collate,
-                shuffle=False,
-            ),
+            'train': make_train_loader(train_set, self.params, train_set.collate),
+            'val': make_eval_loader(val_set, self.params, val_set.collate),
+            'test': make_eval_loader(test_set, self.params, test_set.collate),
         }
         return data_loader

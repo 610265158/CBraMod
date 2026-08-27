@@ -1,80 +1,62 @@
 # EEG-Vision
 
-+ A solution from vision perspective to solve eeg problem
+EEG-Vision studies whether standard ImageNet-pretrained convolutional networks
+can serve as strong EEG encoders after a parameter-free, lossless change of
+input geometry. Its phase-interleaved folding adapter maps
+`[batch, channel, time]` into a single-channel 2D tensor while preserving every
+sample exactly.
 
-Although numerous methods have been proposed to address EEG-related problems,
-including the 'top' unsupervised method,  **Labram, Cbramod, EEG-Dino[1,2,3]**.
-I believe that most existing works(basically all) suffer from **overclaiming** issues and
-fail to capture the essential characteristics of EEG data. Based on this
-observation, I developed this project that innovatively employs vision models
-to tackle EEG problems.
+The repository is built from the CBraMod codebase and provides a unified,
+validation-controlled comparison across 11 downstream EEG datasets. The main
+backbone is EfficientNet-B0; EEGNet and selected timm backbones are available
+as controlled baselines. The original CBraMod modules remain only where they
+are required by legacy tasks.
 
-This project builds upon the Cbramod framework and
-conducts comprehensive comparative experiments across the 12 downstream tasks
-claimed in the Cbramod paper, obtaining corresponding experimental results.
-The results will tell the story. 
+Finalized metrics, protocol constraints, and CBraMod reference values are kept
+in [`experiments/PHASE_FOLD_RESULTS.md`](experiments/PHASE_FOLD_RESULTS.md).
 
-**Please beat existing baselines first before claiming SOTA**
+## Project Navigation
 
-## 🚀 Result
+The codebase keeps the original CBraMod-compatible entrypoints, but the current
+11-dataset downstream experiments should start from:
 
-Here it goes,
+- `PROJECT_LAYOUT.md`: directory map and responsibilities.
+- `experiments/README.md`: configured datasets, split counts, and tensor shapes.
+- `experiments/downstream_11.py`: unified downstream runner.
+- `experiments/run_downstream.sh`: unified shell entrypoint for downstream runs.
+- `models/vision_model.py`: complete downstream vision model.
+- `models/eeg_vision_adapter.py`: the single phase-folding adapter.
+- `models/vision_backbone.py`: timm backbone, global pooling, stride, and checkpoint helpers.
+- `datasets/shape_utils.py`: shared channel-by-time conversion and EEG
+  clipping/scaling helpers.
 
-### 1.1 chb-mit
+Local training logs and checkpoints are written under `experiments/logs/` and
+`experiments/checkpoints/`; these are ignored by git.
 
-| model     | acc     | prauc   | rocuac  |
-|-----------|---------|---------|---------|
-| effnet-b0 | 0.70594 | 0.42923 | 0.89768 | 
+## Current experiment status
 
-### 1.2 tuab
+The temporal adapter now uses phase-interleaved folding:
 
-| model            | acc     | prauc   | rocauc  |
-|------------------|---------|---------|---------|
-| effnet-b0        | 0.82049 | 0.89364 | 0.89177 |    
-| convnextv2_small | 0.83136 | 0.91319 | 0.90551 |     
+```text
+[B,C,T] -> reshape [B,1,C,T/P,P]
+        -> permute [B,1,C,P,T/P]
+        -> reshape [B,1,C*P,T/P]
+```
 
-### 1.3 TUEV
+For example, with `P=4`, the first folded row contains time indices
+`0,4,8,12,...`. Results produced by the earlier contiguous-chunk adapter were
+removed and must be rerun before reporting benchmark comparisons.
 
-| model     | acc     | prauc   | rocauc  |
-|-----------|---------|---------|---------|
-| effnet-b0 | 0.66469 | 0.75131 | 0.86815 |    
-
-### 1.4 motor imagery classification.
-
-| 模型 | physionet  |        |               | shu-mi |        |               |
-| ---- | ----------------- | ------ | ------------- | ------------- | ------ | ------------- |
-|      | acc               | kappa  | weighted_f1   | acc           | kappa  | weighted_f1   |
-| b0   | 0.64018           | 0.52011| 0.64162       | 0.63499       | 0.71522| 0.70266       |
-### 1.5 MENTAL DISORDER DIAGNOSIS
-
-| model |     acc |   prauc |  rocauc |
-|:------|--------:|--------:|--------:|
-| b0    | 0.93833 | 0.98897 | 0.98695 | 
-
-### 1.6 IMAGINED SPEECH CLASSIFICATION
-
-| model | acc     | kappa   | f1      |
-|-------|---------|---------|---------|
-| b0    | 0.62667 | 0.53333 | 0.62595 |
-
-### 1.7 SLEEP STAGING
-
-| model | acc     | kappa   | f1      |
-|-------|---------|---------|---------|
-| b0    | 0.76129 | 0.83855 | 0.83457 |
-
-### 1.8 Emotion Recognition
-|  | faced   |         |             | seed-v  |         |             |
-| ---- |---------|---------|-------------|---------|---------|-------------|
-|      | acc     | kappa   | weighted_f1 | acc     | kappa   | weighted_f1 |
-| b0            | 0.55059 | 0.49360 | 0.55441     | --      | --      | --          |
-| convnext-tiny | --      | --      | --          | 0.40219 | 0.25169 | 0.40166     |
+The finalized reporting seeds are `3407`, `3408`, and `3409`. Checkpoints are
+selected using validation metrics, followed by one final test evaluation per
+seed. Exploratory test-per-epoch peaks are not valid paper results.
 
 ## 🔨 Setup
 
-Install [Python](https://www.python.org/downloads/).
-
-Install [PyTorch](https://pytorch.org/get-started/locally/).
+Install Python and then install
+[PyTorch](https://pytorch.org/get-started/locally/) separately for the CUDA
+version on the target machine. PyTorch is intentionally not pinned in
+`requirements.txt` because the correct wheel is platform dependent.
 
 Install other requirements:
 
@@ -84,17 +66,35 @@ pip install -r requirements.txt
 
 ## 🚢 Train
 
-```commandline
-bash train_tuab.sh
-or
-bash train_tuev.sh
-or 
-bash train_speech.sh ...
+First verify that all configured external datasets are available:
+
+```bash
+bash experiments/run_downstream.sh --check_only --all
 ```
 
-We have released a pretrained checkpoint on [Hugginface🤗](https://huggingface.co/weighting666/CBraMod).
+Run a CPU-only one-batch smoke test:
 
-## ref
+```bash
+bash experiments/run_downstream.sh --dataset CHB-MIT --dry_run \
+  --device cpu --batch_size 1 --num_workers 0 --random_init
+```
+
+Start one downstream run:
+
+```bash
+bash experiments/run_downstream.sh --dataset TUAB --cuda 0
+```
+
+Dataset-specific compatibility wrappers are under `experiments/scripts/`.
+See [`experiments/README.md`](experiments/README.md) for exact shapes,
+preprocessing, flags, and all 11 configured datasets.
+
+The original CBraMod pretrained checkpoint is available on
+[Hugging Face](https://huggingface.co/weighting666/CBraMod). It is used only by
+the legacy CBraMod model path; the default vision path loads timm ImageNet
+weights.
+
+## References
 
 1. Wang, J., Zhao, S., Luo, Z., Zhou, Y., Jiang, H., Li, S., ... & Pan, G. (2024). Cbramod: A criss-cross brain
    foundation model for eeg decoding. arXiv preprint arXiv:2412.07236.

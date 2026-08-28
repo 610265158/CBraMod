@@ -1,16 +1,37 @@
 import copy
 import os
-from contextlib import nullcontext
+import random
+from contextlib import contextmanager, nullcontext
 from timeit import default_timer as timer
 
 import numpy as np
 import torch
 from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss, MSELoss
+from timm.utils import ModelEmaV2
 from tqdm import tqdm
 
 from finetune_evaluator import Evaluator
 
 import torch.nn as nn
+
+
+@contextmanager
+def preserve_random_state():
+    """Keep diagnostic evaluation from changing the next epoch's training RNG."""
+    python_state = random.getstate()
+    numpy_state = np.random.get_state()
+    torch_state = torch.random.get_rng_state()
+    cuda_states = None
+    if torch.cuda.is_available() and torch.cuda.is_initialized():
+        cuda_states = torch.cuda.get_rng_state_all()
+    try:
+        yield
+    finally:
+        random.setstate(python_state)
+        np.random.set_state(numpy_state)
+        torch.random.set_rng_state(torch_state)
+        if cuda_states is not None:
+            torch.cuda.set_rng_state_all(cuda_states)
 
 class Trainer(object):
     def __init__(self, params, data_loader, model):
@@ -29,10 +50,24 @@ class Trainer(object):
         self.amp_dtype_name = getattr(params, 'amp_dtype', 'float16')
         self.amp_dtype = amp_dtypes[self.amp_dtype_name]
         self.model = model.to(self.device)
+        self.ema_decay = float(getattr(params, 'ema_decay', 0.0))
+        if self.ema_decay < 0 or self.ema_decay >= 1:
+            raise ValueError('--ema_decay must be 0 (disabled) or in the interval (0, 1)')
+        self.ema_model = None
+        if self.ema_decay > 0:
+            self.ema_model = ModelEmaV2(self.model, decay=self.ema_decay)
+            self.ema_model.requires_grad_(False)
+            print('timm ModelEmaV2 enabled: decay={}'.format(self.ema_decay))
         if self.params.downstream_dataset in ['FACED', 'SEED-V', 'PhysioNet-MI', 'ISRUC', 'BCIC2020-3', 'TUEV', 'BCIC-IV-2a']:
             self.criterion = CrossEntropyLoss(label_smoothing=self.params.label_smoothing).to(self.device)
         elif self.params.downstream_dataset in ['SHU-MI', 'CHB-MIT', 'Mumtaz2016', 'MentalArithmetic', 'TUAB']:
-            self.criterion = BCEWithLogitsLoss().to(self.device)
+            binary_pos_weight = float(getattr(self.params, 'binary_pos_weight', 1.0))
+            if binary_pos_weight <= 0:
+                raise ValueError('--binary_pos_weight must be greater than 0')
+            pos_weight = torch.tensor(binary_pos_weight, dtype=torch.float32, device=self.device)
+            self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight).to(self.device)
+            if binary_pos_weight != 1.0:
+                print('Weighted BCE enabled: pos_weight={}'.format(binary_pos_weight))
         elif self.params.downstream_dataset == 'SEED-VIG':
             self.criterion = MSELoss().to(self.device)
 
@@ -51,8 +86,18 @@ class Trainer(object):
     def save_best_model_state(self):
         os.makedirs(self.params.model_dir, exist_ok=True)
         model_path = os.path.join(self.params.model_dir, "best.pth")
-        torch.save(self.model.state_dict(), model_path)
+        state = self.best_model_states
+        if state is None:
+            state = self.evaluation_model().state_dict()
+        torch.save(state, model_path)
         print("best model save in " + model_path)
+
+    def evaluation_model(self):
+        return self.ema_model.module if self.ema_model is not None else self.model
+
+    def update_ema(self):
+        if self.ema_model is not None:
+            self.ema_model.update(self.model)
 
     def amp_context(self):
         if self.use_amp:
@@ -178,13 +223,15 @@ class Trainer(object):
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), self.params.clip_value)
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
+                self.update_ema()
             self.optimizer_scheduler.step()
 
             mean_loss = (loss_sum / self.data_length).item()
             current_lr = self.optimizer.param_groups[0]['lr']
 
             with torch.no_grad():
-                ba, kappa, f1, cm = self.val_eval.get_metrics_for_multiclass(self.model)
+                eval_model = self.evaluation_model()
+                ba, kappa, f1, cm = self.val_eval.get_metrics_for_multiclass(eval_model)
                 print(
                     "Epoch {} : Training Loss: {:.5f}, ba: {:.5f}, kappa: {:.5f}, f1: {:.5f}, LR: {:.5f}, Time elapsed {:.2f} mins".format(
                         epoch + 1,
@@ -213,10 +260,11 @@ class Trainer(object):
                     kappa_best = kappa
                     f1_best = f1
                     cm_best = cm
-                    self.best_model_states = copy.deepcopy(self.model.state_dict())
+                    self.best_model_states = copy.deepcopy(eval_model.state_dict())
                     self.save_best_model_state()
                 if self.params.test_each_epoch:
-                    ba, kappa, f1, cm = self.test_eval.get_metrics_for_multiclass(self.model)
+                    with preserve_random_state():
+                        ba, kappa, f1, cm = self.test_eval.get_metrics_for_multiclass(eval_model)
                     print("***************************Test results************************")
                     print(
                         "Test Evaluation: ba: {:.5f}, kappa: {:.5f}, f1: {:.5f}".format(
@@ -288,13 +336,15 @@ class Trainer(object):
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), self.params.clip_value)
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
+                self.update_ema()
             self.optimizer_scheduler.step()
 
             mean_loss = (loss_sum / self.data_length).item()
             current_lr = self.optimizer.param_groups[0]['lr']
 
             with torch.no_grad():
-                ba, pr_auc, roc_auc, cm = self.val_eval.get_metrics_for_binaryclass(self.model)
+                eval_model = self.evaluation_model()
+                ba, pr_auc, roc_auc, cm = self.val_eval.get_metrics_for_binaryclass(eval_model)
                 print(
                     "Epoch {} : Training Loss: {:.5f}, ba: {:.5f}, pr_auc: {:.5f}, roc_auc: {:.5f}, LR: {:.5f}, Time elapsed {:.2f} mins".format(
                         epoch + 1,
@@ -323,10 +373,11 @@ class Trainer(object):
                     pr_auc_best = pr_auc
                     roc_auc_best = roc_auc
                     cm_best = cm
-                    self.best_model_states = copy.deepcopy(self.model.state_dict())
+                    self.best_model_states = copy.deepcopy(eval_model.state_dict())
                     self.save_best_model_state()
                 if self.params.test_each_epoch:
-                    ba, pr_auc, roc_auc, cm = self.test_eval.get_metrics_for_binaryclass(self.model)
+                    with preserve_random_state():
+                        ba, pr_auc, roc_auc, cm = self.test_eval.get_metrics_for_binaryclass(eval_model)
                     print("***************************Test results************************")
                     print(
                         "Test Evaluation: ba: {:.5f}, pr_auc: {:.5f}, roc_auc: {:.5f}".format(
@@ -390,13 +441,15 @@ class Trainer(object):
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.params.clip_value)
                     # torch.nn.utils.clip_grad_value_(self.model.parameters(), self.params.clip_value)
                 self.optimizer.step()
+                self.update_ema()
                 self.optimizer_scheduler.step()
 
             mean_loss = (loss_sum / self.data_length).item()
             current_lr = self.optimizer.param_groups[0]['lr']
 
             with torch.no_grad():
-                corrcoef, r2, rmse = self.val_eval.get_metrics_for_regression(self.model)
+                eval_model = self.evaluation_model()
+                corrcoef, r2, rmse = self.val_eval.get_metrics_for_regression(eval_model)
                 print(
                     "Epoch {} : Training Loss: {:.5f}, corrcoef: {:.5f}, r2: {:.5f}, rmse: {:.5f}, LR: {:.5f}, Time elapsed {:.2f} mins".format(
                         epoch + 1,
@@ -419,7 +472,7 @@ class Trainer(object):
                     corrcoef_best = corrcoef
                     r2_best = r2
                     rmse_best = rmse
-                    self.best_model_states = copy.deepcopy(self.model.state_dict())
+                    self.best_model_states = copy.deepcopy(eval_model.state_dict())
                     self.save_best_model_state()
 
         self.model.load_state_dict(self.best_model_states)

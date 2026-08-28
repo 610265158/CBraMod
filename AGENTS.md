@@ -126,10 +126,10 @@ HuggingFace download.
   in `models/eeg_vision_adapter.py`; it automatically accepts regular
   `[B,C,T]` and ISRUC `[B,S,C,T]` inputs. Timm-specific helpers are in
   `models/vision_backbone.py`.
-- The fold factor `P` defaults to 2 (`DEFAULT_VISION`), overridden per dataset
-  in `configs/downstream.py`: P=8 (CHB-MIT, TUAB), P=4 (ISRUC, Mumtaz2016,
-  MentalArithmetic), P=2 (all others). Override with `--vision_fold_factor`;
-  the time length MUST be divisible by P or `PhaseFoldAdapter` raises.
+- The fold factor `P` defaults to 2 (`DEFAULT_VISION`) and is overridden per
+  dataset in `configs/downstream.py`. ISRUC's finalized recipe uses P=12.
+  Override with `--vision_fold_factor`; the time length MUST be divisible by P
+  or `PhaseFoldAdapter` raises.
 
 Checkpoints write to `experiments/checkpoints/<safe_name>/`, and logs write to
 `experiments/logs/vision/<safe_name>/` unless the runner roots are overridden

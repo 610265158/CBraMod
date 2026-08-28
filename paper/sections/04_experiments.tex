@@ -53,12 +53,13 @@ and sample counts must therefore be reported with every comparison.
 \subsection{Optimization}
 
 We use AdamW \citep{loshchilov2019decoupled}, cosine learning-rate decay,
-batch size 32 except ISRUC (16), dropout 0.1, mixed-precision float16 training,
-and no backbone/head learning-rate split.  The ImageNet backbone and the newly
-initialized linear head are fine-tuned jointly.  Bias and normalization
-parameters receive zero weight decay.  Dataset-specific fold factors, learning
-rates, weight decay, epochs, and augmentations are given in
-Appendix~\ref{app:recipes}.
+batch size 32 except ISRUC (16) and MentalArithmetic (64), dropout 0.1, and no
+backbone/head learning-rate split.  Runs use mixed-precision float16 except
+the finalized MentalArithmetic recipe, which uses bfloat16.  The ImageNet
+backbone and the newly initialized linear head are fine-tuned jointly.  Bias
+and normalization parameters receive zero weight decay.  Dataset-specific
+fold factors, learning rates, weight decay, epochs, EMA, and augmentations are
+given in Appendix~\ref{app:recipes}.
 
 \subsection{Metrics}
 

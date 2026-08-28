@@ -3,6 +3,9 @@ import math
 import torch
 
 
+AMPLITUDE_SCALE_DISTRIBUTIONS = ('log_uniform', 'uniform')
+
+
 def validate_amplitude_scale_params(params):
     probability = float(getattr(params, 'amplitude_scale_prob', 1.0))
     min_scale = float(getattr(params, 'amplitude_scale_min', 0.5))
@@ -16,20 +19,40 @@ def validate_amplitude_scale_params(params):
     return probability, min_scale, max_scale
 
 
+def amplitude_scale_distribution(params):
+    distribution = str(
+        getattr(params, 'amplitude_scale_distribution', 'log_uniform')
+    ).lower()
+    if distribution not in AMPLITUDE_SCALE_DISTRIBUTIONS:
+        raise ValueError(
+            '--amplitude_scale_distribution must be one of {}; got {}'.format(
+                AMPLITUDE_SCALE_DISTRIBUTIONS,
+                distribution,
+            )
+        )
+    return distribution
+
+
 def maybe_apply_amplitude_scale(x, params):
-    """Multiply each training sample by an independent log-uniform scale."""
+    """Multiply each training sample by an independently sampled scale."""
     if not getattr(params, 'amplitude_scale_augmentation', False):
         return x
     if x.ndim not in (3, 4):
         return x
 
     probability, min_scale, max_scale = validate_amplitude_scale_params(params)
+    distribution = amplitude_scale_distribution(params)
     if probability <= 0.0 or min_scale == max_scale == 1.0:
         return x
 
     sample_shape = x.shape[:-2]
     if min_scale == max_scale:
         scales = x.new_full(sample_shape, min_scale)
+    elif distribution == 'uniform':
+        scales = torch.empty(sample_shape, device=x.device, dtype=x.dtype).uniform_(
+            min_scale,
+            max_scale,
+        )
     else:
         log_min = math.log(min_scale)
         log_max = math.log(max_scale)

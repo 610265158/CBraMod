@@ -71,6 +71,8 @@ def main():
                         help='warmup starting LR as a fraction of each group LR')
     parser.add_argument('--optimizer', type=str, default=None, help='optimizer (AdamW, SGD)')
     parser.add_argument('--clip_value', type=float, default=None, help='clip_value')
+    parser.add_argument('--ema_decay', type=float, default=None,
+                        help='model EMA decay; 0 disables EMA')
     parser.add_argument('--dropout', type=float, default=None, help='dropout')
     parser.add_argument('--drop_path_rate', type=float, default=None,
                         help='stochastic-depth rate passed to the vision backbone')
@@ -98,6 +100,16 @@ def main():
                         help='SHU-MI raw-value clip limit before the vision adapter')
     parser.add_argument('--shu_scale', type=float, default=64.0,
                         help='SHU-MI divisor applied after clipping (default: 64)')
+    parser.add_argument('--shu_bandpass_low', type=float, default=None,
+                        help='optional SHU-MI band-pass low cutoff in Hz')
+    parser.add_argument('--shu_bandpass_high', type=float, default=None,
+                        help='optional SHU-MI band-pass high cutoff in Hz')
+    parser.add_argument('--shu_filter_order', type=int, default=4,
+                        help='Butterworth order for optional SHU-MI band-pass')
+    parser.add_argument('--physio_lowpass_hz', type=float, default=None,
+                        help='optional PhysioNet-MI low-pass cutoff in Hz')
+    parser.add_argument('--physio_filter_order', type=int, default=4,
+                        help='Butterworth order for optional PhysioNet-MI low-pass')
     parser.add_argument('--faced_input_norm', type=str, default=None,
                         choices=['clip_scale', 'robust_sample'],
                         help='FACED input normalization; robust_sample uses one median/MAD per trial')
@@ -122,6 +134,8 @@ def main():
 
     parser.add_argument('--num_workers', type=int, default=None, help='num_workers')
     parser.add_argument('--label_smoothing', type=float, default=None, help='label_smoothing')
+    parser.add_argument('--binary_pos_weight', type=float, default=None,
+                        help='positive-class weight for BCE binary tasks; 1 disables reweighting')
     parser.add_argument('--multi_lr', type=str2bool, default=None,
                         help='multi_lr')  # set different learning rates for different modules
     parser.add_argument('--frozen', type=str2bool,
@@ -148,6 +162,9 @@ def main():
                         default=None, help='minimum train-time EEG amplitude scale')
     parser.add_argument('--amplitude_scale_max', type=float,
                         default=None, help='maximum train-time EEG amplitude scale')
+    parser.add_argument('--amplitude_scale_distribution', type=str,
+                        choices=['log_uniform', 'uniform'], default=None,
+                        help='distribution used for train-time amplitude scaling')
     parser.add_argument('--foundation_dir', type=str,
                         default='pretrained_weights/pretrained_weights.pth',
                         help='foundation_dir')
@@ -245,9 +262,11 @@ def legacy_training_defaults():
         'warmup_epochs': 0,
         'warmup_start_factor': 0.1,
         'clip_value': 1,
+        'ema_decay': 0.0,
         'num_workers': 16,
         'optimizer': 'AdamW',
         'label_smoothing': 0.1,
+        'binary_pos_weight': 1.0,
         'dropout': 0.1,
         'drop_path_rate': 0.0,
         'early_stop': 10,
@@ -264,10 +283,16 @@ def legacy_training_defaults():
         'amplitude_scale_prob': 1.0,
         'amplitude_scale_min': 0.5,
         'amplitude_scale_max': 2.0,
+        'amplitude_scale_distribution': 'log_uniform',
         'amp': True,
         'amp_dtype': 'float16',
         'shu_clip_limit': 512.0,
         'shu_scale': 64.0,
+        'shu_bandpass_low': None,
+        'shu_bandpass_high': None,
+        'shu_filter_order': 4,
+        'physio_lowpass_hz': None,
+        'physio_filter_order': 4,
         'faced_input_norm': 'clip_scale',
         'faced_robust_clip': 8.0,
     }

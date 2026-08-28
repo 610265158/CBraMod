@@ -37,6 +37,34 @@ run_recipe() {
   local clip_value="$8"
   local mirror="$9"
   local shu_scale="${10}"
+  local warmup_epochs=0
+  local ema_decay=0
+  local binary_pos_weight=1
+  local time_roll=false
+  local time_roll_prob=1
+  local time_roll_max_fraction=0.5
+  local amp_dtype=float16
+  local early_stop="${epochs}"
+
+  if [[ "${dataset}" == "ISRUC" ]]; then
+    warmup_epochs=3
+    ema_decay=0.995
+    time_roll=true
+    time_roll_prob=0.5
+    time_roll_max_fraction=0.25
+  elif [[ "${dataset}" == "PhysioNet-MI" ]]; then
+    warmup_epochs=3
+    ema_decay=0.995
+    early_stop=10
+  elif [[ "${dataset}" == "MentalArithmetic" ]]; then
+    warmup_epochs=3
+    ema_decay=0.99
+    binary_pos_weight=3
+    time_roll=true
+    time_roll_prob=0.5
+    time_roll_max_fraction=0.25
+    amp_dtype=bfloat16
+  fi
 
   if ! is_requested "${dataset}"; then
     return
@@ -61,21 +89,29 @@ run_recipe() {
       --batch_size "${batch_size}" \
       --num_workers 4 \
       --lr "${lr}" \
+      --backbone_lr_scale 0.1 \
       --weight_decay "${weight_decay}" \
       --clip_value "${clip_value}" \
+      --warmup_epochs "${warmup_epochs}" \
+      --warmup_start_factor 0.1 \
+      --ema_decay "${ema_decay}" \
       --optimizer AdamW \
       --label_smoothing 0.1 \
+      --binary_pos_weight "${binary_pos_weight}" \
       --dropout 0.1 \
       --drop_path_rate 0 \
       --multi_lr false \
-      --early_stop "${epochs}" \
+      --early_stop "${early_stop}" \
+      --balanced_sampling false \
       --mirror_augmentation "${mirror}" \
       --mirror_prob 0.5 \
-      --time_roll_augmentation false \
+      --time_roll_augmentation "${time_roll}" \
+      --time_roll_prob "${time_roll_prob}" \
+      --time_roll_max_fraction "${time_roll_max_fraction}" \
       --amplitude_scale_augmentation false \
       --shu_scale "${shu_scale}" \
       --amp true \
-      --amp_dtype float16 \
+      --amp_dtype "${amp_dtype}" \
       --test_each_epoch false \
       --run_final_test true \
       --selection_metric "${metric}"
@@ -87,13 +123,13 @@ run_recipe() {
 run_recipe CHB-MIT          2 10 32 1e-3 5e-3 pr_auc -1 false 64
 run_recipe TUAB             2  5 32 1e-3 5e-4 pr_auc  1 false 64
 run_recipe TUEV             4 10 32 1e-3 5e-3 kappa  -1 false 64
-run_recipe ISRUC            8 50 16 1e-3 5e-3 kappa  -1 true  64
+run_recipe ISRUC           12 15 16 1e-3 5e-3 kappa  -1 true  64
 run_recipe FACED            2 50 32 1e-3 5e-3 kappa  -1 false 64
 run_recipe SEED-V           8 50 32 5e-4 5e-3 kappa  -1 false 64
 run_recipe PhysioNet-MI     1 30 32 2e-3 5e-3 kappa  -1 false 64
 run_recipe SHU-MI           4 20 32 1e-3 5e-3 pr_auc -1 false 64
 run_recipe BCIC2020-3       1 30 32 1e-3 5e-3 kappa  -1 false 64
 run_recipe Mumtaz2016       2 30 32 5e-4 5e-2 pr_auc -1 false 64
-run_recipe MentalArithmetic 2 10 32 5e-4 1e-2 pr_auc -1 false 64
+run_recipe MentalArithmetic 2 30 64 1e-3 5e-4 pr_auc -1 true 64
 
 echo "[$(date -Is)] REQUESTED RECIPES DONE"

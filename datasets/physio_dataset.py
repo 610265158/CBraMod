@@ -1,6 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
+from scipy import signal
 from utils.util import to_tensor
 import os
 import random
@@ -13,9 +14,30 @@ class CustomDataset(Dataset):
             self,
             data_dir,
             mode='train',
+            lowpass_hz=None,
+            filter_order=4,
+            sampling_rate=200.0,
     ):
         super(CustomDataset, self).__init__()
         self.db = open_lmdb(data_dir)
+        self.lowpass_sos = None
+        if lowpass_hz is not None:
+            cutoff = float(lowpass_hz)
+            order = int(filter_order)
+            nyquist = float(sampling_rate) / 2.0
+            if not 0 < cutoff < nyquist:
+                raise ValueError(
+                    'PhysioNet-MI low-pass must satisfy 0 < cutoff < {} Hz'.format(nyquist)
+                )
+            if order <= 0:
+                raise ValueError('PhysioNet-MI filter order must be positive')
+            self.lowpass_sos = signal.butter(
+                order,
+                cutoff,
+                btype='lowpass',
+                fs=float(sampling_rate),
+                output='sos',
+            )
         with self.db.begin(write=False) as txn:
             self.keys = pickle.loads(txn.get('__keys__'.encode()))[mode]
 
@@ -32,6 +54,14 @@ class CustomDataset(Dataset):
         # print(data)
         # print(label)
 
+        if self.lowpass_sos is not None:
+            # LMDB records are [C,4,200]. Filter the joined four-second trial
+            # so the stored one-second reshape boundaries do not create edges.
+            data = np.asarray(data, dtype=np.float32).reshape(data.shape[0], -1)
+            data = signal.sosfiltfilt(self.lowpass_sos, data, axis=-1).astype(
+                np.float32,
+                copy=False,
+            )
         data = clip_eeg(data)
         return data, label
 
@@ -47,9 +77,22 @@ class LoadDataset(object):
         self.datasets_dir = params.datasets_dir
 
     def get_data_loader(self):
-        train_set = CustomDataset(self.datasets_dir, mode='train')
-        val_set = CustomDataset(self.datasets_dir, mode='val')
-        test_set = CustomDataset(self.datasets_dir, mode='test')
+        lowpass_hz = getattr(self.params, 'physio_lowpass_hz', None)
+        filter_order = getattr(self.params, 'physio_filter_order', 4)
+        dataset_kwargs = {
+            'lowpass_hz': lowpass_hz,
+            'filter_order': filter_order,
+        }
+        if lowpass_hz is not None:
+            print(
+                'PhysioNet-MI zero-phase Butterworth low-pass enabled: {} Hz, order={}'.format(
+                    lowpass_hz,
+                    filter_order,
+                )
+            )
+        train_set = CustomDataset(self.datasets_dir, mode='train', **dataset_kwargs)
+        val_set = CustomDataset(self.datasets_dir, mode='val', **dataset_kwargs)
+        test_set = CustomDataset(self.datasets_dir, mode='test', **dataset_kwargs)
         print(len(train_set), len(val_set), len(test_set))
         print(len(train_set)+len(val_set)+len(test_set))
         data_loader = {

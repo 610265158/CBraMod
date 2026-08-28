@@ -7,7 +7,11 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
-from datasets.amplitude_scale import maybe_apply_amplitude_scale, validate_amplitude_scale_params
+from datasets.amplitude_scale import (
+    amplitude_scale_distribution,
+    maybe_apply_amplitude_scale,
+    validate_amplitude_scale_params,
+)
 from datasets.channel_mirror import DATASET_MIRROR_PERMUTATIONS, maybe_apply_channel_mirror
 from datasets.time_roll import maybe_apply_time_roll, validate_time_roll_params
 
@@ -59,13 +63,15 @@ def make_train_collate_fn(collate_fn, params):
     amplitude_scale_enabled = getattr(params, 'amplitude_scale_augmentation', False)
     if amplitude_scale_enabled:
         probability, min_scale, max_scale = validate_amplitude_scale_params(params)
+        distribution = amplitude_scale_distribution(params)
         amplitude_scale_enabled = probability > 0 and not (min_scale == max_scale == 1.0)
         if amplitude_scale_enabled:
             print(
-                'Amplitude scale augmentation enabled: prob={}, range=[{}, {}], distribution=log-uniform'.format(
+                'Amplitude scale augmentation enabled: prob={}, range=[{}, {}], distribution={}'.format(
                     probability,
                     min_scale,
                     max_scale,
+                    distribution,
                 )
             )
 

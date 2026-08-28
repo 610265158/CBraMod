@@ -88,6 +88,11 @@ the consolidated runner below. With no dataset arguments it schedules all 11;
 positional dataset names select a subset:
 
 ```bash
+
+Recipes that were recently re-frozen and still require a clean three-seed
+confirmation are marked `RERUN` by `--list`.  Their exact queue, parameters,
+and per-dataset launcher commands are recorded in
+`experiments/RERUN_QUEUE.md`.
 bash experiments/run_finalized_efficientnet_b0_3seed.sh
 bash experiments/run_finalized_efficientnet_b0_3seed.sh TUEV ISRUC
 ```
@@ -133,6 +138,10 @@ Supervised dataset loaders use `datasets.shape_utils.clip_eeg`: values are
 converted to `float32`, normally clipped to `[-1024, 1024]`, then divided by
 `32`. SHU-MI is an explicit experiment-specific exception: it is clipped to
 `[-512, 512]`, then divided by `--shu_scale` (default `64`).
+An optional zero-phase Butterworth band-pass can be enabled for SHU-MI with
+`--shu_bandpass_low` and `--shu_bandpass_high`. Filtering is applied to the
+continuous `[32,800]` trial before clipping and scaling; for example,
+`--shu_bandpass_low 1 --shu_bandpass_high 30 --shu_filter_order 4`.
 Vision folding supports one or more temporal phases. For factor `P`, row
 `c*P+p` contains `x[c, p::P]`; with `P=1` the time axis is unchanged. After
 folding, inputs are

@@ -29,7 +29,8 @@ Main target & full fine-tuning & compact EEG transfer & montage-flexible transfe
 Table~\ref{tab:recipes} is the source of truth for the formal EfficientNet-B0
 runs.  ``Folded'' is the non-padded image shape; padding is symmetric and uses
 zeros.  All runs use average pooling, a linear head, ImageNet initialization,
-AdamW, cosine decay, dropout .1, and float16 mixed precision.
+AdamW, cosine decay, and dropout .1.  Mixed precision is float16 except for
+MentalArithmetic, which uses bfloat16.
 
 \begin{table*}[h]
 \centering
@@ -45,22 +46,30 @@ Dataset & $P$ & Folded $H\times W$ & Epochs & LR & WD & Select & Special setting
 CHB-MIT & 2 & $32\times1000$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & --- \\
 TUAB & 2 & $32\times1000$ & 5 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & grad clip 1 \\
 TUEV & 4 & $64\times250$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
-ISRUC & 8 & $48\times750$ & 50 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & mirror $p=.5$ \\
+ISRUC & 12 & $72\times500$ & 15 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, shift+mirror \\
 FACED & 2 & $64\times1000$ & 50 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
 SEED-V & 8 & $496\times25$ & 50 & $5\cdot10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
-PhysioNet-MI & 1 & $64\times800$ & 30 & $2\cdot10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
+PhysioNet-MI & 1 & $64\times800$ & 30 & $2\cdot10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, no folding \\
 SHU-MI & 4 & $128\times200$ & 20 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & clip 512, divide 64 \\
 BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
 Mumtaz2016 & 2 & $38\times500$ & 30 & $5\cdot10^{-4}$ & $5\cdot10^{-2}$ & PR-AUC & --- \\
-MentalArithmetic & 2 & $40\times500$ & 10 & $5\cdot10^{-4}$ & $10^{-2}$ & PR-AUC & --- \\
+MentalArithmetic & 2 & $40\times500$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & EMA .99, bf16, weighted BCE, shift+mirror \\
 \bottomrule
 \end{tabular}}
 \end{table*}
 
-ISRUC mirror augmentation swaps left/right channel pairs according to the known
-montage.  No finalized run uses time roll or random amplitude scaling.  SHU-MI
-uses its documented input-scale exception; all other datasets use the default
-clip-to-1024 and divide-by-32 preprocessing.
+ISRUC uses batch size 16, three warmup epochs, EMA decay .995, time roll
+($p=.5$, maximum fraction .25), and mirror augmentation ($p=.5$), which swaps
+left/right channel pairs according to the known montage.  PhysioNet-MI uses
+batch size 32, three warmup epochs, EMA decay .995, float16 AMP, and no data
+augmentation; left/right mirror is disabled because its motor-imagery labels
+are side-specific.  MentalArithmetic
+uses batch size 64, three warmup epochs,
+\texttt{pos\_weight=3}, time roll ($p=.5$, maximum fraction .25), and mirror
+($p=.5$).
+No finalized run uses random amplitude scaling.  SHU-MI uses its documented
+input-scale exception; all other datasets use the default clip-to-1024 and
+divide-by-32 preprocessing.
 
 \section{Per-Seed Test Values}
 \label{app:per-seed}
@@ -79,14 +88,14 @@ Dataset & Metrics & Seed 3407 & Seed 3408 & Seed 3409 \\
 CHB-MIT & PR/ROC & .48090/.90161 & .42558/.91119 & .42145/.92480 \\
 TUAB & PR/ROC & .88650/.87779 & .88581/.87940 & .88152/.87751 \\
 TUEV & $\kappa$/F1 & .68710/.83240 & .75656/.87256 & .70530/.84046 \\
-ISRUC & $\kappa$/F1 & .76239/.81730 & .77839/.82397 & .75022/.79910 \\
+ISRUC & $\kappa$/F1 & .78103/.82754 & .77841/.82665 & .77708/.82632 \\
 FACED & $\kappa$/F1 & .39297/.47101 & .38057/.45414 & .32736/.40821 \\
 SEED-V & $\kappa$/F1 & .24491/.40159 & .26001/.41536 & .26468/.41578 \\
-PhysioNet-MI & $\kappa$/F1 & .52444/.64685 & .53637/.65420 & .50598/.63330 \\
+PhysioNet-MI & $\kappa$/F1 & .53703/.65190 & .53483/.65078 & .52817/.64664 \\
 SHU-MI & PR/ROC & .71226/.70032 & .69027/.68997 & .64812/.63658 \\
 BCIC2020-3 & $\kappa$/F1 & .52500/.62020 & .52500/.62161 & .49167/.59398 \\
 Mumtaz2016 & PR/ROC & .97603/.97586 & .97342/.96885 & .97167/.96877 \\
-MentalArithmetic & PR/ROC & .73476/.87630 & .57663/.80266 & .64232/.83087 \\
+MentalArithmetic & PR/ROC & .74572/.83955 & .66376/.83131 & .73494/.84013 \\
 \bottomrule
 \end{tabular}}
 \end{table*}
@@ -103,7 +112,7 @@ Dataset & Before padding & After padding \\
 \midrule
 CHB-MIT / TUAB & $32\times1000$ & $32\times1024$ \\
 TUEV & $64\times250$ & $64\times256$ \\
-ISRUC & $48\times750$ & $64\times768$ \\
+ISRUC & $72\times500$ & $96\times512$ \\
 FACED & $64\times1000$ & $64\times1024$ \\
 SEED-V & $496\times25$ & $512\times32$ \\
 PhysioNet-MI & $64\times800$ & $64\times800$ \\

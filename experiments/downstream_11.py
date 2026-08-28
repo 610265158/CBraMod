@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from configs.downstream import DOWNSTREAM_11_CONFIGS as EXPERIMENTS
+from configs.downstream import RERUN_REQUIRED_DATASETS
 from configs.downstream import TRAINING_KEYS
 from configs.downstream import training_config_for
 
@@ -61,6 +62,8 @@ def main():
     parser.add_argument('--weight_decay', type=float, default=None, help='override configured weight decay')
     parser.add_argument('--clip_value', type=float, default=None,
                         help='gradient-norm clipping threshold; <=0 disables clipping')
+    parser.add_argument('--ema_decay', type=float, default=None,
+                        help='model EMA decay; 0 disables EMA')
     parser.add_argument('--min_lr', type=float, default=None, help='minimum cosine-decay learning rate')
     parser.add_argument('--warmup_epochs', type=int, default=None, help='linear warmup epoch count')
     parser.add_argument('--warmup_start_factor', type=float, default=None,
@@ -68,6 +71,8 @@ def main():
     parser.add_argument('--optimizer', type=str, default=None, help='optimizer passed to finetune_main.py')
     parser.add_argument('--label_smoothing', type=float, default=None,
                         help='label smoothing passed to finetune_main.py')
+    parser.add_argument('--binary_pos_weight', type=float, default=None,
+                        help='positive-class weight for BCE binary tasks')
     parser.add_argument('--dropout', type=float, default=None, help='dropout passed to finetune_main.py')
     parser.add_argument('--drop_path_rate', type=float, default=None,
                         help='vision-backbone stochastic-depth rate')
@@ -108,10 +113,23 @@ def main():
                         help='minimum train-time EEG amplitude scale')
     parser.add_argument('--amplitude_scale_max', type=float, default=None,
                         help='maximum train-time EEG amplitude scale')
+    parser.add_argument('--amplitude_scale_distribution', type=str,
+                        choices=['log_uniform', 'uniform'], default=None,
+                        help='distribution for train-time random amplitude scaling')
     parser.add_argument('--shu_clip_limit', type=float, default=None,
                         help='SHU-MI raw-value clip limit before the vision adapter')
     parser.add_argument('--shu_scale', type=float, default=None,
                         help='SHU-MI divisor applied after clipping')
+    parser.add_argument('--shu_bandpass_low', type=float, default=None,
+                        help='optional SHU-MI band-pass low cutoff in Hz')
+    parser.add_argument('--shu_bandpass_high', type=float, default=None,
+                        help='optional SHU-MI band-pass high cutoff in Hz')
+    parser.add_argument('--shu_filter_order', type=int, default=None,
+                        help='Butterworth order for optional SHU-MI band-pass')
+    parser.add_argument('--physio_lowpass_hz', type=float, default=None,
+                        help='optional PhysioNet-MI low-pass cutoff in Hz')
+    parser.add_argument('--physio_filter_order', type=int, default=None,
+                        help='Butterworth order for optional PhysioNet-MI low-pass')
     parser.add_argument('--faced_input_norm', type=str, default=None,
                         choices=['clip_scale', 'robust_sample'],
                         help='FACED input normalization')
@@ -199,12 +217,6 @@ def build_command(name, args, extra_args=None):
         command.append('--dry_run')
     if args.random_init:
         command.extend(['--use_pretrained_weights', 'False'])
-    if args.test_each_epoch is not None:
-        command.extend(['--test_each_epoch', args.test_each_epoch])
-    if args.run_final_test is not None:
-        command.extend(['--run_final_test', args.run_final_test])
-    if args.selection_metric is not None:
-        command.extend(['--selection_metric', args.selection_metric])
     if extra_args:
         command.extend(extra_args)
     return command
@@ -282,8 +294,9 @@ def vision_adapter_summary(cfg):
 
 def list_experiments(args):
     vision_adapter_summary.fold_factor_override = args.vision_fold_factor
-    print('{:<18} {:<11} {:<7} {:<18} {:<6} {:<6} {:<9} {:<9} {:<20} {}'.format(
+    print('{:<18} {:<8} {:<11} {:<7} {:<18} {:<6} {:<6} {:<9} {:<9} {:<20} {}'.format(
         'dataset',
+        'status',
         'task',
         'classes',
         'model',
@@ -300,8 +313,9 @@ def list_experiments(args):
             model_arch=args.model_arch,
             backbone_name=args.backbone_name,
         )
-        print('{:<18} {:<11} {:<7} {:<18} {:<6} {:<6} {:<9} {:<9} {:<20} {}'.format(
+        print('{:<18} {:<8} {:<11} {:<7} {:<18} {:<6} {:<6} {:<9} {:<9} {:<20} {}'.format(
             name,
+            'RERUN' if name in RERUN_REQUIRED_DATASETS else '-',
             cfg['task'],
             cfg['classes'],
             model_summary(cfg, args),

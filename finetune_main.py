@@ -87,9 +87,14 @@ def main():
     parser.add_argument('--vision_height_stride', type=int, default=32,
                         choices=[1, 2, 4, 8, 16, 32],
                         help='target CNN output stride along EEG-channel height; time stride is unchanged')
-    parser.add_argument('--vision_head_init', type=str, default='trunc_normal',
-                        choices=['trunc_normal', 'zero', 'xavier_uniform'],
+    parser.add_argument('--vision_no_pad', type=str2bool, default=False,
+                        help='disable zero-padding after EEG phase folding')
+    parser.add_argument('--vision_head_init', type=str, default=None,
+                        choices=['trunc_normal', 'small_trunc_normal', 'zero',
+                                 'xavier_uniform', 'rare_binary_prior'],
                         help='initialization for the downstream vision classifier head')
+    parser.add_argument('--vision_head_init_std', type=float, default=None,
+                        help='override classifier-head truncated-normal weight std; bias is zero')
     parser.add_argument('--eeg_dataset_mean', type=float, default=None,
                         help='training-split global EEG mean in raw clipped units')
     parser.add_argument('--eeg_dataset_std', type=float, default=None,
@@ -110,6 +115,10 @@ def main():
                         help='optional PhysioNet-MI low-pass cutoff in Hz')
     parser.add_argument('--physio_filter_order', type=int, default=4,
                         help='Butterworth order for optional PhysioNet-MI low-pass')
+    parser.add_argument('--mumtaz_lowpass_hz', type=float, default=None,
+                        help='optional Mumtaz2016 low-pass cutoff in Hz')
+    parser.add_argument('--mumtaz_filter_order', type=int, default=4,
+                        help='Butterworth order for optional Mumtaz2016 low-pass')
     parser.add_argument('--faced_input_norm', type=str, default=None,
                         choices=['clip_scale', 'robust_sample'],
                         help='FACED input normalization; robust_sample uses one median/MAD per trial')
@@ -144,6 +153,10 @@ def main():
                         default=None, help='use_pretrained_weights')
     parser.add_argument('--balanced_sampling', type=str2bool,
                         default=None, help='balance classes with a weighted sampler on the training split')
+    parser.add_argument('--balanced_sampling_power', type=float, default=None,
+                        help='class-balance exponent alpha in sample weight n_c^(-alpha); 1 fully balances')
+    parser.add_argument('--balanced_sampling_min_share', type=float, default=None,
+                        help='minimum target sampling share for each class; 0 disables share flooring')
     parser.add_argument('--mirror_augmentation', type=str2bool,
                         default=None, help='randomly mirror left/right EEG channels on the training split')
     parser.add_argument('--mirror_prob', type=float,
@@ -165,6 +178,12 @@ def main():
     parser.add_argument('--amplitude_scale_distribution', type=str,
                         choices=['log_uniform', 'uniform'], default=None,
                         help='distribution used for train-time amplitude scaling')
+    parser.add_argument('--mixup_augmentation', type=str2bool, default=None,
+                        help='apply batch-level Mixup during binary training')
+    parser.add_argument('--mixup_prob', type=float, default=None,
+                        help='probability of applying Mixup to a training batch')
+    parser.add_argument('--mixup_alpha', type=float, default=None,
+                        help='symmetric Beta distribution alpha for Mixup')
     parser.add_argument('--foundation_dir', type=str,
                         default='pretrained_weights/pretrained_weights.pth',
                         help='foundation_dir')
@@ -185,6 +204,8 @@ def main():
     parser.add_argument('--amp_dtype', type=str, default=None,
                         choices=['float16', 'bfloat16'],
                         help='CUDA autocast dtype when AMP is enabled')
+    parser.add_argument('--mental_scale', type=float, default=None,
+                        help='MentalArithmetic divisor applied after clipping')
     parser.add_argument('--dry_run', action='store_true',
                         help='load one training batch and run one forward pass without training')
     parser.add_argument('--evaluate_checkpoint', type=str, default=None,
@@ -274,6 +295,8 @@ def legacy_training_defaults():
         'multi_lr': True,
         'use_pretrained_weights': True,
         'balanced_sampling': False,
+        'balanced_sampling_power': 1.0,
+        'balanced_sampling_min_share': 0.0,
         'mirror_augmentation': False,
         'mirror_prob': 0.5,
         'time_roll_augmentation': False,
@@ -284,8 +307,12 @@ def legacy_training_defaults():
         'amplitude_scale_min': 0.5,
         'amplitude_scale_max': 2.0,
         'amplitude_scale_distribution': 'log_uniform',
+        'mixup_augmentation': False,
+        'mixup_prob': 1.0,
+        'mixup_alpha': 0.2,
         'amp': True,
         'amp_dtype': 'float16',
+        'mental_scale': 32.0,
         'shu_clip_limit': 512.0,
         'shu_scale': 64.0,
         'shu_bandpass_low': None,
@@ -293,6 +320,8 @@ def legacy_training_defaults():
         'shu_filter_order': 4,
         'physio_lowpass_hz': None,
         'physio_filter_order': 4,
+        'mumtaz_lowpass_hz': None,
+        'mumtaz_filter_order': 4,
         'faced_input_norm': 'clip_scale',
         'faced_robust_clip': 8.0,
     }

@@ -88,12 +88,13 @@ def _pad_to_multiple(image, multiple):
     height, width = image.shape[-2:]
     pad_height = (-height) % height_multiple
     pad_width = (-width) % width_multiple
-    pad_top = pad_height // 2
-    pad_left = pad_width // 2
+    # Keep the folded EEG anchored at the top-left.  Padding is appended only
+    # after the final phase row and time column so it never shifts the physical
+    # origin seen by the convolutional backbone.
     padding = (
-        pad_left,
-        pad_width - pad_left,
-        pad_top,
-        pad_height - pad_top,
+        0,
+        pad_width,
+        0,
+        pad_height,
     )
     return F.pad(image, padding, mode='constant', value=0)

@@ -14,8 +14,12 @@ class CustomDataset(Dataset):
             self,
             data_dir,
             mode='train',
+            scale=32.0,
     ):
         super(CustomDataset, self).__init__()
+        if scale <= 0:
+            raise ValueError('MentalArithmetic scale must be positive')
+        self.scale = scale
         self.db = open_lmdb(data_dir)
         with self.db.begin(write=False) as txn:
             self.keys = pickle.loads(txn.get('__keys__'.encode()))[mode]
@@ -31,7 +35,7 @@ class CustomDataset(Dataset):
         label = pair['label']
         # print(label)
 
-        data = clip_eeg(data)
+        data = clip_eeg(data, scale=self.scale)
         return data, label
 
     def collate(self, batch):
@@ -46,9 +50,10 @@ class LoadDataset(object):
         self.datasets_dir = params.datasets_dir
 
     def get_data_loader(self):
-        train_set = CustomDataset(self.datasets_dir, mode='train')
-        val_set = CustomDataset(self.datasets_dir, mode='val')
-        test_set = CustomDataset(self.datasets_dir, mode='test')
+        scale = self.params.mental_scale
+        train_set = CustomDataset(self.datasets_dir, mode='train', scale=scale)
+        val_set = CustomDataset(self.datasets_dir, mode='val', scale=scale)
+        test_set = CustomDataset(self.datasets_dir, mode='test', scale=scale)
         print(len(train_set), len(val_set), len(test_set))
         print(len(train_set)+len(val_set)+len(test_set))
         data_loader = {

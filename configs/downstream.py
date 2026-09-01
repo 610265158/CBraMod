@@ -23,6 +23,8 @@ TRAINING_KEYS = (
     'multi_lr',
     'use_pretrained_weights',
     'balanced_sampling',
+    'balanced_sampling_power',
+    'balanced_sampling_min_share',
     'mirror_augmentation',
     'mirror_prob',
     'time_roll_augmentation',
@@ -33,8 +35,12 @@ TRAINING_KEYS = (
     'amplitude_scale_min',
     'amplitude_scale_max',
     'amplitude_scale_distribution',
+    'mixup_augmentation',
+    'mixup_prob',
+    'mixup_alpha',
     'amp',
     'amp_dtype',
+    'mental_scale',
     'shu_clip_limit',
     'shu_scale',
     'shu_bandpass_low',
@@ -42,6 +48,8 @@ TRAINING_KEYS = (
     'shu_filter_order',
     'physio_lowpass_hz',
     'physio_filter_order',
+    'mumtaz_lowpass_hz',
+    'mumtaz_filter_order',
     'faced_input_norm',
     'faced_robust_clip',
     'test_each_epoch',
@@ -71,6 +79,8 @@ DEFAULT_TRAINING = {
     'multi_lr': False,
     'use_pretrained_weights': True,
     'balanced_sampling': False,
+    'balanced_sampling_power': 1.0,
+    'balanced_sampling_min_share': 0.0,
     'mirror_augmentation': False,
     'mirror_prob': 0.5,
     'time_roll_augmentation': False,
@@ -81,8 +91,12 @@ DEFAULT_TRAINING = {
     'amplitude_scale_min': 0.5,
     'amplitude_scale_max': 2.0,
     'amplitude_scale_distribution': 'log_uniform',
+    'mixup_augmentation': False,
+    'mixup_prob': 1.0,
+    'mixup_alpha': 0.2,
     'amp': True,
-    'amp_dtype': 'float16',
+    'amp_dtype': 'bfloat16',
+    'mental_scale': 32.0,
     'shu_clip_limit': 512.0,
     'shu_scale': 64.0,
     'shu_bandpass_low': None,
@@ -90,9 +104,11 @@ DEFAULT_TRAINING = {
     'shu_filter_order': 4,
     'physio_lowpass_hz': None,
     'physio_filter_order': 4,
+    'mumtaz_lowpass_hz': None,
+    'mumtaz_filter_order': 4,
     'faced_input_norm': 'clip_scale',
     'faced_robust_clip': 8.0,
-    'test_each_epoch': True,
+    'test_each_epoch': False,
     'run_final_test': True,
     'selection_metric': 'auto',
 }
@@ -128,13 +144,19 @@ DEFAULT_VISION = {
 }
 
 
-# Recipes fixed during the EMA/bf16 stability pass.  Keep these visibly
-# marked until a clean 3407/3408/3409 reproduction has been reviewed and the
-# formal result table has been updated.
+# BCIC2020-3 and MentalArithmetic are locked below. The remaining datasets
+# still need either a five-seed confirmation under bottom/right padding or a
+# finalized dataset-specific recipe before they can enter the formal table.
 RERUN_REQUIRED_DATASETS = {
-    'BCIC2020-3': 'fixed_recipe_v2',
-    'Mumtaz2016': 'fixed_recipe_v2',
-    'MentalArithmetic': 'fixed_recipe_v2',
+    'CHB-MIT': 'bottom_right_padding_5seed_pending',
+    'TUAB': 'bottom_right_padding_5seed_pending',
+    'TUEV': 'bottom_right_padding_5seed_pending',
+    'ISRUC': 'bottom_right_padding_5seed_pending',
+    'FACED': 'recipe_search_pending',
+    'SEED-V': 'recipe_search_pending',
+    'PhysioNet-MI': 'dataset_recipe_5seed_pending',
+    'SHU-MI': 'recipe_search_pending',
+    'Mumtaz2016': 'dataset_split_and_recipe_pending',
 }
 
 
@@ -148,6 +170,111 @@ def _vision(**overrides):
     cfg = deepcopy(DEFAULT_VISION)
     cfg.update(overrides)
     return cfg
+
+
+# Locked five-seed recipes.  Keep these separate from the registry entries so
+# later dataset-wide sweeps cannot silently replace the reported settings.
+# Each result uses seeds 42--46, validation-selected checkpoints, population
+# standard deviation, and one final test evaluation per seed.
+FINALIZED_FIVE_SEED_RECIPES = {
+    'BCIC2020-3': {
+        'seeds': (42, 43, 44, 45, 46),
+        'results': {
+            'kappa': (0.58667, 0.00723),
+            'f1': (0.66956, 0.00581),
+        },
+        'experiment_name': 'bcic2020_3_b0_p1_bottomrightpad_5seed_v1',
+        'training': {
+            'lr': 1e-3,
+            'backbone_lr_scale': 1.0,
+            'batch_size': 32,
+            'num_workers': 4,
+            'epochs': 30,
+            'weight_decay': 5e-3,
+            'min_lr': 1e-6,
+            'warmup_epochs': 3,
+            'warmup_start_factor': 0.1,
+            'clip_value': 1.0,
+            'ema_decay': 0.995,
+            'optimizer': 'AdamW',
+            'label_smoothing': 0.1,
+            'dropout': 0.1,
+            'drop_path_rate': 0.0,
+            'early_stop': 30,
+            'frozen': False,
+            'multi_lr': False,
+            'use_pretrained_weights': True,
+            'balanced_sampling': False,
+            # Imagined speech is hemispherically lateralized; left/right
+            # channel mirroring is not assumed to preserve its labels.
+            'mirror_augmentation': False,
+            'time_roll_augmentation': True,
+            'time_roll_prob': 1.0,
+            'time_roll_max_fraction': 0.5,
+            'amplitude_scale_augmentation': False,
+            'mixup_augmentation': False,
+            'amp': True,
+            'amp_dtype': 'bfloat16',
+            'test_each_epoch': False,
+            'run_final_test': True,
+            'selection_metric': 'kappa',
+        },
+        'vision': _vision(
+            backbone_name='efficientnet_b0',
+            adapter={'fold_factor': 1},
+        ),
+    },
+    'MentalArithmetic': {
+        'seeds': (42, 43, 44, 45, 46),
+        'results': {
+            'pr_auc': (0.79029, 0.05364),
+            'roc_auc': (0.87789, 0.02513),
+        },
+        'experiment_name': 'mentalarithmetic_p4_headstd002_ema995_5seed_v1',
+        'training': {
+            'lr': 1e-3,
+            'backbone_lr_scale': 0.1,
+            'batch_size': 64,
+            'num_workers': 4,
+            'epochs': 30,
+            'weight_decay': 5e-4,
+            'min_lr': 1e-6,
+            'warmup_epochs': 3,
+            'warmup_start_factor': 0.1,
+            'clip_value': -1.0,
+            'ema_decay': 0.995,
+            'optimizer': 'AdamW',
+            'label_smoothing': 0.1,
+            'binary_pos_weight': 3.0,
+            'dropout': 0.1,
+            'drop_path_rate': 0.0,
+            'early_stop': 30,
+            'frozen': False,
+            'multi_lr': False,
+            'use_pretrained_weights': True,
+            'balanced_sampling': False,
+            'mirror_augmentation': True,
+            'mirror_prob': 0.5,
+            'time_roll_augmentation': True,
+            'time_roll_prob': 0.5,
+            'time_roll_max_fraction': 0.25,
+            'amplitude_scale_augmentation': False,
+            'mixup_augmentation': False,
+            'amp': True,
+            'amp_dtype': 'bfloat16',
+            'mental_scale': 32.0,
+            'test_each_epoch': False,
+            'run_final_test': True,
+            'selection_metric': 'pr_auc',
+        },
+        'vision': _vision(
+            backbone_name='efficientnet_b0',
+            squeeze_binary=True,
+            head_init_std=0.002,
+            adapter={'fold_factor': 4},
+        ),
+    },
+}
 
 
 def _dataset(
@@ -187,9 +314,17 @@ DOWNSTREAM_11_CONFIGS = {
         datasets_dir='../BigDownstream/chb-mit/processed_seg',
         storage='pkl_split',
         split_dirs={'train': 'train', 'val': 'val', 'test': 'test'},
-        training={'epochs': 10},
+        training={
+            'lr': 1e-3,
+            'batch_size': 32,
+            'epochs': 10,
+            'weight_decay': 5e-3,
+            'selection_metric': 'pr_auc',
+            'test_each_epoch': False,
+            'run_final_test': True,
+        },
         vision=_vision(squeeze_binary=True, init_head=False,
-                       adapter={'fold_factor': 8}),
+                       adapter={'fold_factor': 4}),
     ),
     'TUAB': _dataset(
         task='binary',
@@ -199,9 +334,18 @@ DOWNSTREAM_11_CONFIGS = {
         datasets_dir='../BigDownstream/TUAB',
         storage='pkl_split',
         split_dirs={'train': 'train', 'val': 'val', 'test': 'test'},
-        training={'clip_value': 1, 'epochs': 5},
+        training={
+            'lr': 1e-3,
+            'batch_size': 32,
+            'epochs': 5,
+            'weight_decay': 5e-4,
+            'clip_value': 1,
+            'selection_metric': 'pr_auc',
+            'test_each_epoch': False,
+            'run_final_test': True,
+        },
         vision=_vision(squeeze_binary=True,
-                       adapter={'fold_factor': 8}),
+                       adapter={'fold_factor': 4}),
     ),
     'TUEV': _dataset(
         task='multiclass',
@@ -211,6 +355,16 @@ DOWNSTREAM_11_CONFIGS = {
         datasets_dir='../BigDownstream/TUEV_refine/processed',
         storage='pkl_split',
         split_dirs={'train': 'processed_train', 'val': 'processed_eval', 'test': 'processed_test'},
+        training={
+            'lr': 1e-3,
+            'batch_size': 32,
+            'epochs': 10,
+            'weight_decay': 5e-3,
+            'selection_metric': 'kappa',
+            'test_each_epoch': False,
+            'run_final_test': True,
+        },
+        vision=_vision(adapter={'fold_factor': 4}),
     ),
     'ISRUC': _dataset(
         task='multiclass',
@@ -249,7 +403,7 @@ DOWNSTREAM_11_CONFIGS = {
             'time_roll_max_fraction': 0.25,
             'amplitude_scale_augmentation': False,
             'amp': True,
-            'amp_dtype': 'float16',
+            'amp_dtype': 'bfloat16',
             'test_each_epoch': False,
             'run_final_test': True,
             'selection_metric': 'kappa',
@@ -263,6 +417,17 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.faced_dataset',
         datasets_dir='../BigDownstream/faced/processed',
         storage='lmdb',
+        training={
+            'lr': 1e-3,
+            'batch_size': 32,
+            'epochs': 50,
+            'weight_decay': 5e-3,
+            'amp_dtype': 'bfloat16',
+            'selection_metric': 'kappa',
+            'test_each_epoch': False,
+            'run_final_test': True,
+        },
+        vision=_vision(adapter={'fold_factor': 2}),
     ),
     'SEED-V': _dataset(
         task='multiclass',
@@ -271,7 +436,17 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.seedv_dataset',
         datasets_dir='../BigDownstream/SEED-V/processed',
         storage='lmdb',
-        vision=_vision(adapter={'fold_factor': 2}),
+        training={
+            'lr': 5e-4,
+            'batch_size': 32,
+            'epochs': 50,
+            'weight_decay': 5e-3,
+            'amp_dtype': 'bfloat16',
+            'selection_metric': 'kappa',
+            'test_each_epoch': False,
+            'run_final_test': True,
+        },
+        vision=_vision(adapter={'fold_factor': 1}),
     ),
     'PhysioNet-MI': _dataset(
         task='multiclass',
@@ -308,7 +483,7 @@ DOWNSTREAM_11_CONFIGS = {
             'time_roll_augmentation': False,
             'amplitude_scale_augmentation': False,
             'amp': True,
-            'amp_dtype': 'float16',
+            'amp_dtype': 'bfloat16',
             'test_each_epoch': False,
             'run_final_test': True,
             'selection_metric': 'kappa',
@@ -322,7 +497,41 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.shu_dataset',
         datasets_dir='../BigDownstream/shu_datasets',
         storage='lmdb',
-        training={'epochs': 20},
+        # Finalized EfficientNet-B0 P=2 recipe after the B0/B5 three-seed
+        # comparison.  Average pooling is retained; no runtime band-pass or
+        # amplitude scaling is used.
+        training={
+            'lr': 1e-3,
+            'backbone_lr_scale': 1.0,
+            'batch_size': 32,
+            'epochs': 20,
+            'weight_decay': 5e-4,
+            'min_lr': 1e-6,
+            'warmup_epochs': 3,
+            'warmup_start_factor': 0.1,
+            'clip_value': -1.0,
+            'ema_decay': 0.995,
+            'optimizer': 'AdamW',
+            'label_smoothing': 0.1,
+            'binary_pos_weight': 1.0,
+            'dropout': 0.1,
+            'drop_path_rate': 0.0,
+            'early_stop': 20,
+            'frozen': False,
+            'multi_lr': False,
+            'use_pretrained_weights': True,
+            'balanced_sampling': False,
+            'mirror_augmentation': False,
+            'time_roll_augmentation': True,
+            'time_roll_prob': 0.5,
+            'time_roll_max_fraction': 0.25,
+            'amplitude_scale_augmentation': False,
+            'amp': True,
+            'amp_dtype': 'bfloat16',
+            'test_each_epoch': False,
+            'run_final_test': True,
+            'selection_metric': 'pr_auc',
+        },
         vision=_vision(squeeze_binary=True, adapter={'fold_factor': 2}),
     ),
     'BCIC2020-3': _dataset(
@@ -332,45 +541,10 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.speech_dataset',
         datasets_dir='../BigDownstream/speech/processed',
         storage='lmdb',
-        # RERUN REQUIRED: fixed_recipe_v2 (seeds 3407/3408/3409).
-        training={
-            'lr': 1e-3,
-            # Full-backbone fine-tuning. multi_lr=False already makes the
-            # effective multiplier 1; keep the recorded value explicit too.
-            'backbone_lr_scale': 1.0,
-            'batch_size': 32,
-            'epochs': 30,
-            'weight_decay': 5e-3,
-            'min_lr': 1e-6,
-            'warmup_epochs': 3,
-            'warmup_start_factor': 0.1,
-            'clip_value': 1.0,
-            'ema_decay': 0.995,
-            'optimizer': 'AdamW',
-            'label_smoothing': 0.1,
-            'dropout': 0.1,
-            'drop_path_rate': 0.0,
-            'early_stop': 30,
-            'frozen': False,
-            'multi_lr': False,
-            'use_pretrained_weights': True,
-            'balanced_sampling': False,
-            # BCIC2020-3 is imagined speech, not left/right motor imagery.
-            # Language activity is hemispherically lateralized, so swapping
-            # left/right electrodes is not a label-preserving transform. The
-            # ablation also showed that mirror weakens the time-shift gain.
-            'mirror_augmentation': False,
-            'time_roll_augmentation': True,
-            'time_roll_prob': 1.0,
-            'time_roll_max_fraction': 0.5,
-            'amplitude_scale_augmentation': False,
-            'amp': True,
-            'amp_dtype': 'bfloat16',
-            'test_each_epoch': False,
-            'run_final_test': True,
-            'selection_metric': 'kappa',
-        },
-        vision=_vision(adapter={'fold_factor': 2}),
+        # Native height is already 64, so P=1 preserves the channel geometry.
+        # Padding is appended only to the right: 64x600 -> 64x608.
+        training=FINALIZED_FIVE_SEED_RECIPES['BCIC2020-3']['training'],
+        vision=FINALIZED_FIVE_SEED_RECIPES['BCIC2020-3']['vision'],
     ),
     'Mumtaz2016': _dataset(
         task='binary',
@@ -379,7 +553,10 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.mumtaz_dataset',
         datasets_dir='../BigDownstream/MDDPHCED/processed_lmdb_75hz',
         storage='lmdb',
-        # RERUN REQUIRED: fixed_recipe_v2 (seeds 3407/3408/3409).
+        # Five-seed bottom/right-padding recipe (seeds 42--46).  The smaller
+        # classifier initialization is matched to the stabilized
+        # MentalArithmetic head while retaining the existing Mumtaz training
+        # recipe.
         training={
             'lr': 1e-3,
             'backbone_lr_scale': 0.1,
@@ -411,8 +588,14 @@ DOWNSTREAM_11_CONFIGS = {
             'test_each_epoch': False,
             'run_final_test': True,
             'selection_metric': 'pr_auc',
+            # The LMDB is already band-pass filtered to 0.3--75 Hz during
+            # preprocessing. Do not apply an additional runtime low-pass.
+            'mumtaz_lowpass_hz': None,
+            'mumtaz_filter_order': 4,
         },
-        vision=_vision(squeeze_binary=True, adapter={'fold_factor': 2}),
+        vision=_vision(squeeze_binary=True, head_init_std=0.002,
+                       feature_aggregation='flatten',
+                       adapter={'fold_factor': 4}),
     ),
     'MentalArithmetic': _dataset(
         task='binary',
@@ -421,46 +604,9 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.stress_dataset',
         datasets_dir='../BigDownstream/mental-arithmetic/processed',
         storage='lmdb',
-        # RERUN REQUIRED: fixed_recipe_v2 (seeds 3407/3408/3409).
-        # Frozen after the corrected phase-interleaved 3-seed stability study
-        # (3407/3408/3409).  The 3:1 train imbalance is handled with weighted
-        # BCE rather than balanced sampling.  Moderate time roll and the
-        # label-preserving left/right mirror improve robustness; checkpoints
-        # are selected by validation PR-AUC and tested exactly once per seed.
-        training={
-            'lr': 1e-3,
-            'backbone_lr_scale': 0.1,
-            'batch_size': 64,
-            'epochs': 30,
-            'weight_decay': 5e-4,
-            'min_lr': 1e-6,
-            'warmup_epochs': 3,
-            'warmup_start_factor': 0.1,
-            'clip_value': -1.0,
-            'ema_decay': 0.99,
-            'optimizer': 'AdamW',
-            'label_smoothing': 0.1,
-            'binary_pos_weight': 3.0,
-            'dropout': 0.1,
-            'drop_path_rate': 0.0,
-            'early_stop': 30,
-            'frozen': False,
-            'multi_lr': False,
-            'use_pretrained_weights': True,
-            'balanced_sampling': False,
-            'mirror_augmentation': True,
-            'mirror_prob': 0.5,
-            'time_roll_augmentation': True,
-            'time_roll_prob': 0.5,
-            'time_roll_max_fraction': 0.25,
-            'amplitude_scale_augmentation': False,
-            'amp': True,
-            'amp_dtype': 'bfloat16',
-            'test_each_epoch': False,
-            'run_final_test': True,
-            'selection_metric': 'pr_auc',
-        },
-        vision=_vision(squeeze_binary=True, adapter={'fold_factor': 2}),
+        # P=4 gives 80x250 and bottom/right padding gives 96x256.
+        training=FINALIZED_FIVE_SEED_RECIPES['MentalArithmetic']['training'],
+        vision=FINALIZED_FIVE_SEED_RECIPES['MentalArithmetic']['vision'],
     ),
 }
 

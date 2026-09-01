@@ -17,11 +17,18 @@ def create_backbone(backbone_name, pretrained=True, drop_path_rate=0.0):
     )
 
 
-def encode_vision(eeg, adapter, backbone):
-    """Encode folded EEG with the backbone's global average pooling."""
+def encode_vision(eeg, adapter, backbone, feature_aggregation='gap'):
+    """Encode folded EEG and aggregate the final spatial feature map."""
     image, chunk_shape = adapter(eeg)
     features = backbone.forward_features(image)
-    features = _pool_features(features, backbone)
+    if feature_aggregation == 'gap':
+        features = _pool_features(features, backbone)
+    elif feature_aggregation == 'flatten':
+        features = features.flatten(1)
+    else:
+        raise ValueError(
+            'Unsupported vision feature aggregation: {}'.format(feature_aggregation)
+        )
     return adapter.restore(features, chunk_shape)
 
 

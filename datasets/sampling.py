@@ -144,12 +144,30 @@ def make_balanced_sampler(dataset, params):
         print('Balanced train sampling skipped: only one class found.')
         return None
 
-    weights = []
-    for labels in sample_labels:
-        if labels:
-            weights.append(sum(1.0 / counts[label] for label in labels) / len(labels))
-        else:
-            weights.append(0.0)
+    min_share = float(getattr(params, 'balanced_sampling_min_share', 0.0))
+    if min_share < 0 or min_share >= 1:
+        raise ValueError('--balanced_sampling_min_share must be in [0, 1)')
+
+    if min_share > 0:
+        if any(len(labels) != 1 for labels in sample_labels):
+            raise ValueError('minimum-share sampling currently requires one label per sample')
+        target_shares = minimum_class_shares(counts, min_share)
+        weights = [target_shares[labels[0]] / counts[labels[0]] for labels in sample_labels]
+        sampling_description = 'min_share={}, targets={}'.format(
+            min_share,
+            ', '.join('{}={:.4f}'.format(label, target_shares[label]) for label in sorted(target_shares)),
+        )
+    else:
+        power = float(getattr(params, 'balanced_sampling_power', 1.0))
+        if power < 0 or power > 1:
+            raise ValueError('--balanced_sampling_power must be in [0, 1]')
+        weights = []
+        for labels in sample_labels:
+            if labels:
+                weights.append(sum(counts[label] ** (-power) for label in labels) / len(labels))
+            else:
+                weights.append(0.0)
+        sampling_description = 'power={}'.format(power)
 
     generator = torch.Generator()
     generator.manual_seed(getattr(params, 'seed', 3407))
@@ -159,8 +177,30 @@ def make_balanced_sampler(dataset, params):
         replacement=True,
         generator=generator,
     )
-    print('Balanced train sampling enabled: {}'.format(format_counts(counts)))
+    print('Balanced train sampling enabled: {}, {}'.format(
+        sampling_description,
+        format_counts(counts),
+    ))
     return sampler
+
+
+def minimum_class_shares(counts, min_share):
+    """Floor rare classes at min_share and redistribute the remainder by prior."""
+    labels = sorted(counts)
+    total = float(sum(counts.values()))
+    natural = {label: counts[label] / total for label in labels}
+    floored = [label for label in labels if natural[label] < min_share]
+    remaining = [label for label in labels if label not in floored]
+    floor_mass = min_share * len(floored)
+    if floor_mass >= 1 or not remaining:
+        raise ValueError(
+            'minimum class share {} is incompatible with {} classes'.format(min_share, len(labels))
+        )
+    remaining_prior = sum(natural[label] for label in remaining)
+    targets = {label: min_share for label in floored}
+    for label in remaining:
+        targets[label] = (1.0 - floor_mass) * natural[label] / remaining_prior
+    return targets
 
 
 def load_sample_labels(dataset):

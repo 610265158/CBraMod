@@ -58,6 +58,20 @@ class Trainer(object):
             self.ema_model = ModelEmaV2(self.model, decay=self.ema_decay)
             self.ema_model.requires_grad_(False)
             print('timm ModelEmaV2 enabled: decay={}'.format(self.ema_decay))
+        self.mixup_enabled = bool(getattr(params, 'mixup_augmentation', False))
+        self.mixup_prob = float(getattr(params, 'mixup_prob', 1.0))
+        self.mixup_alpha = float(getattr(params, 'mixup_alpha', 0.2))
+        if not 0 <= self.mixup_prob <= 1:
+            raise ValueError('--mixup_prob must be in [0, 1]')
+        if self.mixup_alpha <= 0:
+            raise ValueError('--mixup_alpha must be positive')
+        if self.mixup_enabled:
+            if getattr(params, 'downstream_task', None) != 'binary':
+                raise ValueError('Mixup is currently implemented for binary tasks only')
+            print('Batch Mixup enabled: prob={}, alpha={}'.format(
+                self.mixup_prob,
+                self.mixup_alpha,
+            ))
         if self.params.downstream_dataset in ['FACED', 'SEED-V', 'PhysioNet-MI', 'ISRUC', 'BCIC2020-3', 'TUEV', 'BCIC-IV-2a']:
             self.criterion = CrossEntropyLoss(label_smoothing=self.params.label_smoothing).to(self.device)
         elif self.params.downstream_dataset in ['SHU-MI', 'CHB-MIT', 'Mumtaz2016', 'MentalArithmetic', 'TUAB']:
@@ -198,6 +212,10 @@ class Trainer(object):
         selection_best = float('-inf')
         cm_best = None
         best_f1_epoch = 0
+        epochs_without_improvement = 0
+        early_stop_patience = int(getattr(self.params, 'early_stop', 0))
+        if early_stop_patience < 0:
+            raise ValueError('--early_stop must be non-negative')
         for epoch in range(self.params.epochs):
             self.model.train()
             start_time = timer()
@@ -247,6 +265,7 @@ class Trainer(object):
                 selection_score = self.multiclass_selection_score(ba, kappa, f1)
                 if selection_score > selection_best:
                     selection_best = selection_score
+                    epochs_without_improvement = 0
                     print("{} increasing....saving weights !! ".format(
                         self.resolved_selection_metric('multiclass')
                     ))
@@ -262,6 +281,8 @@ class Trainer(object):
                     cm_best = cm
                     self.best_model_states = copy.deepcopy(eval_model.state_dict())
                     self.save_best_model_state()
+                else:
+                    epochs_without_improvement += 1
                 if self.params.test_each_epoch:
                     with preserve_random_state():
                         ba, kappa, f1, cm = self.test_eval.get_metrics_for_multiclass(eval_model)
@@ -274,6 +295,18 @@ class Trainer(object):
                         )
                     )
                     print(cm)
+                if early_stop_patience > 0 and epochs_without_improvement >= early_stop_patience:
+                    print(
+                        "Early stopping at epoch {}: {} did not improve for {} consecutive epochs "
+                        "(best epoch {}, best score {:.5f}).".format(
+                            epoch + 1,
+                            self.resolved_selection_metric('multiclass'),
+                            early_stop_patience,
+                            best_f1_epoch,
+                            selection_best,
+                        )
+                    )
+                    break
         self.model.load_state_dict(self.best_model_states)
         if not self.params.run_final_test:
             print(
@@ -312,6 +345,10 @@ class Trainer(object):
         selection_best = float('-inf')
         cm_best = None
         best_f1_epoch = 0
+        epochs_without_improvement = 0
+        early_stop_patience = int(getattr(self.params, 'early_stop', 0))
+        if early_stop_patience < 0:
+            raise ValueError('--early_stop must be non-negative')
         for epoch in range(self.params.epochs):
             self.model.train()
             start_time = timer()
@@ -320,6 +357,7 @@ class Trainer(object):
                 self.optimizer.zero_grad(set_to_none=True)
                 x = x.to(self.device, non_blocking=self.use_amp)
                 y = y.to(self.device, non_blocking=self.use_amp)
+                x, y = self.mixup_binary_batch(x, y)
                 with self.amp_context():
                     pred = self.model(x)
 
@@ -360,6 +398,7 @@ class Trainer(object):
                 selection_score = self.binary_selection_score(ba, pr_auc, roc_auc)
                 if selection_score > selection_best:
                     selection_best = selection_score
+                    epochs_without_improvement = 0
                     print("{} increasing....saving weights !! ".format(
                         self.resolved_selection_metric('binary')
                     ))
@@ -375,6 +414,8 @@ class Trainer(object):
                     cm_best = cm
                     self.best_model_states = copy.deepcopy(eval_model.state_dict())
                     self.save_best_model_state()
+                else:
+                    epochs_without_improvement += 1
                 if self.params.test_each_epoch:
                     with preserve_random_state():
                         ba, pr_auc, roc_auc, cm = self.test_eval.get_metrics_for_binaryclass(eval_model)
@@ -387,6 +428,18 @@ class Trainer(object):
                         )
                     )
                     print(cm)
+                if early_stop_patience > 0 and epochs_without_improvement >= early_stop_patience:
+                    print(
+                        "Early stopping at epoch {}: {} did not improve for {} consecutive epochs "
+                        "(best epoch {}, best score {:.5f}).".format(
+                            epoch + 1,
+                            self.resolved_selection_metric('binary'),
+                            early_stop_patience,
+                            best_f1_epoch,
+                            selection_best,
+                        )
+                    )
+                    break
         self.model.load_state_dict(self.best_model_states)
         if not self.params.run_final_test:
             print(
@@ -423,6 +476,10 @@ class Trainer(object):
         r2_best = float('-inf')
         rmse_best = 0
         best_r2_epoch = 0
+        epochs_without_improvement = 0
+        early_stop_patience = int(getattr(self.params, 'early_stop', 0))
+        if early_stop_patience < 0:
+            raise ValueError('--early_stop must be non-negative')
         for epoch in range(self.params.epochs):
             self.model.train()
             start_time = timer()
@@ -462,6 +519,7 @@ class Trainer(object):
                     )
                 )
                 if r2 > r2_best:
+                    epochs_without_improvement = 0
                     print("r2 increasing....saving weights !! ")
                     print("Val Evaluation: corrcoef: {:.5f}, r2: {:.5f}, rmse: {:.5f}".format(
                         corrcoef,
@@ -474,6 +532,20 @@ class Trainer(object):
                     rmse_best = rmse
                     self.best_model_states = copy.deepcopy(eval_model.state_dict())
                     self.save_best_model_state()
+                else:
+                    epochs_without_improvement += 1
+
+                if early_stop_patience > 0 and epochs_without_improvement >= early_stop_patience:
+                    print(
+                        "Early stopping at epoch {}: r2 did not improve for {} consecutive epochs "
+                        "(best epoch {}, best score {:.5f}).".format(
+                            epoch + 1,
+                            early_stop_patience,
+                            best_r2_epoch,
+                            r2_best,
+                        )
+                    )
+                    break
 
         self.model.load_state_dict(self.best_model_states)
         with torch.no_grad():
@@ -504,6 +576,18 @@ class Trainer(object):
                     loss.detach().cpu().item(),
                 )
             )
+
+    def mixup_binary_batch(self, x, y):
+        if not self.mixup_enabled or x.size(0) < 2:
+            return x, y
+        if torch.rand((), device=x.device) >= self.mixup_prob:
+            return x, y
+        concentration = torch.tensor(self.mixup_alpha, device=x.device)
+        lam = torch.distributions.Beta(concentration, concentration).sample()
+        permutation = torch.randperm(x.size(0), device=x.device)
+        x = lam * x + (1.0 - lam) * x[permutation]
+        y = lam * y + (1.0 - lam) * y[permutation]
+        return x, y
 
     def resolved_selection_metric(self, task):
         metric = self.params.selection_metric

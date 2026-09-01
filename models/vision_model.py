@@ -1,5 +1,6 @@
 """Phase-folded EEG classifier with a timm vision backbone."""
 
+import torch
 import torch.nn as nn
 
 from configs.downstream import get_dataset_config
@@ -11,18 +12,22 @@ from .vision_backbone import load_backbone_checkpoint
 
 
 class Model(nn.Module):
-    """Phase fold -> vision backbone -> global average pool -> linear head."""
+    """Phase fold -> vision backbone -> configured feature aggregation -> head."""
 
     def __init__(self, param):
         super().__init__()
-        config = get_dataset_config(param.downstream_dataset)['vision']
+        dataset_config = get_dataset_config(param.downstream_dataset)
+        config = dataset_config['vision']
         fold_factor = getattr(param, 'vision_fold_factor', None)
         if fold_factor is None:
             fold_factor = config['adapter']['fold_factor']
 
+        pad_multiple = None
+        if not bool(getattr(param, 'vision_no_pad', False)):
+            pad_multiple = (getattr(param, 'vision_height_stride', 32), 32)
         self.adapter = PhaseFoldAdapter(
             fold_factor=fold_factor,
-            pad_multiple=(getattr(param, 'vision_height_stride', 32), 32),
+            pad_multiple=pad_multiple,
         )
         self._configure_input(param)
 
@@ -46,16 +51,46 @@ class Model(nn.Module):
         if self.frozen_backbone:
             self._freeze_backbone()
 
-        feature_dim = _feature_dim(self.backbone)
+        self.feature_aggregation = config.get('feature_aggregation', 'gap')
+        if self.feature_aggregation == 'gap':
+            feature_dim = _feature_dim(self.backbone)
+        elif self.feature_aggregation == 'flatten':
+            feature_dim = _infer_flat_feature_dim(
+                self.backbone,
+                self.adapter,
+                dataset_config['input_shape'],
+                self.channel_repeat,
+            )
+        else:
+            raise ValueError(
+                'Unsupported vision feature aggregation: {}'.format(
+                    self.feature_aggregation
+                )
+            )
         self.dropout = nn.Dropout(getattr(param, 'dropout', 0.1))
         self.head = nn.Linear(feature_dim, param.num_of_classes)
         if config.get('init_head', True):
-            _init_head(self.head, getattr(param, 'vision_head_init', 'trunc_normal'))
+            head_init_std = getattr(param, 'vision_head_init_std', None)
+            if head_init_std is None:
+                head_init_std = config.get('head_init_std')
+            if head_init_std is not None:
+                if head_init_std <= 0:
+                    raise ValueError('--vision_head_init_std must be positive')
+                nn.init.trunc_normal_(self.head.weight, std=head_init_std)
+                nn.init.zeros_(self.head.bias)
+            else:
+                head_init = getattr(param, 'vision_head_init', None) or config.get('head_init', 'trunc_normal')
+                _init_head(self.head, head_init)
         self.squeeze_binary = config.get('squeeze_binary', False)
 
     def forward(self, eeg):
         eeg = self._prepare_input(eeg)
-        features = self.dropout(encode_vision(eeg, self.adapter, self.backbone))
+        features = self.dropout(encode_vision(
+            eeg,
+            self.adapter,
+            self.backbone,
+            feature_aggregation=self.feature_aggregation,
+        ))
         logits = self.head(features)
         if self.squeeze_binary and logits.size(-1) == 1:
             return logits[..., 0]
@@ -100,13 +135,44 @@ def _feature_dim(backbone):
     return getattr(classifier, 'in_features', None) or backbone.num_features
 
 
+def _infer_flat_feature_dim(backbone, adapter, input_shape, channel_repeat):
+    """Infer a fixed flatten-head width without materializing a LazyLinear."""
+    dummy = torch.zeros((1,) + tuple(input_shape), dtype=torch.float32)
+    dummy = repeat_eeg_channels(dummy, channel_repeat)
+    image, _ = adapter(dummy)
+
+    was_training = backbone.training
+    backbone.eval()
+    with torch.no_grad():
+        features = backbone.forward_features(image)
+    backbone.train(was_training)
+
+    feature_dim = features.flatten(1).shape[1]
+    print(
+        'Flatten vision head: final feature map {} -> {} FC inputs'.format(
+            tuple(features.shape[1:]), feature_dim
+        )
+    )
+    return feature_dim
+
+
 def _init_head(head, mode):
     if mode == 'trunc_normal':
         nn.init.trunc_normal_(head.weight, std=0.02)
+        nn.init.zeros_(head.bias)
+    elif mode == 'small_trunc_normal':
+        nn.init.trunc_normal_(head.weight, std=1e-3)
+        nn.init.zeros_(head.bias)
+    elif mode == 'rare_binary_prior':
+        if head.out_features != 1:
+            raise ValueError('rare_binary_prior requires a single-logit binary head')
+        nn.init.trunc_normal_(head.weight, std=1e-3)
+        nn.init.constant_(head.bias, -5.01)
     elif mode == 'zero':
         nn.init.zeros_(head.weight)
+        nn.init.zeros_(head.bias)
     elif mode == 'xavier_uniform':
         nn.init.xavier_uniform_(head.weight)
+        nn.init.zeros_(head.bias)
     else:
         raise ValueError('Unsupported vision head initialization: {}'.format(mode))
-    nn.init.zeros_(head.bias)

@@ -41,9 +41,14 @@ def main():
                         help='override timm backbone name for --model_arch vision')
     parser.add_argument('--vision_fold_factor', type=int, default=None,
                         help='override phase-interleaved temporal fold factor P (minimum: 1)')
+    parser.add_argument('--vision_no_pad', action='store_true',
+                        help='disable zero-padding after EEG phase folding')
     parser.add_argument('--vision_head_init', type=str,
-                        choices=['trunc_normal', 'zero', 'xavier_uniform'], default=None,
+                        choices=['trunc_normal', 'small_trunc_normal', 'zero',
+                                 'xavier_uniform', 'rare_binary_prior'], default=None,
                         help='initialization for the downstream vision classifier head')
+    parser.add_argument('--vision_head_init_std', type=float, default=None,
+                        help='override classifier-head truncated-normal weight std')
     parser.add_argument('--eeg_dataset_mean', type=float, default=None,
                         help='training-split global EEG mean in raw clipped units')
     parser.add_argument('--eeg_dataset_std', type=float, default=None,
@@ -89,12 +94,18 @@ def main():
     parser.add_argument('--amp_dtype', type=str, default=None,
                         choices=['float16', 'bfloat16'],
                         help='CUDA autocast dtype when AMP is enabled')
+    parser.add_argument('--mental_scale', type=float, default=None,
+                        help='MentalArithmetic divisor applied after clipping')
     parser.add_argument('--frozen', type=str, default=None, help='whether to freeze backbone, true/false')
     parser.add_argument('--multi_lr', type=str, default=None, help='whether to use multi learning rates, true/false')
     parser.add_argument('--use_pretrained_weights', type=str, default=None,
                         help='whether to use timm/foundation pretrained weights, true/false')
     parser.add_argument('--balanced_sampling', type=str, default=None,
                         help='whether to balance classes with a weighted training sampler, true/false')
+    parser.add_argument('--balanced_sampling_power', type=float, default=None,
+                        help='class-balance exponent; 1 fully balances, 0 preserves natural sampling')
+    parser.add_argument('--balanced_sampling_min_share', type=float, default=None,
+                        help='minimum target sampling share for every class; 0 disables')
     parser.add_argument('--mirror_augmentation', type=str, default=None,
                         help='whether to apply train-time left/right channel mirror augmentation, true/false')
     parser.add_argument('--mirror_prob', type=float, default=None,
@@ -116,6 +127,12 @@ def main():
     parser.add_argument('--amplitude_scale_distribution', type=str,
                         choices=['log_uniform', 'uniform'], default=None,
                         help='distribution for train-time random amplitude scaling')
+    parser.add_argument('--mixup_augmentation', type=str, default=None,
+                        help='apply batch-level Mixup during binary training, true/false')
+    parser.add_argument('--mixup_prob', type=float, default=None,
+                        help='probability of applying Mixup to a training batch')
+    parser.add_argument('--mixup_alpha', type=float, default=None,
+                        help='symmetric Beta distribution alpha for Mixup')
     parser.add_argument('--shu_clip_limit', type=float, default=None,
                         help='SHU-MI raw-value clip limit before the vision adapter')
     parser.add_argument('--shu_scale', type=float, default=None,
@@ -130,6 +147,10 @@ def main():
                         help='optional PhysioNet-MI low-pass cutoff in Hz')
     parser.add_argument('--physio_filter_order', type=int, default=None,
                         help='Butterworth order for optional PhysioNet-MI low-pass')
+    parser.add_argument('--mumtaz_lowpass_hz', type=float, default=None,
+                        help='optional Mumtaz2016 low-pass cutoff in Hz')
+    parser.add_argument('--mumtaz_filter_order', type=int, default=None,
+                        help='Butterworth order for optional Mumtaz2016 low-pass')
     parser.add_argument('--faced_input_norm', type=str, default=None,
                         choices=['clip_scale', 'robust_sample'],
                         help='FACED input normalization')
@@ -201,8 +222,12 @@ def build_command(name, args, extra_args=None):
         command.extend(['--backbone_name', args.backbone_name])
     if args.vision_fold_factor is not None:
         command.extend(['--vision_fold_factor', str(args.vision_fold_factor)])
+    if args.vision_no_pad:
+        command.extend(['--vision_no_pad', 'true'])
     if args.vision_head_init is not None:
         command.extend(['--vision_head_init', args.vision_head_init])
+    if args.vision_head_init_std is not None:
+        command.extend(['--vision_head_init_std', str(args.vision_head_init_std)])
     if args.eeg_dataset_mean is not None:
         # Use --key=value so a negative mean in scientific notation is not
         # mistaken for another argparse option by the child process.

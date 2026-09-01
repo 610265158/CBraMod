@@ -144,14 +144,13 @@ DEFAULT_VISION = {
 }
 
 
-# BCIC2020-3 and MentalArithmetic are locked below. The remaining datasets
+# BCIC2020-3, ISRUC, and MentalArithmetic are locked below. The remaining datasets
 # still need either a five-seed confirmation under bottom/right padding or a
 # finalized dataset-specific recipe before they can enter the formal table.
 RERUN_REQUIRED_DATASETS = {
     'CHB-MIT': 'bottom_right_padding_5seed_pending',
     'TUAB': 'bottom_right_padding_5seed_pending',
     'TUEV': 'bottom_right_padding_5seed_pending',
-    'ISRUC': 'bottom_right_padding_5seed_pending',
     'FACED': 'recipe_search_pending',
     'SEED-V': 'recipe_search_pending',
     'PhysioNet-MI': 'dataset_recipe_5seed_pending',
@@ -222,6 +221,54 @@ FINALIZED_FIVE_SEED_RECIPES = {
         'vision': _vision(
             backbone_name='efficientnet_b0',
             adapter={'fold_factor': 1},
+        ),
+    },
+    'ISRUC': {
+        'seeds': (42, 43, 44, 45, 46),
+        'results': {
+            'ba': (0.80253, 0.00272),
+            'kappa': (0.77045, 0.00316),
+            'f1': (0.81970, 0.00287),
+        },
+        'experiment_name': 'isruc_p12_bottomrightpad_headstd002_5seed_v1',
+        'training': {
+            'lr': 1e-3,
+            'backbone_lr_scale': 0.1,
+            'batch_size': 16,
+            'num_workers': 4,
+            'epochs': 15,
+            'weight_decay': 5e-3,
+            'min_lr': 1e-6,
+            'warmup_epochs': 3,
+            'warmup_start_factor': 0.1,
+            'clip_value': -1.0,
+            'ema_decay': 0.995,
+            'optimizer': 'AdamW',
+            'label_smoothing': 0.1,
+            'dropout': 0.1,
+            'drop_path_rate': 0.0,
+            'early_stop': 15,
+            'frozen': False,
+            'multi_lr': False,
+            'use_pretrained_weights': True,
+            'balanced_sampling': False,
+            'mirror_augmentation': True,
+            'mirror_prob': 0.5,
+            'time_roll_augmentation': True,
+            'time_roll_prob': 0.5,
+            'time_roll_max_fraction': 0.25,
+            'amplitude_scale_augmentation': False,
+            'mixup_augmentation': False,
+            'amp': True,
+            'amp_dtype': 'bfloat16',
+            'test_each_epoch': False,
+            'run_final_test': True,
+            'selection_metric': 'kappa',
+        },
+        'vision': _vision(
+            backbone_name='efficientnet_b0',
+            head_init_std=0.002,
+            adapter={'fold_factor': 12},
         ),
     },
     'MentalArithmetic': {
@@ -373,42 +420,11 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.isruc_dataset',
         datasets_dir='../BigDownstream/ISRUC/precessed_filter_35',
         storage='isruc_npy',
-        # Finalized after the corrected phase-interleaved P=12 three-seed
-        # study (3407/3408/3409).  Each record contains 20 sleep epochs, so a
-        # loader batch of 16 yields 320 independently classified epochs.
-        training={
-            'lr': 1e-3,
-            'backbone_lr_scale': 0.1,
-            'batch_size': 16,
-            'epochs': 15,
-            'weight_decay': 5e-3,
-            'min_lr': 1e-6,
-            'warmup_epochs': 3,
-            'warmup_start_factor': 0.1,
-            'clip_value': -1.0,
-            'ema_decay': 0.995,
-            'optimizer': 'AdamW',
-            'label_smoothing': 0.1,
-            'dropout': 0.1,
-            'drop_path_rate': 0.0,
-            'early_stop': 15,
-            'frozen': False,
-            'multi_lr': False,
-            'use_pretrained_weights': True,
-            'balanced_sampling': False,
-            'mirror_augmentation': True,
-            'mirror_prob': 0.5,
-            'time_roll_augmentation': True,
-            'time_roll_prob': 0.5,
-            'time_roll_max_fraction': 0.25,
-            'amplitude_scale_augmentation': False,
-            'amp': True,
-            'amp_dtype': 'bfloat16',
-            'test_each_epoch': False,
-            'run_final_test': True,
-            'selection_metric': 'kappa',
-        },
-        vision=_vision(adapter={'fold_factor': 12}),
+        # Locked five-seed recipe (42--46). Each record contains 20 sleep
+        # epochs, so a loader batch of 16 yields 320 independently classified
+        # epochs. Padding is appended only at the bottom and right.
+        training=FINALIZED_FIVE_SEED_RECIPES['ISRUC']['training'],
+        vision=FINALIZED_FIVE_SEED_RECIPES['ISRUC']['vision'],
     ),
     'FACED': _dataset(
         task='multiclass',

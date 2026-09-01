@@ -15,7 +15,10 @@ before quoting numbers. Only PhysioNet-MI (`P=1`) is unaffected.
 - Result policy (`paper/README.md`): formal tables may contain only
   validation-selected checkpoints with ONE final test evaluation per seed.
   Never copy exploratory `test_each_epoch=true` peaks into a table.
-- Seeds used for reporting: 3407, 3408, 3409 (population std).
+- Default reporting seeds are 3407, 3408, and 3409. Dataset-specific locked
+  five-seed recipes in `configs/downstream.py:FINALIZED_FIVE_SEED_RECIPES`
+  supersede those values; ISRUC uses seeds 42--46. All standard deviations are
+  population statistics.
 
 ## Setup gotchas
 

@@ -1,44 +1,32 @@
-# Fixed-Recipe Rerun Queue
+# Reproduction Queue
 
-These datasets had their default training recipes re-frozen during the
-EMA/bf16 stability pass.  Keep them marked `RERUN` until a clean reproduction
-over seeds 3407, 3408, and 3409 has been reviewed.  Each checkpoint must be
-selected on validation and evaluated on test exactly once.
+The unified min-64 geometry reproduction is complete. There are currently no
+required geometry reruns in the formal 11-dataset table.
 
-Run the queue one dataset at a time with:
+## Completed: `all11_min64_repro_3seed_v1`
 
-```bash
-CUDA_ID=0 bash experiments/run_fixed_recipe_reruns.sh BCIC2020-3
-CUDA_ID=0 bash experiments/run_fixed_recipe_reruns.sh Mumtaz2016
-CUDA_ID=0 bash experiments/run_fixed_recipe_reruns.sh MentalArithmetic
-```
+- [x] CHB-MIT, `P=4`, seeds 3407/3408/3409
+- [x] TUAB, `P=4`, seeds 3407/3408/3409
+- [x] TUEV, `P=4`, seeds 3407/3408/3409
+- [x] ISRUC, `P=12`, seeds 42/43/44/45/46, bottom/right padding, head std .002
+- [x] FACED, `P=2`, seeds 3407/3408/3409
+- [x] SEED-V, `P=1`, seeds 3407/3408/3409
+- [x] PhysioNet-MI, `P=1`, seeds 3407/3408/3409
+- [x] SHU-MI, `P=2`, seeds 3407/3408/3409
+- [x] BCIC2020-3, `P=1`, seeds 3407/3408/3409
+- [x] Mumtaz2016, `P=4`, seeds 3407/3408/3409
+- [x] MentalArithmetic, `P=4`, seeds 3407/3408/3409
 
-## Queue
+All runs use EfficientNet-B0 ImageNet initialization and BF16 AMP. ISRUC uses
+its locked five-seed recipe; the remaining rows in this historical unified
+sweep use seeds 3407/3408/3409. Each best
+checkpoint was selected only on validation and tested exactly once. Exact
+recipes and results are recorded in `experiments/PHASE_FOLD_RESULTS.md`.
 
-- [ ] **BCIC2020-3 — `fixed_recipe_v2`**
-  - Input/fold: `[B,64,600]`, `P=2` -> `[B,1,128,300]`
-  - Train: 30 epochs, batch 32, lr `1e-3`, wd `5e-3`, warmup 3
-  - Stability: EMA `.995`, bf16, grad clip 1
-  - Augmentation: time roll `p=1`, max fraction `.5`; no mirror
-  - Selection: validation kappa
+Launcher: `experiments/run_all11_min64_repro_3seed.sh`
 
-- [ ] **Mumtaz2016 — `fixed_recipe_v2`**
-  - Input/fold: `[B,19,1000]`, `P=2` -> `[B,1,38,500]`
-  - Train: 30 epochs, batch 32, lr `1e-3`, wd `5e-4`, warmup 3
-  - Stability: EMA `.995`, bf16
-  - Augmentation: time roll `p=1`, max fraction `.5`; no mirror
-  - Selection: validation PR-AUC
+Logs: `experiments/logs/all11_min64_repro_3seed_v1/`
 
-- [ ] **MentalArithmetic — `fixed_recipe_v2`**
-  - Input/fold: `[B,20,1000]`, `P=2` -> `[B,1,40,500]`
-  - Train: 30 epochs, batch 64, lr `1e-3`, wd `5e-4`, warmup 3
-  - Stability: EMA `.99`, bf16, weighted BCE `pos_weight=3`
-  - Augmentation: time roll `p=.5`, max fraction `.25`; mirror `p=.5`
-  - Selection: validation PR-AUC
-  - Existing reference reproduction: PR-AUC `.71481 +/- .03636`, AUROC
-    `.83700 +/- .00403`; rerun remains queued for a clean end-to-end check.
-
-`bash experiments/run_downstream.sh --list` displays `RERUN` beside these
-three datasets.  After reviewing all three seeds, update
-`experiments/PHASE_FOLD_RESULTS.md`, then remove the dataset from
-`RERUN_REQUIRED_DATASETS` in `configs/downstream.py`.
+Historical fixed-recipe, P-search, balancing, and test-each-epoch probes remain
+available for provenance, but they are not pending formal rows and must not be
+used in the headline table.

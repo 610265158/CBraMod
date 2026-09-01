@@ -144,7 +144,7 @@ DEFAULT_VISION = {
 }
 
 
-# BCIC2020-3, ISRUC, and MentalArithmetic are locked below. The remaining datasets
+# BCIC2020-3, ISRUC, MentalArithmetic, and PhysioNet-MI are locked below. The remaining datasets
 # still need either a five-seed confirmation under bottom/right padding or a
 # finalized dataset-specific recipe before they can enter the formal table.
 RERUN_REQUIRED_DATASETS = {
@@ -153,7 +153,6 @@ RERUN_REQUIRED_DATASETS = {
     'TUEV': 'bottom_right_padding_5seed_pending',
     'FACED': 'recipe_search_pending',
     'SEED-V': 'recipe_search_pending',
-    'PhysioNet-MI': 'dataset_recipe_5seed_pending',
     'SHU-MI': 'recipe_search_pending',
     'Mumtaz2016': 'dataset_split_and_recipe_pending',
 }
@@ -210,6 +209,54 @@ FINALIZED_FIVE_SEED_RECIPES = {
             'time_roll_augmentation': True,
             'time_roll_prob': 1.0,
             'time_roll_max_fraction': 0.5,
+            'amplitude_scale_augmentation': False,
+            'mixup_augmentation': False,
+            'amp': True,
+            'amp_dtype': 'bfloat16',
+            'test_each_epoch': False,
+            'run_final_test': True,
+            'selection_metric': 'kappa',
+        },
+        'vision': _vision(
+            backbone_name='efficientnet_b0',
+            adapter={'fold_factor': 1},
+        ),
+    },
+    'PhysioNet-MI': {
+        'seeds': (42, 43, 44, 45, 46),
+        'results': {
+            'ba': (0.64909, 0.01251),
+            'kappa': (0.53215, 0.01672),
+            'f1': (0.64848, 0.01328),
+        },
+        'experiment_name': 'physionet_mi_p1_lr2e3_singlelr_wd5e3_warm3_ema995_5seed_v1',
+        'training': {
+            'lr': 2e-3,
+            # multi_lr=False intentionally makes this scale inactive; the
+            # complete network is fine-tuned with the single 2e-3 LR.
+            'backbone_lr_scale': 0.1,
+            'batch_size': 32,
+            'num_workers': 4,
+            'epochs': 30,
+            'weight_decay': 5e-3,
+            'min_lr': 1e-6,
+            'warmup_epochs': 3,
+            'warmup_start_factor': 0.1,
+            'clip_value': -1.0,
+            'ema_decay': 0.995,
+            'optimizer': 'AdamW',
+            'label_smoothing': 0.1,
+            'dropout': 0.1,
+            'drop_path_rate': 0.0,
+            'early_stop': 10,
+            'frozen': False,
+            'multi_lr': False,
+            'use_pretrained_weights': True,
+            'balanced_sampling': False,
+            # Motor-imagery labels are side-specific, so left/right channel
+            # mirroring is not label preserving.
+            'mirror_augmentation': False,
+            'time_roll_augmentation': False,
             'amplitude_scale_augmentation': False,
             'mixup_augmentation': False,
             'amp': True,
@@ -471,40 +518,10 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.physio_dataset',
         datasets_dir='../BigDownstream/eeg-motor-movementimagery-dataset-1.0.0',
         storage='lmdb',
-        # Finalized P=1 stability recipe (seeds 3407/3408/3409). Motor-
-        # imagery labels are side-specific, so left/right mirror augmentation
-        # is not label preserving. Validation kappa selects one checkpoint,
-        # which is evaluated exactly once on test for each reporting seed.
-        training={
-            'lr': 2e-3,
-            'backbone_lr_scale': 0.1,
-            'batch_size': 32,
-            'epochs': 30,
-            'weight_decay': 5e-3,
-            'min_lr': 1e-6,
-            'warmup_epochs': 3,
-            'warmup_start_factor': 0.1,
-            'clip_value': -1.0,
-            'ema_decay': 0.995,
-            'optimizer': 'AdamW',
-            'label_smoothing': 0.1,
-            'dropout': 0.1,
-            'drop_path_rate': 0.0,
-            'early_stop': 10,
-            'frozen': False,
-            'multi_lr': False,
-            'use_pretrained_weights': True,
-            'balanced_sampling': False,
-            'mirror_augmentation': False,
-            'time_roll_augmentation': False,
-            'amplitude_scale_augmentation': False,
-            'amp': True,
-            'amp_dtype': 'bfloat16',
-            'test_each_epoch': False,
-            'run_final_test': True,
-            'selection_metric': 'kappa',
-        },
-        vision=_vision(adapter={'fold_factor': 1}),
+        # Locked single-LR five-seed recipe. Validation Kappa selects one EMA
+        # checkpoint, which is evaluated exactly once on test per seed.
+        training=FINALIZED_FIVE_SEED_RECIPES['PhysioNet-MI']['training'],
+        vision=FINALIZED_FIVE_SEED_RECIPES['PhysioNet-MI']['vision'],
     ),
     'SHU-MI': _dataset(
         task='binary',

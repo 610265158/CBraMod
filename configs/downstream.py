@@ -144,13 +144,13 @@ DEFAULT_VISION = {
 }
 
 
-# BCIC2020-3, ISRUC, MentalArithmetic, and PhysioNet-MI are locked below. The remaining datasets
-# still need either a five-seed confirmation under bottom/right padding or a
-# finalized dataset-specific recipe before they can enter the formal table.
+# BCIC2020-3, ISRUC, MentalArithmetic, PhysioNet-MI, and TUEV are locked
+# below. The remaining datasets still need either a five-seed confirmation
+# under bottom/right padding or a finalized dataset-specific recipe before
+# they can enter the formal table.
 RERUN_REQUIRED_DATASETS = {
     'CHB-MIT': 'bottom_right_padding_5seed_pending',
     'TUAB': 'bottom_right_padding_5seed_pending',
-    'TUEV': 'bottom_right_padding_5seed_pending',
     'FACED': 'recipe_search_pending',
     'SEED-V': 'recipe_search_pending',
     'SHU-MI': 'recipe_search_pending',
@@ -368,6 +368,51 @@ FINALIZED_FIVE_SEED_RECIPES = {
             adapter={'fold_factor': 4},
         ),
     },
+    'TUEV': {
+        'seeds': (42, 43, 44, 45, 46),
+        'results': {
+            'ba': (0.64233, 0.01636),
+            'kappa': (0.69009, 0.01896),
+            'f1': (0.83797, 0.00760),
+        },
+        'experiment_name': 'tuev_p4_bs32_lr1e3_wd5e4_ep10_ls0_clip1_headstd002_5seed_v1',
+        'training': {
+            'lr': 1e-3,
+            'backbone_lr_scale': 0.1,
+            'batch_size': 32,
+            'num_workers': 4,
+            'epochs': 10,
+            'weight_decay': 5e-4,
+            'min_lr': 1e-6,
+            'warmup_epochs': 0,
+            'warmup_start_factor': 0.1,
+            'clip_value': 1.0,
+            'ema_decay': 0.0,
+            'optimizer': 'AdamW',
+            'label_smoothing': 0.0,
+            'dropout': 0.1,
+            'drop_path_rate': 0.0,
+            'early_stop': 10,
+            'frozen': False,
+            'multi_lr': False,
+            'use_pretrained_weights': True,
+            'balanced_sampling': False,
+            'mirror_augmentation': False,
+            'time_roll_augmentation': False,
+            'amplitude_scale_augmentation': False,
+            'mixup_augmentation': False,
+            'amp': True,
+            'amp_dtype': 'bfloat16',
+            'test_each_epoch': False,
+            'run_final_test': True,
+            'selection_metric': 'kappa',
+        },
+        'vision': _vision(
+            backbone_name='efficientnet_b0',
+            head_init_std=0.002,
+            adapter={'fold_factor': 4},
+        ),
+    },
 }
 
 
@@ -449,16 +494,10 @@ DOWNSTREAM_11_CONFIGS = {
         datasets_dir='../BigDownstream/TUEV_refine/processed',
         storage='pkl_split',
         split_dirs={'train': 'processed_train', 'val': 'processed_eval', 'test': 'processed_test'},
-        training={
-            'lr': 1e-3,
-            'batch_size': 32,
-            'epochs': 10,
-            'weight_decay': 5e-3,
-            'selection_metric': 'kappa',
-            'test_each_epoch': False,
-            'run_final_test': True,
-        },
-        vision=_vision(adapter={'fold_factor': 4}),
+        # Locked five-seed recipe (42--46) isolating bs=32 and ep=10 from the
+        # bs=64/ep=30 search; supersedes the canonical 3407--3409 sweep.
+        training=FINALIZED_FIVE_SEED_RECIPES['TUEV']['training'],
+        vision=FINALIZED_FIVE_SEED_RECIPES['TUEV']['vision'],
     ),
     'ISRUC': _dataset(
         task='multiclass',

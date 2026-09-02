@@ -15,7 +15,7 @@ training:
   warmup_epochs: 5
   warmup_start_factor: 0.1
   clip_value: -1.0
-  ema_decay: 0.0
+  ema_decay: 0.995
   num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.1
@@ -64,15 +64,16 @@ protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.53022, std: 0.01794}
-  kappa: {mean: 0.47113, std: 0.01997}
-  f1: {mean: 0.53459, std: 0.01485}
+  ba: {mean: 0.55164, std: 0.01790}
+  kappa: {mean: 0.49533, std: 0.01970}
+  f1: {mean: 0.55672, std: 0.01626}
 notes: >-
   Five-seed FACED flatten+FC recipe with EfficientNet-B0 RA4 weights,
   phase-interleaved fold factor P=2, head initialization std=0.002,
-  weight decay 5e-4, and five-epoch linear warmup. No train-time data
-  augmentation. Standard deviations are population statistics; each seed uses
-  one validation-selected checkpoint followed by one final test evaluation.
+  weight decay 5e-4, five-epoch linear warmup, and EMA decay 0.995. No
+  train-time data augmentation. Standard deviations are population statistics;
+  each seed uses one validation-selected checkpoint followed by one final test
+  evaluation.
 output:
-  model_root: experiments/checkpoints/faced_ra4_p2_flattenfc_wd5e4_warmup5_5seed/seed{seed}
-  log_root: experiments/logs/vision/faced_ra4_p2_flattenfc_wd5e4_warmup5_5seed/seed{seed}
+  model_root: experiments/checkpoints/faced_ra4_p2_flattenfc_wd5e4_warmup5_ema995_5seed/seed{seed}
+  log_root: experiments/logs/vision/faced_ra4_p2_flattenfc_wd5e4_warmup5_ema995_5seed/seed{seed}

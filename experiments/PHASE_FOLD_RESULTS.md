@@ -8,8 +8,9 @@ I[c * P + p, w] = X[c, w * P + p]
 ```
 
 Every formal checkpoint is selected using validation data and evaluated once
-on test. Standard deviations use the population definition. ISRUC and TUEV
-are reported with their locked five-seed recipes (42--46); datasets awaiting
+on test. Standard deviations use the population definition. CHB-MIT, SHU-MI,
+ISRUC, and TUEV are reported with their locked five-seed recipes (42--46);
+datasets awaiting
 five-seed replacement retain the canonical 3407--3409 sweep. Any `P>1`
 checkpoint produced by the superseded contiguous-chunk adapter is stale and
 must not be quoted.
@@ -49,7 +50,7 @@ settings below match the completed launcher.
 
 | Dataset | Input | P | Folded | Padded | Epochs | Batch | LR | WD | Select | Special setting |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: | --- | --- |
-| CHB-MIT | `16x2000` | 4 | `64x500` | `64x512` | 10 | 32 | 1e-3 | 5e-3 | PR-AUC | none |
+| CHB-MIT | `16x2000` | 4 | `64x500` | `64x512` | 10 | 32 | 1e-3 | 5e-3 | PR-AUC | RA4 weights, head std .002, fixed 1:10 positive:negative sampling, no augmentation |
 | TUAB | `16x2000` | 4 | `64x500` | `64x512` | 5 | 32 | 1e-3 | 5e-4 | PR-AUC | grad clip 1 |
 | TUEV | `16x1000` | 4 | `64x250` | `64x256` | 10 | 32 | 1e-3 | 5e-4 | kappa | grad clip 1, head std .002, no aug/ema |
 | ISRUC | `20x6x6000` | 12 | `72x500` | `96x512` | 15 | 16 | 1e-3 | 5e-3 | kappa | warmup 3, EMA .995, roll+mirror, head std .002 |
@@ -64,7 +65,7 @@ settings below match the completed launcher.
 ## Canonical per-seed results
 
 Binary datasets report PR-AUC/AUROC. Multiclass datasets report Cohen's
-kappa/weighted F1. SHU-MI, ISRUC, and TUEV are omitted from this three-seed table
+kappa/weighted F1. CHB-MIT, SHU-MI, ISRUC, and TUEV are omitted from this three-seed table
 because their formal rows are replaced by the locked five-seed results
 immediately below.
 
@@ -80,10 +81,12 @@ immediately below.
 | Mumtaz2016 | .95662/.95016 | .96563/.96419 | .94831/.94269 | **.95685 +/- .00707 / .95235 +/- .00891** |
 | MentalArithmetic | .68154/.89062 | .78280/.91855 | .71758/.86878 | **.72731 +/- .04191 / .89265 +/- .02037** |
 
-### Finalized SHU-MI, ISRUC, and TUEV five-seed results
+### Finalized CHB-MIT, SHU-MI, ISRUC, and TUEV five-seed results
 
 These locked results use seeds 42--46 and validation-only checkpoint selection
-followed by one final test evaluation per seed. ISRUC uses bottom/right-only
+followed by one final test evaluation per seed. CHB-MIT uses RA4 EfficientNet-B0
+weights with P=4, head initialization std=.002, and fixed 1:10 positive-to-
+negative sampling. ISRUC uses bottom/right-only
 padding with `trunc_normal(std=.002)` classifier initialization. TUEV uses the
 bottom/right-padding P=4 geometry with `head_init_std=.002`, `clip_value=1`,
 `weight_decay=5e-4`, `label_smoothing=0`, no augmentation, and no EMA; this
@@ -92,6 +95,7 @@ search. Each entry replaces the corresponding three-seed row above.
 
 | Dataset | Seed 42 | Seed 43 | Seed 44 | Seed 45 | Seed 46 | Mean +/- population std |
 | --- | --- | --- | --- | --- | --- | --- |
+| CHB-MIT (PR-AUC/AUROC/BA) | .40971/.92573/.74623 | .42591/.87683/.73967 | .49244/.91551/.87082 | .32659/.88349/.71525 | .39117/.88547/.70399 | **.40916 +/- .05359 / .89741 +/- .01944 / .75519 +/- .05985** |
 | SHU-MI (PR-AUC/AUROC) | .68564/.68536 | .70343/.69731 | .70447/.70723 | .67264/.67661 | .72479/.71457 | **.69819 +/- .01780 / .69622 +/- .01387** |
 | ISRUC (kappa/F1) | .77291/.82287 | .77096/.81935 | .77465/.82294 | .76719/.81772 | .76654/.81563 | **.77045 +/- .00316 / .81970 +/- .00287** |
 | TUEV (kappa/F1) | .69178/.83861 | .66643/.83048 | .72077/.85193 | .69702/.83692 | .67444/.83193 | **.69009 +/- .01896 / .83797 +/- .00760** |
@@ -111,7 +115,7 @@ metrics are PR-AUC for binary tasks and kappa for multiclass tasks.
 
 | Dataset | Published CBraMod | EfficientNet-B0 | Primary delta (pp) |
 | --- | --- | --- | ---: |
-| CHB-MIT | .3689/.8892 | **.41765 +/- .07678 / .91467 +/- .00789** | +4.88 |
+| CHB-MIT | .3689/.8892 | **.40916 +/- .05359 / .89741 +/- .01944** | +4.03 |
 | TUAB | **.9221/.9156** | .87027 +/- .00330 / .86966 +/- .00482 | -5.18 |
 | TUEV | .6744/.8331 | **.69009 +/- .01896 / .83797 +/- .00760** | +1.57 |
 | ISRUC | .7442/.8011 | **.77045 +/- .00316 / .81970 +/- .00287** | +2.63 |
@@ -125,7 +129,7 @@ metrics are PR-AUC for binary tasks and kappa for multiclass tasks.
 
 The canonical B0 model exceeds the published CBraMod primary metric on six of
 11 datasets and trails it on five. The largest gains are BCIC2020-3 (+15.90),
-MentalArithmetic (+10.06), and CHB-MIT (+4.88) percentage points. FACED is the
+MentalArithmetic (+10.06), and CHB-MIT (+4.03) percentage points. FACED is the
 largest deficit (-13.04). The published comparison is not a controlled paired
 rerun and should be described as competitiveness evidence rather than a final
 ranking.
@@ -138,7 +142,7 @@ the ISRUC B0 margin below uses the locked five-seed B0 mean. EEGNet means are:
 
 | Dataset | EEGNet-8,2 mean +/- std | B0 primary margin |
 | --- | --- | ---: |
-| CHB-MIT | .35091 +/- .08353 / .92546 +/- .00625 | +.06674 |
+| CHB-MIT | .35091 +/- .08353 / .92546 +/- .00625 | +.05825 |
 | TUAB | .86655 +/- .00441 / .87172 +/- .00132 | +.00372 |
 | TUEV | .50123 +/- .05702 / .74625 +/- .02590 | +.18767 |
 | ISRUC | .63655 +/- .03136 / .69791 +/- .02581 | +.13390 |
@@ -156,7 +160,7 @@ datasets, with a SHU-MI margin of about .0103.
 ## Stability
 
 The lowest primary-metric population standard deviations are ISRUC (.00316),
-TUAB (.00330), and SHU-MI (.01780). CHB-MIT (.07678) and MentalArithmetic
+TUAB (.00330), and SHU-MI (.01780). CHB-MIT (.05359) and MentalArithmetic
 (.04191) remain the most seed-sensitive; TUEV dropped from .03708 in the
 three-seed sweep to .01896 after locking the five-seed recipe. In particular,
 the CHB-MIT mean gain should not be described as uniformly reliable across

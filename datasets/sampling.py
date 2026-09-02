@@ -151,6 +151,38 @@ def make_balanced_sampler(dataset, params):
         print('Balanced train sampling skipped: only one class found.')
         return None
 
+    negative_ratio = float(getattr(params, 'balanced_sampling_negative_ratio', 0.0))
+    if negative_ratio < 0:
+        raise ValueError('--balanced_sampling_negative_ratio must be non-negative')
+    if negative_ratio > 0:
+        if set(counts) != {0, 1} or any(len(labels) != 1 for labels in sample_labels):
+            raise ValueError('negative-ratio sampling requires binary single-label samples')
+        positive_indices = [i for i, labels in enumerate(sample_labels) if labels[0] == 1]
+        negative_indices = [i for i, labels in enumerate(sample_labels) if labels[0] == 0]
+        requested_negatives = int(round(negative_ratio * len(positive_indices)))
+        if not positive_indices or not negative_indices:
+            print('Negative-ratio sampling skipped: one class is empty.')
+            return None
+        sample_count = len(positive_indices) + min(len(negative_indices), requested_negatives)
+        generator = torch.Generator()
+        generator.manual_seed(getattr(params, 'seed', 3407))
+        sampler = RatioClassSampler(
+            positive_indices,
+            negative_indices,
+            negative_count=min(len(negative_indices), requested_negatives),
+            num_samples=sample_count,
+            generator=generator,
+        )
+        print(
+            'Negative-ratio sampling enabled: positives={}, negatives={}, target_ratio=1:{}, samples_per_epoch={}'.format(
+                len(positive_indices),
+                len(negative_indices),
+                negative_ratio,
+                sample_count,
+            )
+        )
+        return sampler
+
     min_share = float(getattr(params, 'balanced_sampling_min_share', 0.0))
     if min_share < 0 or min_share >= 1:
         raise ValueError('--balanced_sampling_min_share must be in [0, 1)')
@@ -189,6 +221,28 @@ def make_balanced_sampler(dataset, params):
         format_counts(counts),
     ))
     return sampler
+
+
+class RatioClassSampler(torch.utils.data.Sampler):
+    """Sample every positive and a fixed number of negatives each epoch."""
+
+    def __init__(self, positive_indices, negative_indices, negative_count, num_samples, generator):
+        self.positive_indices = tuple(positive_indices)
+        self.negative_indices = tuple(negative_indices)
+        self.negative_count = int(negative_count)
+        self.num_samples = int(num_samples)
+        self.generator = generator
+
+    def __iter__(self):
+        pos_order = torch.randperm(len(self.positive_indices), generator=self.generator).tolist()
+        neg_order = torch.randperm(len(self.negative_indices), generator=self.generator).tolist()
+        selected = [self.positive_indices[i] for i in pos_order]
+        selected.extend(self.negative_indices[i] for i in neg_order[:self.negative_count])
+        order = torch.randperm(len(selected), generator=self.generator).tolist()
+        return iter([selected[i] for i in order])
+
+    def __len__(self):
+        return self.num_samples
 
 
 def minimum_class_shares(counts, min_share):

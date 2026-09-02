@@ -168,6 +168,8 @@ def main():
                         help='class-balance exponent alpha in sample weight n_c^(-alpha); 1 fully balances')
     parser.add_argument('--balanced_sampling_min_share', type=float, default=None,
                         help='minimum target sampling share for each class; 0 disables share flooring')
+    parser.add_argument('--balanced_sampling_negative_ratio', type=float, default=None,
+                        help='binary ratio sampler: keep all positives and sample this many negatives per positive; 0 disables')
     parser.add_argument('--mirror_augmentation', type=str2bool,
                         default=None, help='randomly mirror left/right EEG channels on the training split')
     parser.add_argument('--mirror_prob', type=float,

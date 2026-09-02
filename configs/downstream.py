@@ -27,6 +27,7 @@ TRAINING_KEYS = (
     'balanced_sampling',
     'balanced_sampling_power',
     'balanced_sampling_min_share',
+    'balanced_sampling_negative_ratio',
     'mirror_augmentation',
     'mirror_prob',
     'time_roll_augmentation',
@@ -83,6 +84,7 @@ DEFAULT_TRAINING = {
     'balanced_sampling': False,
     'balanced_sampling_power': 1.0,
     'balanced_sampling_min_share': 0.0,
+    'balanced_sampling_negative_ratio': 0.0,
     'mirror_augmentation': False,
     'mirror_prob': 0.5,
     'time_roll_augmentation': False,
@@ -146,12 +148,11 @@ DEFAULT_VISION = {
 }
 
 
-# BCIC2020-3, ISRUC, MentalArithmetic, PhysioNet-MI, SHU-MI, and TUEV are locked
+# BCIC2020-3, CHB-MIT, ISRUC, MentalArithmetic, PhysioNet-MI, SHU-MI, and TUEV are locked
 # below. The remaining datasets still need either a five-seed confirmation
 # under bottom/right padding or a finalized dataset-specific recipe before
 # they can enter the formal table.
 RERUN_REQUIRED_DATASETS = {
-    'CHB-MIT': 'bottom_right_padding_5seed_pending',
     'TUAB': 'bottom_right_padding_5seed_pending',
     'FACED': 'recipe_search_pending',
     'SEED-V': 'recipe_search_pending',
@@ -176,6 +177,57 @@ def _vision(**overrides):
 # Each result uses seeds 42--46, validation-selected checkpoints, population
 # standard deviation, and one final test evaluation per seed.
 FINALIZED_FIVE_SEED_RECIPES = {
+    'CHB-MIT': {
+        'seeds': (42, 43, 44, 45, 46),
+        'results': {
+            'pr_auc': (0.40916, 0.05359),
+            'roc_auc': (0.89741, 0.01944),
+            'ba': (0.75519, 0.05985),
+        },
+        'experiment_name': 'chb_mit_ra4_p4_ratio1to10_headstd002_noaug_10ep_5seed_v1',
+        'training': {
+            'lr': 1e-3,
+            'backbone_lr_scale': 0.1,
+            'batch_size': 32,
+            'num_workers': 4,
+            'epochs': 10,
+            'weight_decay': 5e-3,
+            'min_lr': 1e-6,
+            'warmup_epochs': 0,
+            'warmup_start_factor': 0.1,
+            'clip_value': -1.0,
+            'ema_decay': 0.0,
+            'optimizer': 'AdamW',
+            'label_smoothing': 0.1,
+            'binary_pos_weight': 1.0,
+            'dropout': 0.1,
+            'drop_path_rate': 0.0,
+            'early_stop': 10,
+            'frozen': False,
+            'multi_lr': False,
+            'use_pretrained_weights': True,
+            'balanced_sampling': True,
+            'balanced_sampling_power': 1.0,
+            'balanced_sampling_min_share': 0.0,
+            'balanced_sampling_negative_ratio': 10.0,
+            'mirror_augmentation': False,
+            'time_roll_augmentation': False,
+            'amplitude_scale_augmentation': False,
+            'mixup_augmentation': False,
+            'amp': True,
+            'amp_dtype': 'bfloat16',
+            'test_each_epoch': False,
+            'run_final_test': True,
+            'selection_metric': 'pr_auc',
+        },
+        'vision': _vision(
+            backbone_name='efficientnet_b0.ra4_e3600_r224_in1k',
+            head_init_std=0.002,
+            squeeze_binary=True,
+            init_head=False,
+            adapter={'fold_factor': 4},
+        ),
+    },
     'BCIC2020-3': {
         'seeds': (42, 43, 44, 45, 46),
         'results': {
@@ -501,17 +553,10 @@ DOWNSTREAM_11_CONFIGS = {
         datasets_dir='../BigDownstream/chb-mit/processed_seg',
         storage='pkl_split',
         split_dirs={'train': 'train', 'val': 'val', 'test': 'test'},
-        training={
-            'lr': 1e-3,
-            'batch_size': 32,
-            'epochs': 10,
-            'weight_decay': 5e-3,
-            'selection_metric': 'pr_auc',
-            'test_each_epoch': False,
-            'run_final_test': True,
-        },
-        vision=_vision(squeeze_binary=True, init_head=False,
-                       adapter={'fold_factor': 4}),
+        # Locked five-seed recipe (42--46), validation-selected checkpoints,
+        # and one final test evaluation per seed.
+        training=FINALIZED_FIVE_SEED_RECIPES['CHB-MIT']['training'],
+        vision=FINALIZED_FIVE_SEED_RECIPES['CHB-MIT']['vision'],
     ),
     'TUAB': _dataset(
         task='binary',

@@ -126,6 +126,8 @@ def main():
                         help='class-balance exponent; 1 fully balances, 0 preserves natural sampling')
     parser.add_argument('--balanced_sampling_min_share', type=float, default=None,
                         help='minimum target sampling share for every class; 0 disables')
+    parser.add_argument('--balanced_sampling_negative_ratio', type=float, default=None,
+                        help='binary ratio sampler: keep all positives and sample this many negatives per positive; 0 disables')
     parser.add_argument('--mirror_augmentation', type=str, default=None,
                         help='whether to apply train-time left/right channel mirror augmentation, true/false')
     parser.add_argument('--mirror_prob', type=float, default=None,

@@ -20,8 +20,7 @@ The current headline experiment is the **unified all-BF16 min-64 three-seed
 reproduction**:
 
 - experiment: `all11_min64_repro_3seed_v1`
-- launcher: `experiments/run_all11_min64_repro_3seed.sh`
-- compatibility entrypoint: `experiments/run_finalized_efficientnet_b0_3seed.sh`
+- launcher: historical hard-coded launcher (removed during cleanup)
 - launcher log: `experiments/logs/all11_min64_repro_3seed_v1_launcher.log`
 - run logs: `experiments/logs/all11_min64_repro_3seed_v1/`
 - completed: 2026-08-28 21:41 UTC
@@ -171,9 +170,9 @@ AMP precision. Examples include CHB-MIT P=2 (.44264 PR-AUC), TUAB P=2
 (.68584), Mumtaz2016 P=2 (.96294), and MentalArithmetic P=2 (.71481). These
 numbers must not be mixed into the canonical 11-dataset table.
 
-Historical non-ISRUC launchers and logs remain under `experiments/` and
-`experiments/logs/` for provenance. Superseded ISRUC log/checkpoint directories
-were removed after locking the five-seed recipe; only
+Historical launcher scripts were removed from `experiments/` during cleanup;
+summarized provenance is retained here. Superseded ISRUC
+log/checkpoint directories were removed after locking the five-seed recipe; only
 `isruc_p12_bottomrightpad_headstd002_5seed_v1` is retained. The TUEV
 canonical three-seed sweep (.68890 +/- .03708 / .83299 +/- .02169) is
 superseded by the locked five-seed recipe in

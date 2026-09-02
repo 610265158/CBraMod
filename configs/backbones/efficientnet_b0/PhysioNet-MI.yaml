@@ -1,0 +1,67 @@
+dataset: PhysioNet-MI
+backbone_name: efficientnet_b0
+vision:
+  adapter: {fold_factor: 1}
+training:
+  lr: 0.002
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.005
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  mental_scale: 32.0
+  shu_clip_limit: 512.0
+  shu_scale: 64.0
+  shu_bandpass_low: null
+  shu_bandpass_high: null
+  shu_filter_order: 4
+  physio_lowpass_hz: null
+  physio_filter_order: 4
+  mumtaz_lowpass_hz: null
+  mumtaz_filter_order: 4
+  faced_input_norm: clip_scale
+  faced_robust_clip: 8.0
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol: {seeds: [42, 43, 44, 45, 46], selection: validation_selected_checkpoint_once_on_test}
+results:
+  ba: {mean: 0.64909, std: 0.01251}
+  kappa: {mean: 0.53215, std: 0.01672}
+  f1: {mean: 0.64848, std: 0.01328}
+notes: Finalized single-LR five-seed recipe; population standard deviation and one final test evaluation per seed.
+output:
+  model_root: experiments/checkpoints/physionet_mi_p1_lr2e3_singlelr_wd5e3_warm3_ema995_5seed_v1/seed{seed}
+  log_root: experiments/logs/physionet_mi_p1_lr2e3_singlelr_wd5e3_warm3_ema995_5seed_v1/seed{seed}

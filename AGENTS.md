@@ -64,19 +64,18 @@ Critical implications:
   `finetune_main.py` directly with `--downstream_dataset` and use
   `models/legacy/model_for_*.py`.
 
-### Shell wrapper name != dataset name
+### Experiment launchers
 
-`experiments/scripts/train_*.sh` are thin `exec` wrappers around
-`run_downstream.sh --dataset <NAME>`. Two names are misleading and inherited
-from the original project:
+The old `experiments/scripts/train_*.sh` compatibility wrappers were removed.
+Use the unified runner with a complete YAML configuration, for example:
 
-| Wrapper | Actual `--dataset` value |
-| --- | --- |
-| `train_speech.sh` | `BCIC2020-3` |
-| `train_stress.sh` | `MentalArithmetic` |
+```bash
+bash experiments/run_downstream.sh \
+  --config configs/backbones/efficientnet_b0/TUEV.yaml
+```
 
-All others (`train_tuab.sh`, `train_tuev.sh`, `train_chb_mit.sh`, etc.) map
-name-for-name. Always pass the uppercase dataset name when in doubt.
+Locked five-seed convenience launchers under `experiments/` are thin wrappers
+around the same YAML-driven entrypoint.
 
 ## Datasets live outside this repo — check first
 

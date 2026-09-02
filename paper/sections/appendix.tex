@@ -1,69 +1,74 @@
-\section{Model Families}
+\section{Model-Family Comparison}
 \label{app:model-families}
 
-\begin{table}[h]
+\begin{table*}[tbp]
 \centering
-\caption{Conceptual scope of the three model families discussed in the paper.}
+\caption{Conceptual scope of the model families discussed in the paper.}
 \small
-\begin{tabularx}{\linewidth}{lXXX}
+\renewcommand{\arraystretch}{1.06}
+\begin{tabularx}{\textwidth}{@{}lXXX@{}}
 \toprule
  & \method{} & \cbramod{} & \reve{}-Base \\
 \midrule
 Input & phase-folded raw waveform & raw patches + FFT magnitude & raw waveform patches \\
 Encoder & EfficientNet-B0 & criss-cross transformer & coordinate-aware transformer \\
 EEG pretraining & none & TUH EEG & 92 EEG datasets \\
-Nominal size & 5.3M$^\dagger$ & about 4.9M & about 69M \\
+Encoder parameters & 4.01M & about 4.0M & about 69M \\
 Spatial identity & row order & learned fixed-order encoding & physical coordinates \\
 Main target & full fine-tuning & compact EEG transfer & montage-flexible transfer \\
 \bottomrule
 \end{tabularx}
+\tablenote{The unused 1.28M-class ImageNet classifier is excluded from the
+\method{} parameter count. Sizes for published models follow their papers.}
+\end{table*}
 
-\vspace{2pt}
-\footnotesize $^\dagger$The timm model has 5.29M parameters including its unused
-1.28M ImageNet classifier; the feature encoder used here has 4.01M parameters.
-\end{table}
-
-\section{Dataset-Specific Recipes}
+\section{Dataset-Specific Training Recipes}
 \label{app:recipes}
 
 Table~\ref{tab:recipes} is the source of truth for the formal EfficientNet-B0
-runs.  ``Folded'' is the non-padded image shape; padding is symmetric and uses
-zeros.  All runs use average pooling, a linear head, ImageNet initialization,
-AdamW, cosine decay, and dropout .1.  Mixed precision is float16 except for
-MentalArithmetic, which uses bfloat16.
+runs. ``Folded'' is the non-padded image shape; zero padding is appended only
+at the bottom and right. All runs use average pooling, a linear head, ImageNet initialization,
+AdamW, cosine decay, dropout .1, and bfloat16 mixed precision.
 
-\begin{table*}[h]
+\begin{table*}[tbp]
 \centering
-\caption{Finalized phase-interleaved downstream recipes.  ``Select'' is the
-validation metric used to save the checkpoint.}
+\caption{Finalized phase-interleaved downstream recipes.}
 \label{tab:recipes}
-\small
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lrrrrlll}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.06}
+\begin{tabularx}{\textwidth}{@{}lccrcclX@{}}
 \toprule
 Dataset & $P$ & Folded $H\times W$ & Epochs & LR & WD & Select & Special setting \\
 \midrule
-CHB-MIT & 2 & $32\times1000$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & --- \\
-TUAB & 2 & $32\times1000$ & 5 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & grad clip 1 \\
+CHB-MIT & 4 & $64\times500$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & --- \\
+TUAB & 4 & $64\times500$ & 5 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & grad clip 1 \\
 TUEV & 4 & $64\times250$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
-ISRUC & 12 & $72\times500$ & 15 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, shift+mirror \\
+ISRUC & 12 & $72\times500$ & 15 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, shift+mirror, head std .002 \\
 FACED & 2 & $64\times1000$ & 50 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
-SEED-V & 8 & $496\times25$ & 50 & $5\cdot10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
+SEED-V & 1 & $62\times200$ & 50 & $5\cdot10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
 PhysioNet-MI & 1 & $64\times800$ & 30 & $2\cdot10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, no folding \\
-SHU-MI & 4 & $128\times200$ & 20 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & clip 512, divide 64 \\
-BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
-Mumtaz2016 & 2 & $38\times500$ & 30 & $5\cdot10^{-4}$ & $5\cdot10^{-2}$ & PR-AUC & --- \\
-MentalArithmetic & 2 & $40\times500$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & EMA .99, bf16, weighted BCE, shift+mirror \\
+SHU-MI & 2 & $64\times400$ & 20 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & warmup 3, EMA .995, shift, scale 64 \\
+BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no fold, warmup 3, EMA .995, bf16, clip 1, shift \\
+Mumtaz2016 & 4 & $76\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & warmup 3, EMA .995, shift \\
+MentalArithmetic & 4 & $80\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & EMA .99, weighted BCE, shift+mirror \\
 \bottomrule
-\end{tabular}}
+\end{tabularx}
+\tablenote{``Select'' is the validation metric used for checkpointing. All
+runs use ImageNet initialization, AdamW, cosine decay, dropout .1, average
+pooling, a linear head, and bfloat16 mixed precision.}
 \end{table*}
 
 ISRUC uses batch size 16, three warmup epochs, EMA decay .995, time roll
 ($p=.5$, maximum fraction .25), and mirror augmentation ($p=.5$), which swaps
-left/right channel pairs according to the known montage.  PhysioNet-MI uses
-batch size 32, three warmup epochs, EMA decay .995, float16 AMP, and no data
+left/right channel pairs according to the known montage. Its classifier uses
+truncated-normal weight initialization with standard deviation .002 and zero
+bias. PhysioNet-MI uses
+batch size 32, three warmup epochs, EMA decay .995, BF16 AMP, and no data
 augmentation; left/right mirror is disabled because its motor-imagery labels
-are side-specific.  MentalArithmetic
+are side-specific. SHU-MI uses time roll with $p=.5$ and maximum fraction .25.
+BCIC2020-3 and Mumtaz2016 use time roll with $p=1$ and maximum fraction .5;
+neither uses mirror augmentation. MentalArithmetic
 uses batch size 64, three warmup epochs,
 \texttt{pos\_weight=3}, time roll ($p=.5$, maximum fraction .25), and mirror
 ($p=.5$).
@@ -71,57 +76,88 @@ No finalized run uses random amplitude scaling.  SHU-MI uses its documented
 input-scale exception; all other datasets use the default clip-to-1024 and
 divide-by-32 preprocessing.
 
-\section{Per-Seed Test Values}
+\paragraph{SHU-MI backbone-capacity ablation.}
+In the historical matched FP16 P=2 recipe, EfficientNet-B5 reaches
+$.69426\pm.01483/.68949\pm.01163$ PR-AUC/AUROC, compared with
+$.68584\pm.02053/.67720\pm.02232$ for B0. This capacity ablation is not
+directly comparable to the new unified all-BF16 headline result. We retain B0
+in the headline table
+because it is the common encoder used across all 11 datasets; B5 is a
+dataset-specific capacity ablation.
+
+\input{sections/appendix_detailed_results}
+
+\section{Per-Seed Results}
 \label{app:per-seed}
 
-\begin{table*}[h]
+\begin{table*}[tbp]
 \centering
-\caption{Corrected phase-interleaved validation-selected test values.  Each
-checkpoint is evaluated once on test, and each cell reports the same metric
-pair as the main table.}
+\caption{Three-seed test values from validation-selected checkpoints for
+datasets whose locked five-seed replacements are still pending.}
 \small
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{llccc}
+\renewcommand{\arraystretch}{1.04}
+\begin{tabularx}{\textwidth}{@{}ll*{3}{Y}@{}}
 \toprule
 Dataset & Metrics & Seed 3407 & Seed 3408 & Seed 3409 \\
 \midrule
-CHB-MIT & PR/ROC & .48090/.90161 & .42558/.91119 & .42145/.92480 \\
-TUAB & PR/ROC & .88650/.87779 & .88581/.87940 & .88152/.87751 \\
-TUEV & $\kappa$/F1 & .68710/.83240 & .75656/.87256 & .70530/.84046 \\
-ISRUC & $\kappa$/F1 & .78103/.82754 & .77841/.82665 & .77708/.82632 \\
-FACED & $\kappa$/F1 & .39297/.47101 & .38057/.45414 & .32736/.40821 \\
-SEED-V & $\kappa$/F1 & .24491/.40159 & .26001/.41536 & .26468/.41578 \\
-PhysioNet-MI & $\kappa$/F1 & .53703/.65190 & .53483/.65078 & .52817/.64664 \\
-SHU-MI & PR/ROC & .71226/.70032 & .69027/.68997 & .64812/.63658 \\
-BCIC2020-3 & $\kappa$/F1 & .52500/.62020 & .52500/.62161 & .49167/.59398 \\
-Mumtaz2016 & PR/ROC & .97603/.97586 & .97342/.96885 & .97167/.96877 \\
-MentalArithmetic & PR/ROC & .74572/.83955 & .66376/.83131 & .73494/.84013 \\
+CHB-MIT & PR/ROC & .52397/.92512 & .34542/.90605 & .38355/.91285 \\
+TUAB & PR/ROC & .86708/.86289 & .87481/.87229 & .86892/.87379 \\
+TUEV & $\kappa$/F1 & .63647/.80231 & .71484/.84858 & .71540/.84808 \\
+FACED & $\kappa$/F1 & .37429/.45404 & .40240/.46739 & .34432/.42133 \\
+SEED-V & $\kappa$/F1 & .22604/.38659 & .22359/.38433 & .21204/.37472 \\
+PhysioNet-MI & $\kappa$/F1 & .51783/.63940 & .56074/.67021 & .54592/.66012 \\
+SHU-MI & PR/ROC & .68458/.67286 & .67687/.65818 & .67267/.66568 \\
+BCIC2020-3 & $\kappa$/F1 & .57167/.65717 & .56500/.65252 & .60500/.68432 \\
+Mumtaz2016 & PR/ROC & .95662/.95016 & .96563/.96419 & .94831/.94269 \\
+MentalArithmetic & PR/ROC & .68154/.89062 & .78280/.91855 & .71758/.86878 \\
 \bottomrule
-\end{tabular}}
+\end{tabularx}
+\tablenote{Each checkpoint is evaluated once on the test set. Cells report
+PR-AUC/AUROC for binary tasks and $\kappa$/weighted F1 for multiclass tasks.}
 \end{table*}
 
-\section{Padded Image Shapes}
+\begin{table*}[tbp]
+\centering
+\caption{Finalized ISRUC five-seed test values from validation-kappa-selected
+checkpoints.}
+\small
+\renewcommand{\arraystretch}{1.04}
+\begin{tabularx}{\textwidth}{@{}l*{5}{Y}Y@{}}
+\toprule
+Dataset & Seed 42 & Seed 43 & Seed 44 & Seed 45 & Seed 46 & Mean $\pm$ population std \\
+\midrule
+ISRUC ($\kappa$/F1) & .77291/.82287 & .77096/.81935 & .77465/.82294 &
+.76719/.81772 & .76654/.81563 & .77045$\pm$.00316/.81970$\pm$.00287 \\
+\bottomrule
+\end{tabularx}
+\tablenote{The EfficientNet-B0 recipe uses bottom/right-only padding and a
+truncated-normal classifier initialization with standard deviation .002. Each
+checkpoint is evaluated once on the test split.}
+\end{table*}
 
-\begin{table}[h]
+\section{Backbone Input Shapes}
+
+\begin{table}[tbp]
 \centering
 \caption{Backbone input shapes after zero padding to multiples of 32.}
 \small
-\begin{tabular}{lcc}
+\renewcommand{\arraystretch}{1.04}
+\begin{tabularx}{\linewidth}{@{}lYY@{}}
 \toprule
 Dataset & Before padding & After padding \\
 \midrule
-CHB-MIT / TUAB & $32\times1000$ & $32\times1024$ \\
+CHB-MIT / TUAB & $64\times500$ & $64\times512$ \\
 TUEV & $64\times250$ & $64\times256$ \\
 ISRUC & $72\times500$ & $96\times512$ \\
 FACED & $64\times1000$ & $64\times1024$ \\
-SEED-V & $496\times25$ & $512\times32$ \\
+SEED-V & $62\times200$ & $64\times224$ \\
 PhysioNet-MI & $64\times800$ & $64\times800$ \\
-SHU-MI & $128\times200$ & $128\times224$ \\
+SHU-MI & $64\times400$ & $64\times416$ \\
 BCIC2020-3 & $64\times600$ & $64\times608$ \\
-Mumtaz2016 & $38\times500$ & $64\times512$ \\
-MentalArithmetic & $40\times500$ & $64\times512$ \\
+Mumtaz2016 & $76\times250$ & $96\times256$ \\
+MentalArithmetic & $80\times250$ & $96\times256$ \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \section{Formal Evaluation Protocol}
@@ -154,7 +190,7 @@ entrypoint can silently change path resolution.
 Figure~\ref{fig:waveforms} shows representative raw EEG traces rendered in an
 MNE-like layout.  The figure is diagnostic rather than a training input.
 
-\begin{figure}[h]
+\begin{figure}[tbp]
 \centering
 \includegraphics[width=\linewidth]{downstream_waveforms_mne/all_datasets_mne_overview.png}
 \caption{Representative waveforms from the 11 downstream datasets.  Datasets
@@ -163,47 +199,54 @@ motivates an adapter that does not assume a single fixed image size.}
 \label{fig:waveforms}
 \end{figure}
 
-Figure~\ref{fig:repeat} illustrates why channel repetition and temporal folding
-must not be conflated.  Repeat creates identical neighboring bands, whereas
-folding places distinct temporal phases in those rows.
+Figure~\ref{fig:side-top-view} gives an intuitive side-view/top-view reading of
+the same samples. Figure~\ref{fig:seizure-folding} then applies the interface
+to an ictal CHB-MIT segment, while Fig.~\ref{fig:synthetic-folding-patterns}
+isolates canonical temporal motifs under controlled conditions.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=.9\linewidth]{channel_repeat_faced_sample.png}
-\caption{A FACED example with consecutive channel repeat factors 1, 2, and 4.
-Repetition changes sampling density along image height but adds no signal
-content.}
-\label{fig:repeat}
-\end{figure}
+\includegraphics[width=\textwidth]{side_top_view_folding.pdf}
+\caption{The same EEG can be read from two complementary viewpoints. In the
+side view (left), a human follows amplitude as a continuous function of time.
+After lossless $P=4$ folding (right), the identical samples form a
+two-dimensional phase--time texture: samples with phases $p=0,1,2,3$ become
+adjacent vertical rows, while each column advances by four original samples.
+The upper row is a controlled spike--slow-wave example and the lower row is a
+real five-second F7--T7 segment from a CHB-MIT seizure recording. The arrows
+indicate a change of representation and local adjacency, not a change in the
+signal itself.}
+\label{fig:side-top-view}
+\end{figure*}
 
-\section{Submission-Critical Experiments}
-\label{app:critical}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{seizure_lossless_folding.pdf}
+\caption{A real seizure example processed by the visual interface. The
+10-second CHB-MIT segment is labeled ictal and is resampled from 2560 to 2000
+samples before clipping and scaling. Panel A shows all 16 bipolar channels;
+panel B enlarges F7--T7 in the rhythmic interval; panel C shows the exact
+$64\times500$ tensor after $P=4$ folding; and panel D expands its four phase
+rows. All 32,000 values are retained.}
+\label{fig:seizure-folding}
+\end{figure*}
 
-The following items are required before treating this draft as an ICLR-ready
-empirical paper:
-
-\begin{enumerate}
-    \item reproduce \cbramod{} under identical splits, preprocessing, seeds,
-    and validation-only selection;
-    \item run random-initialized EfficientNet-B0 and frozen ImageNet linear
-    probes on all datasets;
-    \item compare $P=1,2,4,8$ under a fixed optimization budget on a
-    representative subset;
-    \item add EEGNet and DeepConvNet with matched validation tuning;
-    \item report parameters, FLOPs, peak memory, examples/second, and wall time;
-    \item evaluate channel permutation, channel dropout, and missing-electrode
-    robustness;
-    \item use subject-level bootstrap confidence intervals or paired tests;
-    \item freeze a prospective protocol that has not been chosen using the
-    current test sets.
-\end{enumerate}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{synthetic_folding_patterns.pdf}
+\caption{Controlled morphologies under lossless $P=4$ folding: spike--slow-wave
+complexes, recruited rhythmic ictal oscillation, and periodic discharges. The
+folded maps preserve the samples and expose motif-specific phase--time
+textures; they are illustrations rather than diagnostic templates.}
+\label{fig:synthetic-folding-patterns}
+\end{figure*}
 
 \section{Data and Code Reproducibility Statement}
 
 The codebase records exact dataset paths, input shapes, preprocessing, seeds,
 training arguments, logs, and validation-selected checkpoints.  Public data
 licenses and access conditions differ by benchmark; no dataset is redistributed
-with the paper.  Final release artifacts should include preprocessing hashes,
-split manifests, environment versions, and commands for every table row.  TUAB
-and TUEV version numbers must be included because sample counts differ across
-releases and historical pipelines.
+with the paper. Reproduction additionally requires the documented dataset
+versions and split manifests; TUAB and TUEV version numbers are especially
+important because sample counts differ across releases and historical
+pipelines.

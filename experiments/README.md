@@ -1,6 +1,6 @@
-# Downstream 11 Experiments
+# Downstream Experiments
 
-This folder keeps one source of truth for the 11 prepared downstream datasets.
+This folder keeps one source of truth for the prepared downstream datasets.
 
 ## Check
 
@@ -10,8 +10,8 @@ bash experiments/run_downstream.sh --check_only --all
 ```
 
 The current LMDB datasets require `lmdb` in the active Python environment:
-FACED, SEED-V, PhysioNet-MI, SHU-MI, BCIC2020-3, Mumtaz2016, and
-MentalArithmetic.
+FACED, SEED-V, PhysioNet-MI, SHU-MI, BCIC2020-3, Mumtaz2016,
+and MentalArithmetic.
 
 ## Dry Run
 
@@ -27,13 +27,6 @@ Run one dataset:
 
 ```bash
 bash experiments/run_downstream.sh --dataset CHB-MIT --cuda 0
-```
-
-The first phase-interleaved folding pilot compares `P=2` and `P=4` on three
-small datasets with one seed:
-
-```bash
-bash experiments/run_phase_fold_small_pilot.sh
 ```
 
 Common training parameters can be overridden on the runner command:
@@ -77,40 +70,40 @@ unknown arguments to `finetune_main.py`.
 The runner defaults to `HF_HUB_OFFLINE=1` for fast startup with cached timm
 weights. Use `--online_weights` if a new machine needs to download the weights.
 
-Run all 11 datasets sequentially:
+For locked runs, use the complete YAML directly. The YAML owns the dataset,
+recipe, seed list, output roots, and result notes; no shell script duplicates
+those values. The runner disables test-per-epoch evaluation for locked configs,
+selects checkpoints on validation, and evaluates each selected checkpoint once
+on the test split.
+
+The retained locked convenience launchers are:
+
+- `run_isruc_bottomrightpad_headstd002_5seed.sh`
+- `run_tuev_p4_bs32_wd5e4_ep10_headstd002_5seed.sh`
+- `run_physionet_mi_lr2e3_singlelr_ema995_5seed.sh`
+- `run_bcic2020_3_bottomrightpad_5seed.sh`
+- `run_mentalarithmetic_headstd002_ema995_5seed.sh`
+
+## Complete experiment configs
+
+For a reproducible run, prefer passing one complete YAML directly to the
+runner. The YAML can contain `dataset`, `backbone_name`, `vision`, `training`,
+`protocol`, and `output` sections:
 
 ```bash
-bash experiments/run_downstream.sh --all --cuda 0
+bash experiments/run_downstream.sh \
+  --config configs/backbones/efficientnet_b0/TUEV.yaml
 ```
 
-To reproduce the finalized EfficientNet-B0 recipes and reporting seeds, use
-the consolidated runner below. With no dataset arguments it schedules all 11;
-positional dataset names select a subset:
+Use the directory convention `configs/backbones/<backbone>/<dataset>.yaml` for
+new locked recipes. A backbone-only `default.yaml` can hold shared defaults;
+dataset files may extend it and record their five-seed results and notes.
 
-```bash
-
-Recipes that were recently re-frozen and still require a clean three-seed
-confirmation are marked `RERUN` by `--list`.  Their exact queue, parameters,
-and per-dataset launcher commands are recorded in
-`experiments/RERUN_QUEUE.md`.
-bash experiments/run_finalized_efficientnet_b0_3seed.sh
-bash experiments/run_finalized_efficientnet_b0_3seed.sh TUEV ISRUC
-```
-
-This runner disables test-per-epoch evaluation, selects checkpoints on the
-validation primary metric, and evaluates each selected checkpoint once on the
-test split. Historical search launchers remain in this directory for
-provenance but are not the recommended reproduction entrypoint.
+CLI flags remain available as explicit temporary overrides. `--dataset` and
+`--backbone_config` is retained for compatibility with older launchers.
 
 Logs are saved under `./experiments/logs/vision/<dataset_name>/`.
 Checkpoints are saved under `./experiments/checkpoints/<dataset_name>/`.
-
-Dataset-specific shell wrappers are kept in `experiments/scripts/` for
-convenience, for example:
-
-```bash
-bash experiments/scripts/train_tuab.sh --cuda 0
-```
 
 ## Configured Datasets
 
@@ -174,3 +167,23 @@ separate ISRUC folding algorithm. Override `P` with `--vision_fold_factor`.
 | BCIC2020-3 | `[B, 64, 600]` |
 | Mumtaz2016 | `[B, 19, 1000]` |
 | MentalArithmetic | `[B, 20, 1000]` |
+
+## Canonical Folded Shapes
+
+| Dataset | P | Before padding | Backbone input |
+| --- | ---: | --- | --- |
+| CHB-MIT | 4 | `[B,1,64,500]` | `[B,1,64,512]` |
+| TUAB | 4 | `[B,1,64,500]` | `[B,1,64,512]` |
+| TUEV | 4 | `[B,1,64,250]` | `[B,1,64,256]` |
+| ISRUC | 12 | `[B*20,1,72,500]` | `[B*20,1,96,512]` |
+| FACED | 2 | `[B,1,64,1000]` | `[B,1,64,1024]` |
+| SEED-V | 1 | `[B,1,62,200]` | `[B,1,64,224]` |
+| PhysioNet-MI | 1 | `[B,1,64,800]` | `[B,1,64,800]` |
+| SHU-MI | 2 | `[B,1,64,400]` | `[B,1,64,416]` |
+| BCIC2020-3 | 1 | `[B,1,64,600]` | `[B,1,64,608]` |
+| Mumtaz2016 | 4 | `[B,1,76,250]` | `[B,1,96,256]` |
+| MentalArithmetic | 4 | `[B,1,80,250]` | `[B,1,96,256]` |
+
+All canonical formal runs use BF16 AMP, validation-only checkpoint selection,
+and one final test evaluation per seed. Exact values and provenance are in
+`experiments/PHASE_FOLD_RESULTS.md`.

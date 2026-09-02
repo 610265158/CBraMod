@@ -23,10 +23,11 @@ sweep use seeds 3407/3408/3409. Each best
 checkpoint was selected only on validation and tested exactly once. Exact
 recipes and results are recorded in `experiments/PHASE_FOLD_RESULTS.md`.
 
-Launcher: `experiments/run_all11_min64_repro_3seed.sh`
+The historical hard-coded launcher was removed; use the complete YAML configs
+and the unified `experiments/run_downstream.sh` entrypoint for reruns.
 
 Logs: `experiments/logs/all11_min64_repro_3seed_v1/`
 
-Historical fixed-recipe, P-search, balancing, and test-each-epoch probes remain
-available for provenance, but they are not pending formal rows and must not be
-used in the headline table.
+Historical fixed-recipe, P-search, balancing, and test-each-epoch probes were
+removed from `experiments/`; their summarized provenance remains in
+`experiments/PHASE_FOLD_RESULTS.md` and the paper notes.

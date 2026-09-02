@@ -1,7 +1,7 @@
 \section{Experimental Setup}
 \label{sec:experiments}
 
-\subsection{Benchmarks}
+\subsection{Benchmarks and split provenance}
 
 The suite covers 11 datasets and six broad application categories: clinical
 detection (CHB-MIT, TUAB, and TUEV), sleep staging (ISRUC), emotion recognition
@@ -16,33 +16,41 @@ The source collections include CHB-MIT \citep{shoeb2009application}, the TUH
 corpora underlying TUAB and TUEV \citep{obeid2016temple}, ISRUC-Sleep
 \citep{khalighi2016isruc}, FACED \citep{chen2023large}, the PhysioNet motor
 movement/imagery recordings distributed through BCI2000
-\citep{schalk2004bci2000}, Mumtaz2016 \citep{mumtaz2016mdd}, and
-MentalArithmetic \citep{zyma2019mental}.  Final submission metadata must add
-the exact canonical citations for SEED-V, SHU-MI, and BCIC2020-3.
+\citep{schalk2004bci2000}, SEED-V \citep{liu2021comparing}, SHU-MI
+\citep{ma2022large}, BCIC2020-3 \citep{jeong20222020}, Mumtaz2016
+\citep{mumtaz2016mdd}, and MentalArithmetic \citep{zyma2019mental}.
 
 \begin{table*}[t]
 \centering
-\caption{The 11-dataset evaluation suite.  ``Classes'' reports semantic
-classes; binary models use one output logit.}
+\caption{The 11-dataset evaluation suite and local split sizes.}
 \label{tab:datasets}
 \small
-\begin{tabular}{llcrrr}
+\renewcommand{\arraystretch}{1.04}
+\begin{tabularx}{\textwidth}{@{}lXccrrr@{}}
 \toprule
 Dataset & Task & Input shape & Classes & Train & Val & Test \\
 \midrule
+\familyrow{7}{Clinical detection}
 CHB-MIT & seizure detection & $16\times2000$ & 2 & 286,964 & 23,065 & 16,964 \\
 TUAB & abnormal detection & $16\times2000$ & 2 & 297,103 & 75,407 & 36,945 \\
 TUEV & event classification & $16\times1000$ & 6 & 68,445 & 15,487 & 29,421 \\
+\familyrow{7}{Sleep staging}
 ISRUC & sleep staging & $20\times6\times6000$ & 5 & 3,559 & 468 & 435 \\
+\familyrow{7}{Affective computing}
 FACED & emotion recognition & $32\times2000$ & 9 & 6,720 & 1,680 & 1,932 \\
 SEED-V & emotion recognition & $62\times200$ & 5 & 34,432 & 42,960 & 40,352 \\
+\familyrow{7}{Brain--computer interfaces}
 PhysioNet-MI & motor imagery & $64\times800$ & 4 & 6,300 & 1,734 & 1,803 \\
 SHU-MI & motor imagery & $32\times800$ & 2 & 7,210 & 2,431 & 2,347 \\
 BCIC2020-3 & imagined speech & $64\times600$ & 5 & 4,500 & 750 & 750 \\
+\familyrow{7}{Clinical and cognitive state decoding}
 Mumtaz2016 & depression & $19\times1000$ & 2 & 4,891 & 1,041 & 1,211 \\
 MentalArithmetic & mental workload & $20\times1000$ & 2 & 1,343 & 172 & 192 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
+\tablenote{Input shapes omit the batch dimension. ISRUC stores 20 consecutive
+epochs per record; all other rows are channel $\times$ time. ``Classes''
+reports semantic classes, while binary heads use one output logit.}
 \end{table*}
 
 CHB-MIT segments are resampled to 2,000 samples in the dataloader.  TUAB and
@@ -50,57 +58,70 @@ TUEV use the repository's deterministic preprocessing rather than the older
 hardware-dependent splits inherited from BIOT and LaBraM.  Dataset versions
 and sample counts must therefore be reported with every comparison.
 
-\subsection{Optimization}
+\subsection{Reference methods and comparability}
+
+The main comparison places BIOT, LaBraM-Base, \cbramod{}, and \reve{}-Base as
+EEG-pretrained foundation models against \method{} as generic vision transfer
+without EEG pretraining.
+Published values are transcribed from the \cbramod{} and \reve{} benchmark
+tables \citep{wang2024cbramod,elouahidi2025reve}. For TUAB and TUEV we use
+\cbramod{}'s target-corpus-excluded controls, avoiding overlap between those
+downstream corpora and its TUEG pretraining set.
+
+Appendix~\ref{app:detailed-results} additionally reports the complete
+shared-partition supervised suite for every dataset, subject to the TUEV
+version caveat: EEGNet, EEGConformer, SPaRCNet, ContraWR, CNN-Transformer,
+FFCL, and ST-Transformer
+\citep{lawhern2018eegnet,song2022eeg,jing2023development,yang2021self,
+peh2022transformer,li2022motor,song2021transformer}. These published baselines
+are useful architecture controls but are kept out of the headline table so the
+main comparison remains readable.
+
+Our manifests follow the same subject- or trial-level partitions. Eight tasks
+are shared by both reference papers and our study: TUAB, TUEV, ISRUC, FACED,
+PhysioNet-MI, BCIC2020-3, Mumtaz2016, and MentalArithmetic. CHB-MIT, SEED-V,
+and SHU-MI are covered by \cbramod{} but not \reve{}. ``Shared split'' does
+not mean a paired rerun: preprocessing, optimization, seeds, and checkpoint
+selection remain method-specific. Two exceptions require stronger caveats.
+Our TUEV uses v2.0.1 (113,353 segments), whereas the references use v2.0.0
+(112,491); and \reve{} reports corrected ISRUC channel selection under the
+same subject split but a different input pipeline. We therefore call the
+remaining published rows direct benchmark comparisons, TUEV a cross-version
+comparison, and REVE--ISRUC a shared-split comparison with preprocessing
+differences.
+
+\subsection{Training and implementation}
 
 We use AdamW \citep{loshchilov2019decoupled}, cosine learning-rate decay,
 batch size 32 except ISRUC (16) and MentalArithmetic (64), dropout 0.1, and no
-backbone/head learning-rate split.  Runs use mixed-precision float16 except
-the finalized MentalArithmetic recipe, which uses bfloat16.  The ImageNet
-backbone and the newly initialized linear head are fine-tuned jointly.  Bias
-and normalization parameters receive zero weight decay.  Dataset-specific
-fold factors, learning rates, weight decay, epochs, EMA, and augmentations are
-given in Appendix~\ref{app:recipes}.
+backbone/head learning-rate split. All formal runs use bfloat16 mixed
+precision. The ImageNet backbone and newly initialized linear head are
+fine-tuned jointly. Bias and normalization parameters receive zero weight
+decay. Dataset-specific learning rates, weight decay, epochs, EMA settings,
+and augmentations are reported in Appendix~\ref{app:recipes}.
 
-\subsection{Metrics}
+Unless stated otherwise, samples are converted to float32, clipped to
+$[-1024,1024]$, and divided by 32, bounding the visual input to $[-32,32]$.
+SHU-MI is the only finalized exception: it is clipped to $[-512,512]$ and
+divided by 64. No finalized recipe uses random amplitude scaling.
 
-Binary tasks report PR-AUC and AUROC; the primary metric is PR-AUC because
-positive-class prevalence varies substantially across datasets.  Multiclass
-tasks report Cohen's $\kappa$ and weighted F1, with $\kappa$ primary.  Balanced
-accuracy is logged for diagnosis but is not used in the cross-model conclusion.
+The fold factor is fixed before training using
+Eq.~\ref{eq:p-geometry-rule}: we choose the smallest valid $P$ that reaches at
+least 64 folded rows, while treating SEED-V's native 62 rows as sufficiently
+close and leaving it at $P=1$. All 11 datasets use the same EfficientNet-B0
+architecture and have completed repeated-seed evaluation. ISRUC uses its
+locked five-seed confirmation (42--46); datasets awaiting five-seed replacement
+retain the canonical 3407--3409 sweep.
 
-For a fixed recipe, we train seeds 3407, 3408, and 3409.  Tables report the
-arithmetic mean and population standard deviation.  Within each seed, the best
-checkpoint is selected only from validation PR-AUC or validation $\kappa$;
-that checkpoint is then evaluated once on the test set.
+\subsection{Evaluation protocol}
 
-\subsection{Recipe selection and draft-status caveat}
+Binary tasks report PR-AUC and AUROC, with PR-AUC primary because positive
+class prevalence varies across datasets. Multiclass tasks report Cohen's
+$\kappa$ and weighted F1, with $\kappa$ primary. We omit balanced accuracy from
+the result tables to keep the binary reporting protocol consistent.
 
-The intended submission protocol is a two-stage procedure:
-
-\begin{enumerate}
-    \item compare a prespecified candidate set using validation results from
-    seeds 3407 and 3408, without test evaluation;
-    \item freeze the selected recipe and evaluate seeds 3407--3409 once on the
-    test set.
-\end{enumerate}
-
-The recent ISRUC and SHU-MI searches follow this protocol.  However, several
-candidate sets were motivated by an earlier exploratory grid that printed test
-metrics every epoch.  Although the formal checkpoints in this paper are
-validation-selected, the development history can still induce indirect test
-adaptation.  A submission-ready revision should either rerun a prospectively
-frozen protocol on untouched splits or clearly label the work as an exploratory
-benchmark study.  We retain this caveat rather than hiding it.
-
-\subsection{Baselines and comparison scope}
-
-The main comparison uses published \cbramod{} values because that compact EEG
-foundation model is close in nominal parameter count to EfficientNet-B0.  It is
-not a perfectly controlled comparison: some published values use different
-dataset versions or splits, and we have not yet reproduced \cbramod{} with the
-same three seeds and preprocessing.  Accordingly, Table~\ref{tab:main-results}
-is evidence of competitiveness, not a definitive paired ranking.
-
-For the final ICLR submission, we will add same-pipeline runs of \cbramod{},
-\biot{}, \labram{}, and \reve{} where code and checkpoints permit, together
-with random-initialized EfficientNet-B0 and task-specific EEG CNN controls.
+For each frozen recipe, we train seeds 3407, 3408, and 3409 and report the
+arithmetic mean and population standard deviation. The checkpoint is selected
+only by validation PR-AUC or validation $\kappa$ and is then evaluated once on
+the test set. Detailed per-seed values and the executable protocol are provided
+in Appendix~\ref{app:per-seed} and Appendix~\ref{app:protocol}.

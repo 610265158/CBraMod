@@ -1,19 +1,34 @@
-\section{Discussion, Limitations, and Broader Impact}
+\section{Discussion and Limitations}
 
 \subsection{What can be concluded about EEG foundation models?}
 
 The study is designed around a narrow but important question: full fine-tuning
 performance alone may not identify the source of a foundation model's gains.
 The corrected phase-interleaved benchmark shows that a compact generic encoder
-can be competitive on several tasks, while the deficits on FACED, TUAB, SHU-MI,
-and Mumtaz2016 reject a universal replacement claim.  More generally, new
+can be competitive on several tasks, while the deficits on FACED, TUAB,
+SEED-V, SHU-MI, and Mumtaz2016 reject a universal replacement claim. More generally, new
 foundation models should compare against strong architecture-and-geometry
 controls, not only task-specific networks with weaker transfer recipes.
+This interpretation is consistent with recent calls to reassess EEG
+foundation models against carefully tuned conventional decoders
+\citep{yang2026eegworth}.  The shared conclusion is methodological: stronger
+controls are needed before an improvement can be attributed specifically to
+large-scale EEG pretraining; it is not evidence that foundation models are
+categorically unnecessary.
+
+The expanded comparison also sharpens the role of scale and spatial identity.
+Against 69M-parameter \reve{}-Base, \method{} is higher on four of eight shared
+primary metrics, but two of those comparisons carry TUEV-version or
+ISRUC-preprocessing caveats. The clean PhysioNet-MI and BCIC2020-3 gains show
+that large-scale EEG pretraining is not always necessary under full
+fine-tuning. The TUAB and FACED deficits show the converse: physical
+coordinates and heterogeneous EEG pretraining remain valuable when montage or
+subject shift dominates.
 
 In the terminology of our title, vision pretraining is a \emph{conditional}
 free lunch: its weights are available without additional EEG pretraining, but
 their value depends on input geometry, downstream optimization, and task
-characteristics.  Five gains, two near ties, and four deficits across the 11
+characteristics. Six gains and five deficits across the 11
 benchmarks make this conditionality empirically visible.
 
 The results do \emph{not} show that EEG pretraining is unnecessary.  This work
@@ -26,19 +41,28 @@ unexpectedly strong component under end-to-end supervised adaptation.
 \subsection{Threats to validity}
 
 \begin{itemize}
-    \item \textbf{Baseline comparability.}  The \cbramod{} column contains
-    published references, not same-split three-seed reproductions.  TUAB and
-    TUEV dataset versions and splits are particularly sensitive.
+    \item \textbf{Baseline comparability.}  BIOT, LaBraM, \cbramod{}, and
+    \reve{} are published references, not local paired reproductions. The
+    manifests follow shared benchmark partitions, but preprocessing,
+    optimization, seeds, and model selection remain method-specific. TUEV is a
+    cross-version comparison (local v2.0.1 versus published v2.0.0), and
+    REVE--ISRUC uses corrected channel selection. For TUAB and TUEV we use
+    \cbramod{}'s target-corpus-excluded controls rather than its full-pretraining
+    results.
     \item \textbf{Development-set contamination.}  Formal runs evaluate the
     test set once, but some candidate recipes were inspired by earlier test-
     visible exploration.  A prospectively frozen rerun is needed for the final
     paper.
     \item \textbf{Dataset-specific recipes.}  The encoder is fixed, but $P$,
     optimization, input scale, and augmentation vary by dataset.  This is a
-    tuned downstream protocol, not zero-shot universality.
-    \item \textbf{Incomplete controls.}  Random initialization, EEGNet,
-    DeepConvNet, identical-pipeline foundation baselines, FLOPs, throughput,
-    and memory are not yet in the main table.
+    tuned downstream protocol, not zero-shot universality.  We introduce the
+    prespecified geometry rule in Eq.~\ref{eq:p-geometry-rule} to reduce this
+    freedom. The unified geometry confirmations are complete, while SEED-V
+    remains a measured counterexample to shape-only selection.
+    \item \textbf{Incomplete controls.} Random initialization, matched
+    supervised architectures,
+    identical-pipeline foundation baselines, FLOPs, throughput, and memory are
+    not yet in the main table.
     \item \textbf{Statistical uncertainty.}  Three seeds are informative but
     limited, especially for MentalArithmetic.  Subject-level bootstrap
     intervals and paired tests would better reflect evaluation uncertainty.

@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from .backbones import load_backbone_config, profile_training_overrides
+
 
 TRAINING_KEYS = (
     'lr',
@@ -689,10 +691,12 @@ def get_dataset_config(name):
     return deepcopy(DOWNSTREAM_11_CONFIGS[name])
 
 
-def training_config_for(name, model_arch='vision', backbone_name=None):
+def training_config_for(name, model_arch='vision', backbone_name=None, backbone_config=None):
     cfg = get_dataset_config(name)
     training = dict(cfg['training'])
     training.update(model_training_overrides(cfg, model_arch, backbone_name))
+    if backbone_config:
+        training.update(profile_training_overrides(load_backbone_config(backbone_config, dataset=name)))
     return training
 
 

@@ -1,6 +1,7 @@
 einops
 h5py
 lmdb
+PyYAML
 matplotlib
 mne
 numpy

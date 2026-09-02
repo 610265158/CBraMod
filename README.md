@@ -85,7 +85,8 @@ Start one downstream run:
 bash experiments/run_downstream.sh --dataset TUAB --cuda 0
 ```
 
-Dataset-specific compatibility wrappers are under `experiments/scripts/`.
+Locked experiment launchers and complete YAML configs are documented under
+`experiments/README.md`.
 See [`experiments/README.md`](experiments/README.md) for exact shapes,
 preprocessing, flags, and all 11 configured datasets.
 

@@ -1,12 +1,16 @@
 % Finalized phase-interleaved EfficientNet-B0 results. Every checkpoint was
 % selected using the validation primary metric and evaluated once on test.
-% Standard deviations are population statistics over seeds 3407--3409.
+% Standard deviations are population statistics. ISRUC uses its locked
+% five-seed recipe (42--46); remaining unfinished five-seed conversions retain
+% the canonical 3407--3409 sweep values.
 
 \newcommand{\numFinalized}{11}
 \newcommand{\numBenchmarks}{11}
 
 % Published CBraMod reference values. Binary: PR-AUC / AUROC.
-% Multiclass: Cohen's kappa / weighted F1.
+% Multiclass: Cohen's kappa / weighted F1. For TUAB and TUEV we use the
+% paper's target-corpus-excluded controls, because both datasets are subsets
+% of the TUEG pretraining corpus used by the full CBraMod model.
 \newcommand{\cbCHB}{\ensuremath{.3689/.8892}}
 \newcommand{\cbTUAB}{\ensuremath{.9221/.9156}}
 \newcommand{\cbTUEV}{\ensuremath{.6744/.8331}}
@@ -19,29 +23,29 @@
 \newcommand{\cbMumtaz}{\ensuremath{.9923/.9921}}
 \newcommand{\cbMental}{\ensuremath{.6267/.7905}}
 
-% Corrected phase-interleaved EfficientNet-B0 three-seed results.
-\newcommand{\ourCHB}{\ensuremath{.4426\pm.0271\,/\,.9125\pm.0095}}
-\newcommand{\ourTUAB}{\ensuremath{.8846\pm.0022\,/\,.8782\pm.0008}}
-\newcommand{\ourTUEV}{\ensuremath{.7163\pm.0294\,/\,.8485\pm.0174}}
-\newcommand{\ourISRUC}{\ensuremath{.7788\pm.0016\,/\,.8268\pm.0005}}
-\newcommand{\ourFACED}{\ensuremath{.3670\pm.0285\,/\,.4445\pm.0265}}
-\newcommand{\ourSEEDV}{\ensuremath{.2565\pm.0084\,/\,.4109\pm.0066}}
-\newcommand{\ourPhysio}{\ensuremath{.5333\pm.0038\,/\,.6498\pm.0023}}
-\newcommand{\ourSHU}{\ensuremath{.6836\pm.0266\,/\,.6756\pm.0279}}
-\newcommand{\ourBCIC}{\ensuremath{.5139\pm.0157\,/\,.6119\pm.0127}}
-\newcommand{\ourMumtaz}{\ensuremath{.9737\pm.0018\,/\,.9712\pm.0033}}
-\newcommand{\ourMental}{\ensuremath{.7148\pm.0364\,/\,.8370\pm.0040}}
+% Corrected phase-interleaved EfficientNet-B0 repeated-seed results.
+\newcommand{\ourCHB}{\ensuremath{.4177\pm.0768\,/\,.9147\pm.0079}}
+\newcommand{\ourTUAB}{\ensuremath{.8703\pm.0033\,/\,.8697\pm.0048}}
+\newcommand{\ourTUEV}{\ensuremath{.6889\pm.0371\,/\,.8330\pm.0217}}
+\newcommand{\ourISRUC}{\ensuremath{.7705\pm.0032\,/\,.8197\pm.0029}}
+\newcommand{\ourFACED}{\ensuremath{.3737\pm.0237\,/\,.4476\pm.0194}}
+\newcommand{\ourSEEDV}{\ensuremath{.2206\pm.0061\,/\,.3819\pm.0052}}
+\newcommand{\ourPhysio}{\ensuremath{.5415\pm.0178\,/\,.6566\pm.0128}}
+\newcommand{\ourSHU}{\ensuremath{.6780\pm.0049\,/\,.6656\pm.0060}}
+\newcommand{\ourBCIC}{\ensuremath{.5806\pm.0175\,/\,.6647\pm.0140}}
+\newcommand{\ourMumtaz}{\ensuremath{.9569\pm.0071\,/\,.9524\pm.0089}}
+\newcommand{\ourMental}{\ensuremath{.7273\pm.0419\,/\,.8927\pm.0204}}
 
 % Primary-metric deltas: EfficientNet-B0 mean minus published CBraMod value,
 % expressed in percentage points.
-\newcommand{\deltaCHB}{\ensuremath{+7.37}}
-\newcommand{\deltaTUAB}{\ensuremath{-3.75}}
-\newcommand{\deltaTUEV}{\ensuremath{+4.19}}
-\newcommand{\deltaISRUC}{\ensuremath{+3.46}}
-\newcommand{\deltaFACED}{\ensuremath{-13.71}}
-\newcommand{\deltaSEEDV}{\ensuremath{-0.04}}
-\newcommand{\deltaPhysio}{\ensuremath{+1.11}}
-\newcommand{\deltaSHU}{\ensuremath{-3.03}}
-\newcommand{\deltaBCIC}{\ensuremath{+9.23}}
-\newcommand{\deltaMumtaz}{\ensuremath{-1.86}}
-\newcommand{\deltaMental}{\ensuremath{+8.81}}
+\newcommand{\deltaCHB}{\ensuremath{+4.88}}
+\newcommand{\deltaTUAB}{\ensuremath{-5.18}}
+\newcommand{\deltaTUEV}{\ensuremath{+1.45}}
+\newcommand{\deltaISRUC}{\ensuremath{+2.63}}
+\newcommand{\deltaFACED}{\ensuremath{-13.04}}
+\newcommand{\deltaSEEDV}{\ensuremath{-3.63}}
+\newcommand{\deltaPhysio}{\ensuremath{+1.93}}
+\newcommand{\deltaSHU}{\ensuremath{-3.59}}
+\newcommand{\deltaBCIC}{\ensuremath{+15.90}}
+\newcommand{\deltaMumtaz}{\ensuremath{-3.55}}
+\newcommand{\deltaMental}{\ensuremath{+10.06}}

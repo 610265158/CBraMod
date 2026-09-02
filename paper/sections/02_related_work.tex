@@ -1,6 +1,7 @@
 \section{Related Work}
 
-\paragraph{Task-specific EEG architectures.}
+\subsection{Task-specific decoders and EEG foundation models}
+
 EEGNet uses compact temporal and depthwise spatial convolutions tailored to
 brain--computer interfaces \citep{lawhern2018eegnet}.  DeepConvNet and
 ShallowConvNet similarly encode useful signal-processing priors through
@@ -8,7 +9,6 @@ temporal filters, spatial filters, and pooling \citep{schirrmeister2017deep}.
 These networks establish that convolution is a natural EEG primitive, but they
 typically assume a fixed montage and are optimized within one benchmark.
 
-\paragraph{EEG foundation models.}
 \biot{} maps heterogeneous biosignals to frequency-domain tokens and trains
 across datasets \citep{yang2024biot}.  \labram{} uses masked EEG modeling at
 large scale \citep{jiang2024labram}.  \cbramod{} combines time-domain patches,
@@ -19,7 +19,16 @@ subjects and uses physical electrode coordinates to support unseen montages
 EEG-domain pretraining.  We instead hold domain pretraining absent and ask how
 much performance follows from geometry plus a mature generic backbone.
 
-\paragraph{Vision transfer beyond natural images.}
+Recent work has also explicitly questioned whether EEG foundation models
+consistently justify their added complexity when compared with carefully tuned
+traditional decoders across diverse BCI tasks \citep{yang2026eegworth}.  This
+critique motivates stronger controls, but does not imply that EEG pretraining
+is uniformly ineffective.  Our study tests a complementary control: a compact
+generic encoder with no EEG pretraining, paired with a lossless geometry
+adapter and evaluated across 11 tasks.
+
+\subsection{Vision transfer and lossless rearrangement}
+
 ImageNet pretraining provides transferable low- and mid-level filters
 \citep{deng2009imagenet}.  EfficientNet jointly scales network width, depth,
 and image resolution \citep{tan2019efficientnet}; vision transformers provide
@@ -28,7 +37,6 @@ vision models have been applied to spectrograms and topographic EEG maps, but
 these representations introduce a Fourier transform, interpolation, or an
 electrode layout.  Our input remains the raw waveform and changes indices only.
 
-\paragraph{Rearrangement operators.}
 Pixel shuffle and space-to-depth operations demonstrate that a tensor
 reindexing can substantially alter the computation performed by a fixed
 convolutional architecture \citep{shi2016realtime}.  Temporal folding is
@@ -37,3 +45,16 @@ electrode--phase height.  Each folded column contains $P$ consecutive samples,
 while each row follows one phase at stride $P$.  This explicit signal meaning
 lets us analyze the original temporal offsets represented by local 2D
 neighbors.
+
+\subsection{Positioning of this work}
+
+The closest empirical references are \cbramod{} and \reve{}, because their
+benchmark suites supply the subject- or trial-level partitions used here.
+They also expose two complementary EEG priors: \cbramod{} models temporal and
+cross-channel structure with a compact criss-cross transformer, whereas
+\reve{} uses physical electrode coordinates and 69M parameters pretrained on
+92 datasets. Our question is different from proposing another EEG foundation
+model. We ask how far a 4.01M-parameter ImageNet encoder can go after only a
+lossless change of input geometry. This comparison separates three possible
+sources of downstream performance---task architecture, EEG pretraining, and
+representation geometry---that are otherwise easy to conflate.

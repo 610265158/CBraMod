@@ -1,0 +1,421 @@
+\section{Detailed Results}
+\label{app:detailed-results}
+
+Following the per-dataset presentation of \reve{} Appendix C
+\citep{elouahidi2025reve}, this section reports both metrics for every dataset.
+Published supervised and foundation-model values are transcribed from the
+shared benchmark tables in \cbramod{} and \reve{}
+\citep{wang2024cbramod,elouahidi2025reve}. The supervised suite contains
+EEGNet, EEGConformer, SPaRCNet, ContraWR, CNN-Transformer, FFCL, and
+ST-Transformer. All use the same subject- or trial-level partition as our
+pipeline except for the documented TUEV version difference. Binary tasks
+report PR-AUC/AUROC; multiclass tasks report Cohen's $\kappa$/weighted F1.
+Balanced accuracy is omitted because it was not part of our frozen formal
+reporting protocol and cannot be reconstructed from the saved aggregate
+metrics.
+Published and local rows still differ in preprocessing, optimization, seeds,
+and checkpoint selection, so these are direct benchmark comparisons rather
+than paired reproductions. Bold denotes the best displayed mean per metric.
+
+\subsection{CHB-MIT: Seizure Detection}
+
+CHB-MIT \citep{shoeb2009application} uses subjects 1--19 for training,
+20--21 for validation, and 22--23 for testing. The benchmark contains 326,993
+ten-second segments after resampling and uses PR-AUC as its primary metric.
+
+\begin{table}[t]
+\centering
+\caption{CHB-MIT seizure detection under the shared subject split.}
+\label{tab:detail-chb}
+\begin{detailresults}
+\toprule
+Method & PR-AUC $\uparrow$ & AUROC $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.1914\pm.0182$ & $.8048\pm.0136$ \\
+EEGConformer & $.2209\pm.0215$ & $.8226\pm.0170$ \\
+SPaRCNet & $.1247\pm.0119$ & $.8143\pm.0148$ \\
+ContraWR & $.2264\pm.0174$ & $.8097\pm.0114$ \\
+CNN-Transformer & $.2479\pm.0227$ & $.8662\pm.0082$ \\
+FFCL & $.2049\pm.0346$ & $.8271\pm.0051$ \\
+ST-Transformer & $.1422\pm.0094$ & $.8237\pm.0491$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.3277\pm.0460$ & $.8761\pm.0284$ \\
+\labram{}-Base & $.3287\pm.0402$ & $.8679\pm.0199$ \\
+\cbramod{} & $.3689\pm.0382$ & $.8892\pm.0154$ \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & \textbf{$.4177\pm.0768$} & \textbf{$.9147\pm.0079$} \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{TUAB: Abnormal EEG Detection}
+
+TUAB \citep{obeid2016temple} uses the shared
+297,103/75,407/36,945 train/validation/test split. We report \cbramod{}'s
+target-corpus-excluded control because TUAB is contained in its TUEG
+pretraining source.
+
+\begin{table}[t]
+\centering
+\caption{TUAB abnormal EEG detection under the shared split.}
+\label{tab:tuab-comparison}
+\begin{detailresults}
+\toprule
+Method & PR-AUC $\uparrow$ & AUROC $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.8299\pm.0043$ & $.8412\pm.0031$ \\
+EEGConformer & $.8427\pm.0054$ & $.8445\pm.0038$ \\
+SPaRCNet & $.8414\pm.0018$ & $.8676\pm.0012$ \\
+ContraWR & $.8421\pm.0104$ & $.8456\pm.0074$ \\
+CNN-Transformer & $.8433\pm.0039$ & $.8461\pm.0013$ \\
+FFCL & $.8448\pm.0065$ & $.8569\pm.0051$ \\
+ST-Transformer & $.8521\pm.0026$ & $.8707\pm.0019$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.8792\pm.0023$ & $.8815\pm.0043$ \\
+\labram{}-Base & $.8965\pm.0016$ & $.9022\pm.0009$ \\
+\labram{}-Large & $.9130\pm.0005$ & $.9127\pm.0005$ \\
+\labram{}-Huge & $.9204\pm.0011$ & $.9162\pm.0016$ \\
+\cbramod{} (excluding TUAB) & $.9221\pm.0015$ & $.9156\pm.0017$ \\
+\reve{}-Base & \textbf{$.9281\pm.0009$} & \textbf{$.9245\pm.0013$} \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & $.8703\pm.0033$ & $.8697\pm.0048$ \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{TUEV: Event Type Classification}
+
+TUEV \citep{obeid2016temple} uses the original test split and an 80/20
+subject-level division of the original training set. Published rows use
+v2.0.0 (112,491 segments), whereas our pipeline uses v2.0.1 (113,353), so the
+local row is a cross-version comparison. The \cbramod{} row excludes TUEV
+from its TUEG pretraining corpus.
+
+\begin{table}[t]
+\centering
+\caption{TUEV event classification; the local row uses v2.0.1 and published
+rows use v2.0.0.}
+\label{tab:detail-tuev}
+\begin{detailresults}
+\toprule
+Method & $\kappa$ $\uparrow$ & Weighted F1 $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.3577\pm.0155$ & $.6539\pm.0120$ \\
+EEGConformer & $.3967\pm.0195$ & $.6983\pm.0152$ \\
+SPaRCNet & $.4233\pm.0181$ & $.7024\pm.0104$ \\
+ContraWR & $.3912\pm.0237$ & $.6893\pm.0136$ \\
+CNN-Transformer & $.3815\pm.0134$ & $.6854\pm.0293$ \\
+FFCL & $.3732\pm.0188$ & $.6783\pm.0120$ \\
+ST-Transformer & $.3765\pm.0306$ & $.6823\pm.0190$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.5273\pm.0249$ & $.7492\pm.0082$ \\
+\labram{}-Base & $.6637\pm.0093$ & $.8312\pm.0052$ \\
+\labram{}-Large & $.6622\pm.0136$ & $.8315\pm.0040$ \\
+\labram{}-Huge & $.6745\pm.0195$ & $.8329\pm.0086$ \\
+\cbramod{} (excluding TUEV) & $.6744\pm.0121$ & $.8331\pm.0071$ \\
+\reve{}-Base & $.6783\pm.0199$ & \textbf{$.8451\pm.0129$} \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & \textbf{$.6889\pm.0371$} & $.8330\pm.0217$ \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{ISRUC: Sleep Staging}
+
+ISRUC Subgroup 1 \citep{khalighi2016isruc} uses subjects 1--80, 81--90, and
+91--100 for training, validation, and testing. Each example retains 20
+consecutive 30-second epochs. REVE follows the same subject split but corrects
+a channel-selection issue in the inherited preprocessing, so its row is not
+input-identical to the other published baselines.
+
+\begin{table}[t]
+\centering
+\caption{ISRUC five-class sleep staging under the shared subject split.}
+\label{tab:detail-isruc}
+\begin{detailresults}
+\toprule
+Method & $\kappa$ $\uparrow$ & Weighted F1 $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.7040\pm.0173$ & $.7513\pm.0124$ \\
+EEGConformer & $.7143\pm.0162$ & $.7634\pm.0151$ \\
+SPaRCNet & $.7097\pm.0132$ & $.7624\pm.0092$ \\
+ContraWR & $.7178\pm.0156$ & $.7610\pm.0137$ \\
+CNN-Transformer & $.7129\pm.0121$ & $.7719\pm.0105$ \\
+FFCL & $.7016\pm.0291$ & $.7614\pm.0197$ \\
+ST-Transformer & $.7013\pm.0352$ & $.7681\pm.0175$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.7192\pm.0231$ & $.7790\pm.0146$ \\
+\labram{}-Base & $.7231\pm.0182$ & $.7810\pm.0133$ \\
+\cbramod{} & $.7442\pm.0152$ & $.8011\pm.0099$ \\
+\reve{}-Base & $.7500\pm.0156$ & $.8005\pm.0135$ \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & \textbf{$.7705\pm.0032$} & \textbf{$.8197\pm.0029$} \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{FACED: Emotion Recognition}
+
+FACED \citep{chen2023large} uses subjects 1--80 for training, 81--100 for
+validation, and 101--123 for testing across nine emotion classes.
+
+\begin{table}[t]
+\centering
+\caption{FACED nine-class emotion recognition under the shared subject split.}
+\label{tab:detail-faced}
+\begin{detailresults}
+\toprule
+Method & $\kappa$ $\uparrow$ & Weighted F1 $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.3342\pm.0251$ & $.4124\pm.0141$ \\
+EEGConformer & $.3858\pm.0186$ & $.4514\pm.0107$ \\
+SPaRCNet & $.3978\pm.0289$ & $.4729\pm.0133$ \\
+ContraWR & $.4231\pm.0151$ & $.4884\pm.0074$ \\
+CNN-Transformer & $.4017\pm.0168$ & $.4720\pm.0125$ \\
+FFCL & $.3987\pm.0383$ & $.4699\pm.0145$ \\
+ST-Transformer & $.4137\pm.0133$ & $.4795\pm.0096$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.4476\pm.0254$ & $.5136\pm.0112$ \\
+\labram{}-Base & $.4698\pm.0188$ & $.5288\pm.0102$ \\
+\cbramod{} & $.5041\pm.0122$ & $.5618\pm.0093$ \\
+\reve{}-Base & \textbf{$.5080\pm.0191$} & \textbf{$.5659\pm.0172$} \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & $.3737\pm.0237$ & $.4476\pm.0194$ \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{SEED-V: Emotion Recognition}
+
+SEED-V \citep{liu2021comparing} divides the 15 trials in each session into
+five training, five validation, and five test trials. REVE does not report this
+dataset.
+
+\begin{table}[t]
+\centering
+\caption{SEED-V five-class emotion recognition under the shared trial split.}
+\label{tab:detail-seedv}
+\begin{detailresults}
+\toprule
+Method & $\kappa$ $\uparrow$ & Weighted F1 $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.1006\pm.0143$ & $.2749\pm.0098$ \\
+EEGConformer & $.1772\pm.0174$ & $.3487\pm.0136$ \\
+SPaRCNet & $.1121\pm.0139$ & $.2979\pm.0083$ \\
+ContraWR & $.1905\pm.0188$ & $.3544\pm.0121$ \\
+CNN-Transformer & $.2072\pm.0183$ & $.3642\pm.0088$ \\
+FFCL & $.2078\pm.0201$ & $.3645\pm.0132$ \\
+ST-Transformer & $.1083\pm.0121$ & $.2833\pm.0105$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.2261\pm.0262$ & $.3856\pm.0203$ \\
+\labram{}-Base & $.2386\pm.0209$ & $.3974\pm.0111$ \\
+\cbramod{} & \textbf{$.2569\pm.0143$} & \textbf{$.4101\pm.0108$} \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & $.2206\pm.0061$ & $.3819\pm.0052$ \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{PhysioNet-MI: Motor Imagery}
+
+PhysioNet-MI \citep{schalk2004bci2000} uses subjects 1--70 for training,
+71--89 for validation, and 90--109 for testing across four motor-imagery
+classes.
+
+\begin{table}[t]
+\centering
+\caption{PhysioNet-MI four-class motor-imagery classification under the shared
+subject split.}
+\label{tab:detail-physio}
+\begin{detailresults}
+\toprule
+Method & $\kappa$ $\uparrow$ & Weighted F1 $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.4468\pm.0199$ & $.5796\pm.0115$ \\
+EEGConformer & $.4736\pm.0171$ & $.6062\pm.0095$ \\
+SPaRCNet & $.4564\pm.0234$ & $.5937\pm.0147$ \\
+ContraWR & $.4527\pm.0248$ & $.5918\pm.0116$ \\
+CNN-Transformer & $.4725\pm.0223$ & $.6041\pm.0105$ \\
+FFCL & $.4323\pm.0182$ & $.5701\pm.0079$ \\
+ST-Transformer & $.4712\pm.0199$ & $.6053\pm.0075$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.4875\pm.0272$ & $.6158\pm.0197$ \\
+\labram{}-Base & $.4912\pm.0192$ & $.6177\pm.0141$ \\
+\cbramod{} & $.5222\pm.0169$ & $.6427\pm.0100$ \\
+\reve{}-Base & $.5306\pm.0187$ & $.6484\pm.0170$ \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & \textbf{$.5415\pm.0178$} & \textbf{$.6566\pm.0128$} \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{SHU-MI: Motor Imagery}
+
+SHU-MI \citep{ma2022large} uses subjects 1--15 for training, 16--20 for
+validation, and 21--25 for testing. REVE does not report this dataset.
+
+\begin{table}[t]
+\centering
+\caption{SHU-MI binary motor-imagery classification under the shared subject
+split.}
+\label{tab:detail-shu}
+\begin{detailresults}
+\toprule
+Method & PR-AUC $\uparrow$ & AUROC $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.6311\pm.0142$ & $.6283\pm.0152$ \\
+EEGConformer & $.6370\pm.0093$ & $.6351\pm.0101$ \\
+SPaRCNet & $.6510\pm.0062$ & $.6431\pm.0082$ \\
+ContraWR & $.6315\pm.0105$ & $.6273\pm.0113$ \\
+CNN-Transformer & $.6412\pm.0076$ & $.6323\pm.0082$ \\
+FFCL & $.5943\pm.0172$ & $.6014\pm.0168$ \\
+ST-Transformer & $.6394\pm.0122$ & $.6431\pm.0111$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.6770\pm.0119$ & $.6609\pm.0127$ \\
+\labram{}-Base & $.6761\pm.0083$ & $.6604\pm.0091$ \\
+\cbramod{} & \textbf{$.7139\pm.0088$} & \textbf{$.6988\pm.0068$} \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & $.6780\pm.0049$ & $.6656\pm.0060$ \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{BCIC2020-3: Imagined Speech}
+
+BCIC2020-3 \citep{jeong20222020} uses its official 60/10/10 trials per class
+for training, validation, and testing across 15 subjects and five imagined
+phrases.
+
+\begin{table}[t]
+\centering
+\caption{BCIC2020-3 five-class imagined-speech classification under the
+official split.}
+\label{tab:detail-bcic}
+\begin{detailresults}
+\toprule
+Method & $\kappa$ $\uparrow$ & Weighted F1 $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.3016\pm.0123$ & $.4413\pm.0102$ \\
+EEGConformer & $.3133\pm.0183$ & $.4488\pm.0154$ \\
+SPaRCNet & $.3033\pm.0233$ & $.4420\pm.0108$ \\
+ContraWR & $.3078\pm.0218$ & $.4407\pm.0182$ \\
+CNN-Transformer & $.3166\pm.0118$ & $.4506\pm.0127$ \\
+FFCL & $.3301\pm.0359$ & $.4689\pm.0205$ \\
+ST-Transformer & $.2941\pm.0159$ & $.4247\pm.0138$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.3650\pm.0176$ & $.4917\pm.0079$ \\
+\labram{}-Base & $.3800\pm.0242$ & $.5054\pm.0205$ \\
+\cbramod{} & $.4216\pm.0163$ & $.5383\pm.0096$ \\
+\reve{}-Base & $.4543\pm.0154$ & $.5633\pm.0124$ \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & \textbf{$.5806\pm.0175$} & \textbf{$.6647\pm.0140$} \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{Mumtaz2016: Depression Detection}
+
+Mumtaz2016 \citep{mumtaz2016mdd} uses 24 MDD/19 control subjects for
+training, 5/4 for validation, and 5/5 for testing.
+
+\begin{table}[t]
+\centering
+\caption{Mumtaz2016 depression detection under the shared subject split.}
+\label{tab:detail-mumtaz}
+\begin{detailresults}
+\toprule
+Method & PR-AUC $\uparrow$ & AUROC $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.9626\pm.0095$ & $.9639\pm.0093$ \\
+EEGConformer & $.9684\pm.0105$ & $.9702\pm.0101$ \\
+SPaRCNet & $.9754\pm.0065$ & $.9781\pm.0083$ \\
+ContraWR & $.9589\pm.0102$ & $.9621\pm.0092$ \\
+CNN-Transformer & $.9757\pm.0074$ & $.9742\pm.0059$ \\
+FFCL & $.9717\pm.0021$ & $.9753\pm.0033$ \\
+ST-Transformer & $.9578\pm.0086$ & $.9594\pm.0059$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.9736\pm.0034$ & $.9758\pm.0042$ \\
+\labram{}-Base & $.9798\pm.0093$ & $.9782\pm.0057$ \\
+\cbramod{} & $.9923\pm.0032$ & $.9921\pm.0025$ \\
+\reve{}-Base & \textbf{$.9961\pm.0013$} & \textbf{$.9957\pm.0015$} \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & $.9569\pm.0071$ & $.9524\pm.0089$ \\
+\bottomrule
+\end{detailresults}
+\end{table}
+
+\subsection{MentalArithmetic: Mental Workload}
+
+MentalArithmetic \citep{zyma2019mental} uses subjects 1--28 for training,
+29--32 for validation, and 33--36 for testing.
+
+\begin{table}[t]
+\centering
+\caption{MentalArithmetic binary workload classification under the shared
+subject split.}
+\label{tab:detail-mental}
+\begin{detailresults}
+\toprule
+Method & PR-AUC $\uparrow$ & AUROC $\uparrow$ \\
+\midrule
+\familyrow{3}{Supervised architectures}
+EEGNet & $.5763\pm.0102$ & $.7321\pm.0108$ \\
+EEGConformer & $.5829\pm.0134$ & $.7424\pm.0128$ \\
+SPaRCNet & $.5825\pm.0193$ & $.7418\pm.0132$ \\
+ContraWR & $.5787\pm.0164$ & $.7332\pm.0082$ \\
+CNN-Transformer & $.5777\pm.0285$ & $.7258\pm.0336$ \\
+FFCL & $.5786\pm.0266$ & $.7330\pm.0198$ \\
+ST-Transformer & $.5672\pm.0259$ & $.7132\pm.0174$ \\
+\midrule
+\familyrow{3}{EEG foundation models}
+\biot{} & $.6004\pm.0195$ & $.7536\pm.0144$ \\
+\labram{}-Base & $.5999\pm.0155$ & $.7721\pm.0093$ \\
+\cbramod{} & $.6267\pm.0099$ & $.7905\pm.0073$ \\
+\reve{}-Base & \textbf{$.7470\pm.0807$} & $.8450\pm.0514$ \\
+\midrule
+\familyrow{3}{Generic vision transfer}
+\oursrow
+\method{} (B0) & $.7273\pm.0419$ & \textbf{$.8927\pm.0204$} \\
+\bottomrule
+\end{detailresults}
+\end{table}

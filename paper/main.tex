@@ -1,3 +1,4 @@
+\PassOptionsToPackage{table}{xcolor}
 \documentclass[10pt]{article}
 
 % Drop the official ICLR style file into paper/ when it becomes available.
@@ -30,14 +31,19 @@
 \newcommand{\labram}{\textsc{LaBraM}}
 \newcommand{\biot}{\textsc{BIOT}}
 \newcommand{\good}[1]{\textbf{#1}}
-\newcommand{\pending}[1]{\textcolor{orange!80!black}{\textit{#1}}}
-\newcommand{\draftnote}[1]{%
-  \begin{center}
-  \fcolorbox{orange!70!black}{orange!7}{%
-    \begin{minipage}{0.94\linewidth}\small\textbf{Draft note.} #1\end{minipage}}
-  \end{center}}
 \newcommand{\eg}{e.g.,\ }
 \newcommand{\ie}{i.e.,\ }
+\newcommand{\oursrow}{\rowcolor{blue!7}}
+\newcommand{\familyrow}[2]{\rowcolor{gray!12}\multicolumn{#1}{@{}l}{\emph{#2}}\\}
+\newcommand{\tablenote}[1]{%
+  \vspace{3pt}\parbox{\linewidth}{\footnotesize\textit{Note.}~#1}}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newenvironment{detailresults}{%
+  \footnotesize
+  \setlength{\tabcolsep}{5pt}%
+  \renewcommand{\arraystretch}{1.05}%
+  \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lcc@{}}%
+}{\end{tabular*}}
 
 \newtheorem{proposition}{Proposition}
 \newtheorem{hypothesis}{Hypothesis}

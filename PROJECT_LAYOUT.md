@@ -15,10 +15,12 @@ the paths can be overridden from the command line.
 | `finetune_evaluator.py` | Metric calculation for validation and test splits. |
 | `pretrain_main.py` | EEG-Vision VICReg pretraining entrypoint. |
 | `experiments/run_downstream.sh` | Unified shell entrypoint for downstream experiments. |
-| `experiments/scripts/train_*.sh` | Backward-compatible dataset wrappers around `experiments/run_downstream.sh`. |
+| `configs/backbones/*/*.yaml` | Backbone profiles and dataset-specific locked configurations, including recipes, seeds, results, and notes where finalized. |
+| `experiments/run_*5seed.sh` | Locked five-seed launchers for finalized recipes. |
 
-Two wrapper names come from the original project naming: `train_speech.sh`
-runs `BCIC2020-3`, and `train_stress.sh` runs `MentalArithmetic`.
+Exploratory and per-dataset compatibility wrappers were removed from
+`experiments/`; use `experiments/run_downstream.sh --config <yaml>` for new
+runs.
 
 ## Dataset Code
 

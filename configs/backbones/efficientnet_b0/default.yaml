@@ -1,0 +1,8 @@
+backbone_name: efficientnet_b0
+description: Canonical EfficientNet-B0 downstream baseline.
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+notes: >-
+  Dataset-specific recipes and finalized results live in the dataset YAML
+  files in this directory.

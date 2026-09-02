@@ -1,26 +1,33 @@
 import os
-import mne
 import numpy as np
+import mne
 import lmdb
 import pickle
+
+# MNE versions using ``np.in1d`` need this compatibility alias with NumPy 2.x.
+if not hasattr(np, 'in1d'):
+    np.in1d = np.isin
 
 #遍历文件夹
 def iter_files(rootDir):
     #遍历根目录
     files_H, files_MDD = [], []
     for file in os.listdir(rootDir):
-        if 'TASK' not in file:
-            if 'MDD' in file:
-                files_MDD.append(file)
-            else:
-                files_H.append(file)
+        # The raw directory may also contain the output LMDB directory. Only
+        # EDF recordings are valid inputs; TASK files are intentionally unused.
+        if not file.lower().endswith('.edf') or 'TASK' in file.upper():
+            continue
+        if 'MDD' in file:
+            files_MDD.append(file)
+        else:
+            files_H.append(file)
     return files_H, files_MDD
 
 
 selected_channels = ['EEG Fp1-LE', 'EEG Fp2-LE', 'EEG F3-LE', 'EEG F4-LE', 'EEG C3-LE', 'EEG C4-LE', 'EEG P3-LE',
                      'EEG P4-LE', 'EEG O1-LE', 'EEG O2-LE', 'EEG F7-LE', 'EEG F8-LE', 'EEG T3-LE', 'EEG T4-LE',
                      'EEG T5-LE', 'EEG T6-LE', 'EEG Fz-LE', 'EEG Cz-LE', 'EEG Pz-LE']
-rootDir = '/data/datasets/MDDPHCED/files'
+rootDir = '/nas/public/MDDPHCED'
 files_H, files_MDD = iter_files(rootDir)
 files_H = sorted(files_H)
 files_MDD = sorted(files_MDD)
@@ -53,7 +60,7 @@ print(files_dict['val'])
 print(files_dict['test'])
 
 
-db = lmdb.open('/data/datasets/MDDPHCED/processed_lmdb_75hz', map_size=1273741824)
+db = lmdb.open('/data/lz/public/BigDownstream/MDDPHCED/processed_lmdb_75hz', map_size=1273741824)
 
 for files_key in files_dict.keys():
     for file in files_dict[files_key]:

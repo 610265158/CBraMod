@@ -1,0 +1,11 @@
+backbone_name: convnextv2_base.fcmae_ft_in22k_in1k
+description: ConvNeXtV2-Base ImageNet-22K to ImageNet-1K initialized profile.
+training:
+  lr: 0.0001
+protocol:
+  seeds: [3407, 3408, 3409]
+  selection: validation_selected_checkpoint_once_on_test
+results: {}
+notes: >-
+  Pilot profile for the min-64 phase-fold benchmark. Add finalized five-seed
+  metrics under results only after validation-selected, one-shot test runs.

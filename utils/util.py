@@ -6,12 +6,13 @@ import numpy as np
 import torch
 import torch.distributed as dist
 from tqdm import tqdm
-import random
+
 
 def generate_mask(bz, ch_num, patch_num, mask_ratio, device):
     mask = torch.zeros((bz, ch_num, patch_num), dtype=torch.long, device=device)
     mask = mask.bernoulli_(mask_ratio)
     return mask
+
 
 def to_tensor(array):
     return torch.from_numpy(array).float()

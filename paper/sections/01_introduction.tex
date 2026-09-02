@@ -18,7 +18,9 @@ data or running an EEG self-supervised pretraining stage.  It does not mean
 zero computation, universal improvement, or deployment without task-specific
 fine-tuning.
 
-We study this confound using a deliberately ordinary visual backbone.  A raw
+We study this confound by comparing EEG-pretrained foundation models with a
+generic ImageNet encoder that has no EEG pretraining. The visual baseline uses
+a deliberately ordinary backbone. A raw
 EEG segment is naturally a matrix with electrodes as rows and time samples as
 columns.  Directly passing this matrix to a two-dimensional CNN is unattractive:
 the input is extremely wide, often only 6--64 rows high, and standard vision
@@ -26,7 +28,7 @@ networks reduce both spatial axes by a factor near 32.  The electrode dimension
 can therefore collapse after only a few stages, while a large fraction of the
 spatial computation is spent traversing a long time axis.  Resizing the matrix
 would change values; a spectrogram would discard phase and introduce analysis
-choices; repeating rows would increase resolution without adding information.
+choices.
 
 Our alternative is a lossless index transformation.  For fold factor $P$, we
 reshape each channel into groups of $P$ consecutive samples and transpose the
@@ -44,19 +46,16 @@ This viewpoint leads to three questions:
 \begin{enumerate}
     \item When can a lossless geometry adapter make generic ImageNet
     pretraining competitive across heterogeneous EEG tasks?
-    \item Are gains explained only by a taller image, or by the particular
-    adjacency induced by folding?
+    \item How do fold factor and induced adjacency change the receptive field
+    presented to a hierarchical 2D CNN?
     \item On which tasks does an artificial row geometry fail, revealing the
     need for channel identity, physical coordinates, or EEG pretraining?
 \end{enumerate}
 
 We study these questions with one EfficientNet-B0 across 11 downstream
-benchmarks, using three seeds, validation checkpoint selection, and one final
+benchmarks, using repeated seeds, validation checkpoint selection, and one final
 test evaluation.  The corrected phase-interleaved benchmark exceeds the
-published \cbramod{} primary metric on six datasets, reaches near parity on
-one, and is lower on four.  Historical channel-repetition and reduced-stride
-pilots are retained only as exploratory controls and are not mixed with these
-formal results.
+published \cbramod{} primary metric on six datasets and is lower on five.
 
 Our contributions are:
 
@@ -67,12 +66,13 @@ Our contributions are:
     \item \textbf{A geometry account of CNN transfer.}  We characterize how
     folding remaps temporal distance, increases signal occupancy after padding,
     and changes the receptive field induced by hierarchical 2D convolution.
-    \item \textbf{A broad controlled benchmark.}  We evaluate one
-    ImageNet-pretrained EfficientNet-B0 family across 11 datasets under a
-    validation-selected three-seed protocol.
-    \item \textbf{Boundary evidence.}  Repeat, stride, and task-level analyses
-    identify when generic visual locality is useful and when missing electrode
-    topology remains a limiting factor.
+    \item \textbf{A broad foundation-model comparison.}  We
+    evaluate one ImageNet-pretrained EfficientNet-B0 across 11 datasets under
+    a validation-selected repeated-seed protocol and place it beside published
+    BIOT, LaBraM, CBraMod, and REVE results on the shared benchmark partitions.
+    \item \textbf{Boundary evidence.} Task-level analyses identify when
+    generic visual locality is useful and when missing electrode topology
+    remains a limiting factor.
 \end{itemize}
 
 The intended claim is not that a small CNN universally replaces EEG foundation

@@ -5,9 +5,12 @@ raw EEG and generic vision backbones.  The method changes no waveform values
 and adds no learned adapter parameters, yet it substantially changes the
 neighborhoods and downsampling trajectory seen by a 2D CNN.  Across 11
 benchmarks, EfficientNet-B0 exceeds published \cbramod{} primary metrics on
-six datasets, is within 0.1 percentage points on one, and trails on four.  The
-pattern supports competitiveness, not universal superiority, and still
-requires same-pipeline foundation-model reproduction for a paired claim.
+six datasets and trails on five. The expanded foundation-model comparison
+places it first among the displayed methods on five
+tasks; across the eight REVE-overlap tasks it is higher on four, with explicit
+version or preprocessing caveats on two. The pattern supports competitiveness,
+not universal superiority, and still requires same-pipeline foundation-model
+reproduction for a paired claim.
 
 The broader message is methodological: before attributing downstream accuracy
 to large-scale EEG pretraining, representation geometry must be treated as a

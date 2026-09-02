@@ -1,55 +1,17 @@
-\section{Representation Geometry Analysis}
+\section{Analysis: When Does Folding Help?}
 \label{sec:analysis}
 
-\draftnote{The numerical controls in this section used the superseded
-contiguous-chunk adapter whenever $P>1$.  They motivate the experimental
-design but do not establish the behavior of phase-interleaved folding.}
+The benchmark ladder separates three recurring regimes. On BCIC2020-3, a
+native 64-row input and full visual fine-tuning outperform every displayed EEG
+foundation model, suggesting that architecture and supervised adaptation are
+already strong. On TUAB and FACED, coordinate-aware or EEG-pretrained models
+retain a clear advantage, pointing to domain structure that folding does not
+encode. SEED-V supplies a third regime: the visual model is competitive, but
+the shape-only fold rule selects a weaker geometry than an earlier exploratory
+recipe. The analyses below connect these outcomes to fold factor and channel
+neighborhoods rather than treating the 11 tasks as an undifferentiated ranking.
 
-\subsection{Is a taller input sufficient?}
-
-Folding changes at least three factors simultaneously: image height, horizontal
-length, and local adjacency.  We use two controls to separate them.  Channel
-repeat increases height without adding distinct samples.  Reduced height
-stride keeps the input unchanged but preserves more vertical feature positions.
-Table~\ref{tab:geometry-pilot} reports historical validation-selected
-single-seed pilots.  They are exploratory, use the old adapter for folded
-conditions, and are not included in the corrected result count.
-
-\begin{table}[t]
-\centering
-\caption{Geometry controls with EfficientNet-B0.  Binary rows report PR/ROC;
-BCIC2020-3 reports $\kappa$/F1.  ``Repeat'' uses $P=1$ and repeats each channel
-four times.  ``Stride 8'' reduces only vertical downsampling.}
-\label{tab:geometry-pilot}
-\small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{lcccc}
-\toprule
-Dataset & Unfolded $P=1$ & Repeat $\times4$ & Height stride 8 & Selected fold \\
-\midrule
-MentalArithmetic & .7278/.7831 & .5144/.7632 & .5881/.7471 & \good{.7978/.9190} ($P=4$) \\
-BCIC2020-3 & .5033/.6025 & \good{.5917/.6736} & .5283/.6222 & .5267/.6224 ($P=2$) \\
-Mumtaz2016 & .9617/.9666 & .9551/.9479 & .9643/.9658 & \good{.9778/.9761} ($P=2$) \\
-\bottomrule
-\end{tabular}}
-\end{table}
-
-Under the historical contiguous-chunk implementation, the controls rejected a
-universal ``more rows is better'' explanation.  Repeat
-strongly improves BCIC2020-3 but damages MentalArithmetic; stride reduction is
-neutral on Mumtaz2016 and harmful on MentalArithmetic.  Folding is best on two
-of the three tasks, while repeat is best on BCIC2020-3.  The representation
-therefore appeared to interact with task structure rather than acting as a
-generic resolution multiplier.  The matched-height tests must be repeated
-before making this claim for phase-interleaved folding.
-
-On FACED, repeat $\times2$ improves $\kappa$ from .3639 to .3823 under a strict
-$P=1$ control, showing that delaying vertical collapse can matter.  It still
-falls far short of the .5041 \cbramod{} reference.  Better resolution is thus
-helpful but insufficient when the missing information is electrode identity or
-cross-subject spatial structure.
-
-\subsection{The fold factor is a structural hyperparameter}
+\subsection{Fold factor controls the geometry seen by the CNN}
 
 The visual aspect ratio before padding is
 
@@ -60,19 +22,50 @@ The visual aspect ratio before padding is
 Increasing $P$ changes this ratio quadratically, but a square image is not the
 objective.  Large $P$ also makes each horizontal step span more original
 samples and increases the distance across phase-wrap boundaries.  Consistent
-with this trade-off, the
-selected recipes span $P\in\{1,2,4,8,12\}$: PhysioNet-MI prefers no folding,
-BCIC2020-3 also uses $P=1$, CHB-MIT, TUAB, FACED, Mumtaz2016, and
-MentalArithmetic use $P=2$, TUEV and SHU-MI use $P=4$, and ISRUC and SEED-V use
-$P=12$ and $P=8$, respectively.
+with this trade-off, Eq.~\ref{eq:p-geometry-rule} chooses $P$ from $(C,T)$ and
+the EfficientNet-B0 stride without inspecting labels or test performance.
+Table~\ref{tab:p-rule} gives the completed unified choices.
 
-This variability suggests that $P$ should eventually be predicted from signal
-and architecture properties rather than tuned independently for every dataset.
-A candidate rule could depend on $(C,T)$, total height stride, sampling rate,
-and the temporal support of discriminative events.  Testing such a rule on held
-out datasets would make the geometry claim substantially stronger.
+\begin{table*}[t]
+\centering
+\caption{Architecture-aligned fold factors used in the unified reproduction.}
+\label{tab:p-rule}
+\small
+\begin{tabularx}{\textwidth}{@{}lrrrcX@{}}
+\toprule
+Dataset & $C$ & $T$ & $P_{\mathrm{geo}}$ & Folded $H\times W$ & Status \\
+\midrule
+CHB-MIT & 16 & 2000 & 4 & $64\times500$ & completed \\
+TUAB & 16 & 2000 & 4 & $64\times500$ & completed \\
+TUEV & 16 & 1000 & 4 & $64\times250$ & completed \\
+ISRUC & 6 & 6000 & 12 & $72\times500$ & completed \\
+FACED & 32 & 2000 & 2 & $64\times1000$ & completed \\
+SEED-V & 62 & 200 & 1 & $62\times200$ & completed; historical $P=8$ is stronger \\
+PhysioNet-MI & 64 & 800 & 1 & $64\times800$ & completed \\
+SHU-MI & 32 & 800 & 2 & $64\times400$ & completed \\
+BCIC2020-3 & 64 & 600 & 1 & $64\times600$ & completed \\
+Mumtaz2016 & 19 & 1000 & 4 & $76\times250$ & completed \\
+MentalArithmetic & 20 & 1000 & 4 & $80\times250$ & completed \\
+\bottomrule
+\end{tabularx}
+\tablenote{The rule uses only input shape and backbone stride. SEED-V is
+retained as a measured counterexample: an earlier $P=8$ recipe was stronger,
+but also differed in AMP precision.}
+\end{table*}
 
-\subsection{Artificial versus physical neighborhoods}
+The rule is intentionally simple.  It explains why a native 64-channel input
+such as BCIC2020-3 or PhysioNet-MI should remain unfolded, why 16-channel,
+2,000-sample inputs use $P=4$, and why long ISRUC epochs require a much larger
+factor.  However, SEED-V shows that shape alone is insufficient: canonical
+$P=1$ reaches .2206 kappa, whereas the historical phase-interleaved $P=8$
+recipe reached .2565. Because the two runs also differ in AMP precision, this
+is evidence of a limitation rather than a clean single-factor ablation.
+Sampling rate, event duration, channel topology, and task-specific temporal
+support are plausible missing variables.  We therefore report the rule as a
+prespecified architecture baseline and its failures as evidence, rather than
+overriding failures with post-hoc factor search.
+
+\subsection{Where artificial neighborhoods fail}
 
 Folding preserves channel order but does not encode channel names or 3D
 locations.  Permuting electrodes changes the model even if the underlying set
@@ -86,13 +79,3 @@ minimal topology signal: a channel-ID embedding, coordinate-valued planes, or a
 small channel mixer before folding.  A decisive experiment is a channel-order
 stress test: train with one order, evaluate under known permutations, and
 compare row-order encoding with physical-coordinate encoding.
-
-\subsection{ImageNet initialization versus architecture}
-
-The current study uses ImageNet weights in every formal run.  It therefore does
-not yet distinguish the contribution of EfficientNet architecture from natural
-image pretraining.  Random initialization, frozen linear probing, and matched
-training-budget controls are required.  If random initialization approaches the
-pretrained result, the primary contribution is architectural geometry; if the
-gap remains large, the one-channel adaptation is successfully reusing generic
-visual filters despite the modality shift.

@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 
 from configs.downstream import get_dataset_config
+from configs.backbones import backbone_name_for, load_backbone_config
 from datasets.shape_utils import DEFAULT_EEG_SCALE_DIVISOR
 
 from .eeg_vision_adapter import PhaseFoldAdapter, repeat_eeg_channels
@@ -18,6 +19,24 @@ class Model(nn.Module):
         super().__init__()
         dataset_config = get_dataset_config(param.downstream_dataset)
         config = dataset_config['vision']
+        profile = load_backbone_config(
+            getattr(param, 'backbone_config', None),
+            dataset=param.downstream_dataset,
+        )
+        profile_vision = profile.get('vision', {})
+        if profile_vision:
+            config.update(profile_vision)
+            if 'adapter' in profile_vision:
+                config['adapter'] = dict(dataset_config['vision'].get('adapter', {}))
+                config['adapter'].update(profile_vision['adapter'])
+        for key, attr in (
+            ('feature_aggregation', 'vision_feature_aggregation'),
+            ('init_head', 'vision_init_head'),
+            ('squeeze_binary', 'vision_squeeze_binary'),
+        ):
+            value = getattr(param, attr, None)
+            if value is not None:
+                config[key] = value
         fold_factor = getattr(param, 'vision_fold_factor', None)
         if fold_factor is None:
             fold_factor = config['adapter']['fold_factor']
@@ -31,7 +50,10 @@ class Model(nn.Module):
         )
         self._configure_input(param)
 
-        backbone_name = getattr(param, 'backbone_name', None) or config['backbone_name']
+        backbone_name = (
+            getattr(param, 'backbone_name', None)
+            or backbone_name_for(profile, config['backbone_name'])
+        )
         self.backbone = create_backbone(
             backbone_name,
             pretrained=getattr(param, 'use_pretrained_weights', True),

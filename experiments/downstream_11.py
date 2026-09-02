@@ -17,18 +17,24 @@ from configs.downstream import DOWNSTREAM_11_CONFIGS as EXPERIMENTS
 from configs.downstream import RERUN_REQUIRED_DATASETS
 from configs.downstream import TRAINING_KEYS
 from configs.downstream import training_config_for
+from configs.backbones import backbone_name_for, load_backbone_config
+from configs.experiment import load_experiment_config
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Run the 11 prepared downstream experiments.')
+    parser = argparse.ArgumentParser(description='Run the configured downstream experiments.')
     parser.add_argument('--dataset', action='append', choices=sorted(EXPERIMENTS.keys()),
                         help='dataset to run; can be specified multiple times')
-    parser.add_argument('--all', action='store_true', help='run all 11 datasets sequentially')
+    parser.add_argument('--config', type=str, default=None,
+                        help='complete experiment YAML (dataset, model, recipe, protocol, output)')
+    parser.add_argument('--all', action='store_true', help='run all configured datasets sequentially')
     parser.add_argument('--list', action='store_true', help='print configured datasets')
     parser.add_argument('--check_only', action='store_true', help='check paths and dependencies without training')
     parser.add_argument('--dry_run', action='store_true',
                         help='pass --dry_run to finetune_main.py for one-batch forward validation')
     parser.add_argument('--python', default=sys.executable, help='python executable used to call finetune_main.py')
+    parser.add_argument('--seed', type=int, default=None,
+                        help='run only this seed; overrides protocol.seeds for --config')
     parser.add_argument('--model_root', default='./experiments/checkpoints',
                         help='directory that will contain per-dataset weights')
     parser.add_argument('--log_root', default='./experiments/logs',
@@ -39,8 +45,15 @@ def main():
                         help='downstream model architecture')
     parser.add_argument('--backbone_name', type=str, default=None,
                         help='override timm backbone name for --model_arch vision')
+    parser.add_argument('--backbone_config', type=str, default=None,
+                        help='backbone profile name or YAML path (e.g. convnextv2_tiny)')
     parser.add_argument('--vision_fold_factor', type=int, default=None,
                         help='override phase-interleaved temporal fold factor P (minimum: 1)')
+    parser.add_argument('--vision_channel_repeat', type=int, default=None,
+                        help='repeat each EEG channel before phase folding')
+    parser.add_argument('--vision_height_stride', type=int, default=None,
+                        choices=[1, 2, 4, 8, 16, 32],
+                        help='target CNN output stride along EEG-channel height')
     parser.add_argument('--vision_no_pad', action='store_true',
                         help='disable zero-padding after EEG phase folding')
     parser.add_argument('--vision_head_init', type=str,
@@ -49,6 +62,13 @@ def main():
                         help='initialization for the downstream vision classifier head')
     parser.add_argument('--vision_head_init_std', type=float, default=None,
                         help='override classifier-head truncated-normal weight std')
+    parser.add_argument('--vision_squeeze_binary', type=str, default=None,
+                        help='return a scalar logit for single-class binary tasks')
+    parser.add_argument('--vision_init_head', type=str, default=None,
+                        help='whether to initialize the vision classifier head')
+    parser.add_argument('--vision_feature_aggregation', type=str, default=None,
+                        choices=['gap', 'flatten'],
+                        help='feature aggregation used before the vision head')
     parser.add_argument('--eeg_dataset_mean', type=float, default=None,
                         help='training-split global EEG mean in raw clipped units')
     parser.add_argument('--eeg_dataset_std', type=float, default=None,
@@ -163,6 +183,20 @@ def main():
     parser.add_argument('--continue_on_error', action='store_true', help='continue after a failed dataset')
     args, extra_args = parser.parse_known_args()
 
+    experiment = load_experiment_config(args.config) if args.config else None
+    if experiment:
+        if args.all:
+            raise SystemExit('--all cannot be combined with --config; list datasets in the YAML instead')
+        apply_experiment_config(args, experiment)
+
+    if args.backbone_config:
+        profile = load_backbone_config(
+            args.backbone_config,
+            dataset=args.dataset[0] if args.dataset else None,
+        )
+        if args.backbone_name is None:
+            args.backbone_name = backbone_name_for(profile)
+
     if args.list:
         list_experiments(args)
         return
@@ -172,13 +206,18 @@ def main():
         ok = check_experiments(names)
         raise SystemExit(0 if ok else 1)
 
-    for name in names:
-        command = build_command(name, args, extra_args)
-        log_path = build_log_path(name, args)
-        print_command(name, command, log_path)
-        returncode = run_command(command, args, log_path)
-        if returncode and not args.continue_on_error:
-            raise SystemExit(returncode)
+    if args.seed is not None:
+        seeds = [args.seed]
+    else:
+        seeds = (experiment or {}).get('protocol', {}).get('seeds', [None])
+    for seed in seeds:
+        for name in names:
+            command = build_command(name, args, extra_args, seed=seed)
+            log_path = build_log_path(name, args, seed=seed)
+            print_command(name, command, log_path)
+            returncode = run_command(command, args, log_path)
+            if returncode and not args.continue_on_error:
+                raise SystemExit(returncode)
 
 
 def selected_names(args):
@@ -189,14 +228,16 @@ def selected_names(args):
     raise SystemExit('Please pass --dataset DATASET, --all, --list, or --check_only --all.')
 
 
-def build_command(name, args, extra_args=None):
+def build_command(name, args, extra_args=None, seed=None):
     cfg = EXPERIMENTS[name]
     training = training_config_for(
         name,
         model_arch=args.model_arch,
         backbone_name=args.backbone_name,
+        backbone_config=args.backbone_config,
     )
-    model_dir = Path(args.model_root) / safe_name(name)
+    model_root = format_output_root(args.model_root, args, name, seed)
+    model_dir = Path(model_root) / safe_name(name)
     device = args.device
     if device is None and args.dry_run:
         device = 'auto'
@@ -220,14 +261,26 @@ def build_command(name, args, extra_args=None):
     append_optional_training_args(command, args, training)
     if args.backbone_name:
         command.extend(['--backbone_name', args.backbone_name])
+    if args.backbone_config:
+        command.extend(['--backbone_config', str(args.backbone_config)])
     if args.vision_fold_factor is not None:
         command.extend(['--vision_fold_factor', str(args.vision_fold_factor)])
+    if args.vision_channel_repeat is not None:
+        command.extend(['--vision_channel_repeat', str(args.vision_channel_repeat)])
+    if args.vision_height_stride is not None:
+        command.extend(['--vision_height_stride', str(args.vision_height_stride)])
     if args.vision_no_pad:
         command.extend(['--vision_no_pad', 'true'])
     if args.vision_head_init is not None:
         command.extend(['--vision_head_init', args.vision_head_init])
     if args.vision_head_init_std is not None:
         command.extend(['--vision_head_init_std', str(args.vision_head_init_std)])
+    if args.vision_squeeze_binary is not None:
+        command.extend(['--vision_squeeze_binary', str(args.vision_squeeze_binary)])
+    if args.vision_init_head is not None:
+        command.extend(['--vision_init_head', str(args.vision_init_head)])
+    if args.vision_feature_aggregation is not None:
+        command.extend(['--vision_feature_aggregation', str(args.vision_feature_aggregation)])
     if args.eeg_dataset_mean is not None:
         # Use --key=value so a negative mean in scientific notation is not
         # mistaken for another argparse option by the child process.
@@ -244,6 +297,8 @@ def build_command(name, args, extra_args=None):
         command.extend(['--use_pretrained_weights', 'False'])
     if extra_args:
         command.extend(extra_args)
+    if seed is not None:
+        command.extend(['--seed', str(seed)])
     return command
 
 
@@ -265,12 +320,63 @@ def run_env(args):
     return env
 
 
-def build_log_path(name, args):
+def build_log_path(name, args, seed=None):
     if args.no_log_file:
         return None
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = '{}_{}_pid{}.log'.format(timestamp, safe_name(name), os.getpid())
-    return Path(args.log_root) / args.model_arch / safe_name(name) / filename
+    log_root = format_output_root(args.log_root, args, name, seed)
+    return Path(log_root) / args.model_arch / safe_name(name) / filename
+
+
+def format_output_root(root, args, dataset, seed):
+    value = str(root)
+    if seed is not None and '{seed}' not in value and getattr(args, 'config', None):
+        value = str(Path(value) / 'seed{}'.format(seed))
+    return value.format(seed='' if seed is None else seed, dataset=safe_name(dataset))
+
+
+def apply_experiment_config(args, config):
+    """Apply YAML values only when the corresponding CLI flag was omitted."""
+    explicit = {item.split('=', 1)[0] for item in sys.argv[1:] if item.startswith('--')}
+
+    def set_if_absent(attr, value, flag=None):
+        if value is not None and ('--{}'.format(flag or attr) not in explicit):
+            setattr(args, attr, value)
+
+    datasets = config['dataset']
+    if args.dataset is None:
+        args.dataset = datasets
+    elif any(dataset not in datasets for dataset in args.dataset):
+        raise SystemExit(
+            '--dataset values must be listed by experiment config {}; got {}'.format(
+                ', '.join(datasets), ', '.join(args.dataset)
+            )
+        )
+    set_if_absent('model_arch', config.get('model_arch'), 'model_arch')
+    set_if_absent('backbone_name', config.get('backbone_name') or config.get('backbone', {}).get('name'), 'backbone_name')
+    set_if_absent('backbone_config', config.get('backbone_config'), 'backbone_config')
+    vision = config.get('vision', {})
+    for key, attr in {
+        'fold_factor': 'vision_fold_factor', 'channel_repeat': 'vision_channel_repeat',
+        'height_stride': 'vision_height_stride', 'no_pad': 'vision_no_pad',
+        'head_init': 'vision_head_init', 'head_init_std': 'vision_head_init_std',
+        'squeeze_binary': 'vision_squeeze_binary', 'init_head': 'vision_init_head',
+        'feature_aggregation': 'vision_feature_aggregation',
+    }.items():
+        set_if_absent(attr, vision.get(key), attr)
+    adapter = vision.get('adapter', {})
+    if isinstance(adapter, dict):
+        set_if_absent('vision_fold_factor', adapter.get('fold_factor'), 'vision_fold_factor')
+    for key, value in config.get('training', {}).items():
+        if hasattr(args, key):
+            set_if_absent(key, value, key)
+    runtime = config.get('output', {})
+    for key in ('model_root', 'log_root'):
+        set_if_absent(key, runtime.get(key), key)
+    set_if_absent('cuda', config.get('cuda'), 'cuda')
+    set_if_absent('device', config.get('device'), 'device')
+    args.config = config.get('_path', args.config)
 
 
 def run_command(command, args, log_path):
@@ -337,6 +443,7 @@ def list_experiments(args):
             name,
             model_arch=args.model_arch,
             backbone_name=args.backbone_name,
+            backbone_config=args.backbone_config,
         )
         print('{:<18} {:<8} {:<11} {:<7} {:<18} {:<6} {:<6} {:<9} {:<9} {:<20} {}'.format(
             name,

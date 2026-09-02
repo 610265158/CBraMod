@@ -15,7 +15,8 @@ from finetune_trainer import Trainer
 
 
 DATASET_REGISTRY = dataset_registry()
-DATASET_REGISTRY.update({
+# Keep the two legacy datasets available outside the 11-dataset runner.
+for _legacy_name, _legacy_entry in {
     'SEED-VIG': {
         'dataset_module': 'datasets.seedvig_dataset',
         'model_module': 'models.legacy.model_for_seedvig',
@@ -26,7 +27,8 @@ DATASET_REGISTRY.update({
         'model_module': 'models.legacy.model_for_bciciv2a',
         'task': 'multiclass',
     },
-})
+}.items():
+    DATASET_REGISTRY.setdefault(_legacy_name, _legacy_entry)
 
 TRAIN_METHODS = {
     'binary': 'train_for_binaryclass',
@@ -80,6 +82,8 @@ def main():
                         help='downstream model architecture')
     parser.add_argument('--backbone_name', type=str, default=None,
                         help='override timm backbone name for --model_arch vision')
+    parser.add_argument('--backbone_config', type=str, default=None,
+                        help='backbone profile name or YAML path')
     parser.add_argument('--vision_fold_factor', type=int, default=None,
                         help='override phase-interleaved temporal fold factor P (minimum: 1)')
     parser.add_argument('--vision_channel_repeat', type=int, default=1,
@@ -95,6 +99,13 @@ def main():
                         help='initialization for the downstream vision classifier head')
     parser.add_argument('--vision_head_init_std', type=float, default=None,
                         help='override classifier-head truncated-normal weight std; bias is zero')
+    parser.add_argument('--vision_squeeze_binary', type=str2bool, default=None,
+                        help='return a scalar logit for single-class binary tasks')
+    parser.add_argument('--vision_init_head', type=str2bool, default=None,
+                        help='whether to initialize the vision classifier head')
+    parser.add_argument('--vision_feature_aggregation', type=str, default=None,
+                        choices=['gap', 'flatten'],
+                        help='feature aggregation used before the vision head')
     parser.add_argument('--eeg_dataset_mean', type=float, default=None,
                         help='training-split global EEG mean in raw clipped units')
     parser.add_argument('--eeg_dataset_std', type=float, default=None,
@@ -251,6 +262,7 @@ def apply_downstream_defaults(params):
             params.downstream_dataset,
             model_arch=params.model_arch,
             backbone_name=params.backbone_name,
+            backbone_config=params.backbone_config,
         )
     else:
         training = legacy_training_defaults()

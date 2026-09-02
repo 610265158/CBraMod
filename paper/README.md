@@ -11,8 +11,10 @@ baseline through lossless geometry alignment.
 - `results.tex`: headline numerical macros mirrored from
   `experiments/PHASE_FOLD_RESULTS.md`, the repository source of truth.
 - `sections/00_abstract.tex` through `sections/08_conclusion.tex`: main paper.
-- `sections/appendix.tex`: recipes, padded shapes, protocol, visualizations, and
-  the submission-critical experiment list.
+- `sections/appendix.tex`: recipes, padded shapes, protocol, per-seed values,
+  and additional visualizations.
+- `sections/appendix_detailed_results.tex`: Appendix C-style per-dataset
+  comparisons with supervised architectures and EEG foundation models.
 - `references.bib`: bibliography.
 - `ICLR_SUBMISSION_PLAN.md`: practical plan for turning the draft into a
   defensible main-track submission.
@@ -38,9 +40,27 @@ editing. Do not upload an invented or unofficial ICLR style file.
 The adapter was corrected on 25 August 2026 from contiguous-chunk folding to
 the intended phase-interleaved permutation. The finalized EfficientNet-B0
 table now contains all 11 datasets, each with validation-selected checkpoints
-and one final test evaluation for seeds 3407, 3408, and 3409. PhysioNet-MI uses
-`P=1`, so its input mapping is unaffected. ConvNeXt probes are exploratory and
-are not included in the headline table.
+and one final test evaluation per seed. ISRUC has been replaced by its locked
+five-seed run (42--46); datasets still awaiting five-seed replacement retain
+the canonical 3407--3409 sweep. The headline
+table also includes published BIOT, LaBraM-Base, and CBraMod references for all
+11 datasets, plus REVE-Base on its eight overlapping tasks. The
+CBraMod TUAB and TUEV cells use the target-corpus-excluded controls; TUEV and
+REVE--ISRUC are marked with comparability caveats. PhysioNet-MI uses `P=1`, so its
+input mapping is unaffected. ConvNeXt probes are exploratory and are not
+included in the headline table.
+
+Appendix C mirrors REVE's detailed-results organization: all 11 datasets have
+individual two-metric tables containing the shared supervised architecture
+suite, EEG foundation models, REVE where available, and the finalized local B0
+result.
+
+The current headline table is the completed unified all-BF16 min-64
+reproduction. Fold-factor selection chooses the smallest valid `P` that
+reaches at least 64 folded rows; SEED-V's native 62 rows are treated as close
+enough and left at `P=1`. ISRUC has completed its locked five-seed rerun.
+SEED-V remains a documented limitation because this prespecified `P=1` result
+underperforms the historical `P=8` recipe.
 
 Before submission:
 

@@ -1,7 +1,7 @@
 \section{Method}
 \label{sec:method}
 
-\subsection{Problem setting}
+\subsection{Overview and problem setting}
 
 For a regular dataset, an EEG segment is
 $\mathbf{X}\in\mathbb{R}^{C\times T}$, where $C$ is the number of channels
@@ -56,60 +56,19 @@ $64\times250$.  The tensor map marks each four-row electrode group, and the
 lower inset enlarges the four colored temporal-phase rows of one real electrode.
 All 16,000 values are retained exactly.  Folding changes only
 their two-dimensional adjacency, without interpolation or learnable
-parameters.}
+parameters. The architecture rule in Eq.~\ref{eq:p-geometry-rule} also selects
+$P=4$ for the formal TUEV runs.}
 \label{fig:temporal-folding}
 \end{figure*}
 
-The ``top view'' in Fig.~\ref{fig:side-top-view} is a geometric metaphor for
-the convolutional input raster, not a claim that the network performs a literal
-projection or that folding makes the signal two-dimensional in a physical
-sense.  Humans usually inspect an EEG trace along its original time axis;
-convolutions instead respond to the local neighborhoods induced by the raster
-indexing.  The purpose of folding is to place short within-channel temporal
-segments into contiguous vertical neighborhoods before the visual backbone's
-strided stages reduce spatial resolution.
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{side_top_view_folding.pdf}
-\caption{The same EEG can be read from two complementary viewpoints.  In the
-side view (left), a human follows amplitude as a continuous function of time.
-After lossless $P=4$ folding (right), the identical samples form a two-dimensional
-phase--time texture: samples with phases $p=0,1,2,3$ become adjacent vertical
-rows, while each column advances by four original samples.  The upper row is a
-controlled spike--slow-wave example and the lower row is a real five-second
-F7--T7 segment from a CHB-MIT seizure recording.  The arrows indicate a change
-of representation and local adjacency, not a change in the signal itself.}
-\label{fig:side-top-view}
-\end{figure*}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{seizure_lossless_folding.pdf}
-\caption{A real seizure example processed by the same visual interface.  The
-10-second CHB-MIT seizure segment is labeled ictal and is resampled from 2560 to
-2000 samples before the standard clipping and scaling.  Panel A shows all 16
-bipolar channels; panel B enlarges the F7--T7 channel in the visibly rhythmic
-interval.  Panel C is the exact $64\times500$ phase-interleaved tensor after
-$P=4$ folding, and panel D expands its four adjacent phase rows.  The
-transformation retains all 32,000 values and changes only their two-dimensional
-adjacency.}
-\label{fig:seizure-folding}
-\end{figure*}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{synthetic_folding_patterns.pdf}
-\caption{Controlled synthetic morphologies showing how lossless $P=4$
-folding exposes different temporal motifs to a 2D CNN.  From top to bottom:
-spike--slow-wave complexes, a recruited rhythmic ictal oscillation, and
-periodic discharges.  Each row contains exactly 1,000 samples before and
-after the bijective rearrangement.  The folded maps and phase rows preserve
-the characteristic sharp transients, slow after-waves, periodic spacing, and
-amplitude envelope; they do not constitute clinical templates or diagnostic
-criteria.}
-\label{fig:synthetic-folding-patterns}
-\end{figure*}
+The resulting raster is a computational view, not a claim that EEG becomes a
+physical image. Humans follow amplitude along time; the CNN instead responds
+to neighborhoods induced by the raster indices. Folding places short
+within-channel temporal segments into contiguous vertical neighborhoods before
+strided stages reduce spatial resolution. A side-view/top-view illustration,
+a real seizure example, and controlled waveform examples are provided in
+Appendix Figs.~\ref{fig:side-top-view}, \ref{fig:seizure-folding}, and
+\ref{fig:synthetic-folding-patterns}.
 
 \begin{proposition}[Information preservation]
 $F_P$ is a bijection between $\mathbb{R}^{C\times T}$ and
@@ -127,7 +86,7 @@ averaged, interpolated, or discarded.
 Folding is consequently not a filter and should not be described as denoising.
 It changes only the neighborhoods on which the following network operates.
 
-\subsection{What locality means after folding}
+\subsection{Locality induced by folding}
 
 Consider two folded pixels from the same electrode,
 $\mathbf{I}_{cP+p,w}$ and $\mathbf{I}_{cP+p',w'}$.  Their Manhattan distance
@@ -180,7 +139,7 @@ meaningful structure.  It also exposes a limitation: the adapter does not know
 physical electrode coordinates and cannot distinguish a physiological
 neighborhood from an arbitrary row ordering.
 
-\subsection{Downsampling and signal occupancy}
+\paragraph{Downsampling and signal occupancy.}
 
 EfficientNet-B0 has a nominal total spatial stride of 32.  With no folding,
 many datasets provide fewer than 32 channel rows.  The implementation pads
@@ -205,6 +164,44 @@ This does not guarantee improvement: an excessively large $P$ coarsens the
 horizontal time step, increases phase-wrap distance, and creates more
 artificial vertical boundaries.
 
+\subsection{Architecture-aligned fold-factor selection}
+\label{sec:p-selection}
+
+To avoid choosing $P$ independently by test-set performance, we define a
+deterministic geometry rule from the input shape and the backbone stride.  For
+each divisor $P$ of $T$, let
+
+\begin{equation}
+  H(P)=CP, \qquad W(P)=T/P.
+\end{equation}
+
+EfficientNet-B0 has total spatial stride 32. To retain at least two
+signal-bearing cells along height before global pooling, we target at least 64
+folded rows and choose the smallest valid factor. A native channel count very
+close to 64 is treated as sufficient; specifically, SEED-V's 62 channels are
+left unfolded. We select
+
+\begin{equation}
+\label{eq:p-geometry-rule}
+ P_{\mathrm{geo}}=
+ \begin{cases}
+  1, & C\geq62,\\
+  \min\{P\in\mathbb{N}: P\mid T,\ CP\geq64\}, & C<62.
+ \end{cases}
+\end{equation}
+
+The target height 64 leaves two signal-bearing cells after a nominal stride of
+32 instead of merely avoiding collapse. This is an architecture-alignment
+heuristic, not a claim that 64 rows are intrinsically optimal for EEG. It uses
+only $(C,T)$ and the backbone geometry, and therefore can be fixed before
+training or test evaluation.
+
+The rule also makes the trade-off explicit. Increasing $P$ raises vertical
+occupancy but shortens the horizontal sequence and makes one horizontal pixel
+span $P$ original samples. Selecting the smallest factor that reaches the
+height target limits
+this loss of horizontal resolution and the number of phase-wrap boundaries.
+
 \begin{hypothesis}[Geometry alignment]
 Temporal folding helps when it improves signal occupancy and exposes useful
 within-electrode phase and $P$-spaced relations before hierarchical
@@ -213,7 +210,7 @@ should not be universal, and should weaken when physical electrode topology or
 long uninterrupted horizontal context is more important.
 \end{hypothesis}
 
-\subsection{Visual encoder and classifier}
+\subsection{Vision backbone and task head}
 
 The main model is intentionally small:
 
@@ -237,13 +234,3 @@ the feature encoder contains approximately 4.0M parameters.  A dropout layer
 and task-specific linear classifier are trained together with the backbone.
 The architecture contains no EEG-specific self-supervised weights, Fourier
 features, attention layer, or learned positional embedding.
-
-\subsection{Input amplitude handling}
-
-Unless stated otherwise, samples are converted to float32, clipped to
-$[-1024,1024]$, and divided by 32.  This bounds the default visual input to
-$[-32,32]$.  SHU-MI is the sole experiment-specific exception in the finalized
-table: it is clipped to $[-512,512]$ and divided by 64.  The selected SHU-MI
-recipe uses no random amplitude scaling.  This exception is reported explicitly
-because input amplitude is a material hyperparameter for transferred vision
-backbones.

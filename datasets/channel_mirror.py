@@ -177,3 +177,43 @@ def maybe_apply_channel_mirror(x, params):
     else:
         x[apply_mask] = x[apply_mask].index_select(2, permutation)
     return x
+
+
+def maybe_apply_channel_mirror_with_label_swap(x, y, params):
+    """Mirror SHU-MI channels and swap binary left/right labels together.
+
+    SHU-MI motor-imagery labels are side-specific: a left/right montage mirror
+    changes the semantic class, so the corresponding binary label must flip.
+    This helper intentionally lives beside the generic channel mirror path and
+    is only called for datasets whose labels are known to have this symmetry.
+    """
+    if not getattr(params, 'mirror_augmentation', False):
+        return x, y
+
+    probability = float(getattr(params, 'mirror_prob', 0.5))
+    if probability <= 0 or x.ndim not in (3, 4):
+        return x, y
+
+    channel_dim = 1 if x.ndim == 3 else 2
+    permutation = channel_mirror_permutation(
+        getattr(params, 'downstream_dataset', None),
+        x.shape[channel_dim],
+    )
+    if permutation is None:
+        return x, y
+
+    batch_size = x.shape[0]
+    apply_mask = torch.rand(batch_size, device=x.device) < probability
+    if not bool(apply_mask.any()):
+        return x, y
+
+    permutation = torch.as_tensor(permutation, dtype=torch.long, device=x.device)
+    x = x.clone()
+    if x.ndim == 3:
+        x[apply_mask] = x[apply_mask].index_select(1, permutation)
+    else:
+        x[apply_mask] = x[apply_mask].index_select(2, permutation)
+
+    y = y.clone()
+    y[apply_mask] = 1 - y[apply_mask]
+    return x, y

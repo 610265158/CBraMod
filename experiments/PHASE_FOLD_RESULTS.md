@@ -56,7 +56,7 @@ settings below match the completed launcher.
 | FACED | `32x2000` | 2 | `64x1000` | `64x1024` | 50 | 32 | 1e-3 | 5e-3 | kappa | none |
 | SEED-V | `62x200` | 1 | `62x200` | `64x224` | 50 | 32 | 5e-4 | 5e-3 | kappa | no folding |
 | PhysioNet-MI | `64x800` | 1 | `64x800` | `64x800` | 30 | 32 | 2e-3 | 5e-3 | kappa | warmup 3, EMA .995 |
-| SHU-MI | `32x800` | 2 | `64x400` | `64x416` | 20 | 32 | 1e-3 | 5e-4 | PR-AUC | warmup 3, EMA .995, roll, scale 64 |
+| SHU-MI | `32x800` | 2 | `64x400` | `64x416` | 10 | 32 | 1e-3 | 5e-4 | PR-AUC | RA4 weights, clip 1024/scale 32, no augmentation, EMA .995 |
 | BCIC2020-3 | `64x600` | 1 | `64x600` | `64x608` | 30 | 32 | 1e-3 | 5e-3 | kappa | warmup 3, EMA .995, clip 1, roll |
 | Mumtaz2016 | `19x1000` | 4 | `76x250` | `96x256` | 30 | 32 | 1e-3 | 5e-4 | PR-AUC | warmup 3, EMA .995, roll |
 | MentalArithmetic | `20x1000` | 4 | `80x250` | `96x256` | 30 | 64 | 1e-3 | 5e-4 | PR-AUC | warmup 3, EMA .99, pos-weight 3, roll+mirror |
@@ -64,7 +64,7 @@ settings below match the completed launcher.
 ## Canonical per-seed results
 
 Binary datasets report PR-AUC/AUROC. Multiclass datasets report Cohen's
-kappa/weighted F1. ISRUC and TUEV are omitted from this three-seed table
+kappa/weighted F1. SHU-MI, ISRUC, and TUEV are omitted from this three-seed table
 because their formal rows are replaced by the locked five-seed results
 immediately below.
 
@@ -80,7 +80,7 @@ immediately below.
 | Mumtaz2016 | .95662/.95016 | .96563/.96419 | .94831/.94269 | **.95685 +/- .00707 / .95235 +/- .00891** |
 | MentalArithmetic | .68154/.89062 | .78280/.91855 | .71758/.86878 | **.72731 +/- .04191 / .89265 +/- .02037** |
 
-### Finalized ISRUC and TUEV five-seed results
+### Finalized SHU-MI, ISRUC, and TUEV five-seed results
 
 These locked results use seeds 42--46 and validation-only checkpoint selection
 followed by one final test evaluation per seed. ISRUC uses bottom/right-only
@@ -92,6 +92,7 @@ search. Each entry replaces the corresponding three-seed row above.
 
 | Dataset | Seed 42 | Seed 43 | Seed 44 | Seed 45 | Seed 46 | Mean +/- population std |
 | --- | --- | --- | --- | --- | --- | --- |
+| SHU-MI (PR-AUC/AUROC) | .68564/.68536 | .70343/.69731 | .70447/.70723 | .67264/.67661 | .72479/.71457 | **.69819 +/- .01780 / .69622 +/- .01387** |
 | ISRUC (kappa/F1) | .77291/.82287 | .77096/.81935 | .77465/.82294 | .76719/.81772 | .76654/.81563 | **.77045 +/- .00316 / .81970 +/- .00287** |
 | TUEV (kappa/F1) | .69178/.83861 | .66643/.83048 | .72077/.85193 | .69702/.83692 | .67444/.83193 | **.69009 +/- .01896 / .83797 +/- .00760** |
 
@@ -117,7 +118,7 @@ metrics are PR-AUC for binary tasks and kappa for multiclass tasks.
 | FACED | **.5041/.5618** | .37367 +/- .02372 / .44759 +/- .01935 | -13.04 |
 | SEED-V | **.2569/.4101** | .22056 +/- .00610 / .38188 +/- .00515 | -3.63 |
 | PhysioNet-MI | .5222/.6427 | **.54150 +/- .01779 / .65658 +/- .01283** | +1.93 |
-| SHU-MI | **.7139/.6988** | .67804 +/- .00493 / .66557 +/- .00599 | -3.59 |
+| SHU-MI | **.7139/.6988** | .69819 +/- .01780 / .69622 +/- .01387 | -1.57 |
 | BCIC2020-3 | .4216/.5383 | **.58056 +/- .01750 / .66467 +/- .01402** | +15.90 |
 | Mumtaz2016 | **.9923/.9921** | .95685 +/- .00707 / .95235 +/- .00891 | -3.55 |
 | MentalArithmetic | .6267/.7905 | **.72731 +/- .04191 / .89265 +/- .02037** | +10.06 |
@@ -144,18 +145,18 @@ the ISRUC B0 margin below uses the locked five-seed B0 mean. EEGNet means are:
 | FACED | .25136 +/- .01223 / .31909 +/- .01258 | +.12231 |
 | SEED-V | .08174 +/- .00104 / .21567 +/- .00537 | +.13882 |
 | PhysioNet-MI | .46778 +/- .00663 / .60074 +/- .00437 | +.07372 |
-| SHU-MI | .67699 +/- .00333 / .68793 +/- .00215 | +.00105 |
+| SHU-MI | .67699 +/- .00333 / .68793 +/- .00215 | +.01026 |
 | BCIC2020-3 | .07111 +/- .00208 / .24307 +/- .00320 | +.50945 |
 | Mumtaz2016 | .94793 +/- .01276 / .93908 +/- .01043 | +.00892 |
 | MentalArithmetic | .40375 +/- .01946 / .65731 +/- .02101 | +.32356 |
 
 EfficientNet-B0 exceeds the same-pipeline EEGNet primary-metric mean on all 11
-datasets, although the SHU-MI margin is only about .0011.
+datasets, with a SHU-MI margin of about .0103.
 
 ## Stability
 
 The lowest primary-metric population standard deviations are ISRUC (.00316),
-TUAB (.00330), and SHU-MI (.00493). CHB-MIT (.07678) and MentalArithmetic
+TUAB (.00330), and SHU-MI (.01780). CHB-MIT (.07678) and MentalArithmetic
 (.04191) remain the most seed-sensitive; TUEV dropped from .03708 in the
 three-seed sweep to .01896 after locking the five-seed recipe. In particular,
 the CHB-MIT mean gain should not be described as uniformly reliable across

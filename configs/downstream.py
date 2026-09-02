@@ -146,7 +146,7 @@ DEFAULT_VISION = {
 }
 
 
-# BCIC2020-3, ISRUC, MentalArithmetic, PhysioNet-MI, and TUEV are locked
+# BCIC2020-3, ISRUC, MentalArithmetic, PhysioNet-MI, SHU-MI, and TUEV are locked
 # below. The remaining datasets still need either a five-seed confirmation
 # under bottom/right padding or a finalized dataset-specific recipe before
 # they can enter the formal table.
@@ -155,7 +155,6 @@ RERUN_REQUIRED_DATASETS = {
     'TUAB': 'bottom_right_padding_5seed_pending',
     'FACED': 'recipe_search_pending',
     'SEED-V': 'recipe_search_pending',
-    'SHU-MI': 'recipe_search_pending',
     'Mumtaz2016': 'dataset_split_and_recipe_pending',
 }
 
@@ -270,6 +269,53 @@ FINALIZED_FIVE_SEED_RECIPES = {
         'vision': _vision(
             backbone_name='efficientnet_b0',
             adapter={'fold_factor': 1},
+        ),
+    },
+    'SHU-MI': {
+        'seeds': (42, 43, 44, 45, 46),
+        'results': {
+            'pr_auc': (0.69819, 0.01780),
+            'roc_auc': (0.69622, 0.01387),
+            'ba': (0.62734, 0.00848),
+        },
+        'experiment_name': 'shumi_ra4_clip1024_scale32_noaug_10ep_5seed_v1',
+        'training': {
+            'lr': 1e-3,
+            'backbone_lr_scale': 1.0,
+            'batch_size': 32,
+            'num_workers': 4,
+            'epochs': 10,
+            'weight_decay': 5e-4,
+            'min_lr': 1e-6,
+            'warmup_epochs': 3,
+            'warmup_start_factor': 0.1,
+            'clip_value': -1.0,
+            'ema_decay': 0.995,
+            'optimizer': 'AdamW',
+            'label_smoothing': 0.1,
+            'binary_pos_weight': 1.0,
+            'dropout': 0.1,
+            'drop_path_rate': 0.0,
+            'early_stop': 20,
+            'frozen': False,
+            'multi_lr': False,
+            'use_pretrained_weights': True,
+            'balanced_sampling': False,
+            'mirror_augmentation': False,
+            'time_roll_augmentation': False,
+            'amplitude_scale_augmentation': False,
+            'mixup_augmentation': False,
+            'amp': True,
+            'amp_dtype': 'bfloat16',
+            'shu_clip_limit': 1024.0,
+            'shu_scale': 32.0,
+            'test_each_epoch': False,
+            'run_final_test': True,
+            'selection_metric': 'pr_auc',
+        },
+        'vision': _vision(
+            backbone_name='efficientnet_b0.ra4_e3600_r224_in1k',
+            adapter={'fold_factor': 2},
         ),
     },
     'ISRUC': {
@@ -571,42 +617,10 @@ DOWNSTREAM_11_CONFIGS = {
         dataset_module='datasets.shu_dataset',
         datasets_dir='../BigDownstream/shu_datasets',
         storage='lmdb',
-        # Finalized EfficientNet-B0 P=2 recipe after the B0/B5 three-seed
-        # comparison.  Average pooling is retained; no runtime band-pass or
-        # amplitude scaling is used.
-        training={
-            'lr': 1e-3,
-            'backbone_lr_scale': 1.0,
-            'batch_size': 32,
-            'epochs': 20,
-            'weight_decay': 5e-4,
-            'min_lr': 1e-6,
-            'warmup_epochs': 3,
-            'warmup_start_factor': 0.1,
-            'clip_value': -1.0,
-            'ema_decay': 0.995,
-            'optimizer': 'AdamW',
-            'label_smoothing': 0.1,
-            'binary_pos_weight': 1.0,
-            'dropout': 0.1,
-            'drop_path_rate': 0.0,
-            'early_stop': 20,
-            'frozen': False,
-            'multi_lr': False,
-            'use_pretrained_weights': True,
-            'balanced_sampling': False,
-            'mirror_augmentation': False,
-            'time_roll_augmentation': True,
-            'time_roll_prob': 0.5,
-            'time_roll_max_fraction': 0.25,
-            'amplitude_scale_augmentation': False,
-            'amp': True,
-            'amp_dtype': 'bfloat16',
-            'test_each_epoch': False,
-            'run_final_test': True,
-            'selection_metric': 'pr_auc',
-        },
-        vision=_vision(squeeze_binary=True, adapter={'fold_factor': 2}),
+        # Locked five-seed recipe: RA4 EfficientNet-B0 weights, clip=1024,
+        # scale=32, no train-time augmentation, and P=2.
+        training=FINALIZED_FIVE_SEED_RECIPES['SHU-MI']['training'],
+        vision=FINALIZED_FIVE_SEED_RECIPES['SHU-MI']['vision'],
     ),
     'BCIC2020-3': _dataset(
         task='multiclass',

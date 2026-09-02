@@ -135,6 +135,8 @@ An optional zero-phase Butterworth band-pass can be enabled for SHU-MI with
 `--shu_bandpass_low` and `--shu_bandpass_high`. Filtering is applied to the
 continuous `[32,800]` trial before clipping and scaling; for example,
 `--shu_bandpass_low 1 --shu_bandpass_high 30 --shu_filter_order 4`.
+The finalized SHU-MI five-seed recipe overrides this default with clip
+`[-1024,1024]` and `--shu_scale 32`.
 Vision folding supports one or more temporal phases. For factor `P`, row
 `c*P+p` contains `x[c, p::P]`; with `P=1` the time axis is unchanged. After
 folding, inputs are

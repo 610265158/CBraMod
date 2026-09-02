@@ -12,7 +12,11 @@ from datasets.amplitude_scale import (
     maybe_apply_amplitude_scale,
     validate_amplitude_scale_params,
 )
-from datasets.channel_mirror import DATASET_MIRROR_PERMUTATIONS, maybe_apply_channel_mirror
+from datasets.channel_mirror import (
+    DATASET_MIRROR_PERMUTATIONS,
+    maybe_apply_channel_mirror,
+    maybe_apply_channel_mirror_with_label_swap,
+)
 from datasets.time_roll import maybe_apply_time_roll, validate_time_roll_params
 
 
@@ -81,7 +85,10 @@ def make_train_collate_fn(collate_fn, params):
     def wrapped_collate(batch):
         x, y = collate_fn(batch)
         if mirror_enabled:
-            x = maybe_apply_channel_mirror(x, params)
+            if dataset_name == 'SHU-MI':
+                x, y = maybe_apply_channel_mirror_with_label_swap(x, y, params)
+            else:
+                x = maybe_apply_channel_mirror(x, params)
         if time_roll_enabled:
             x = maybe_apply_time_roll(x, params)
         if amplitude_scale_enabled:

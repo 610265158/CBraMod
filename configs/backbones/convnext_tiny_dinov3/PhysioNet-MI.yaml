@@ -1,0 +1,70 @@
+dataset: PhysioNet-MI
+model_arch: vision
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter: {fold_factor: 1}
+  feature_aggregation: flatten
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.005
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  physio_lowpass_hz: null
+  physio_filter_order: 4
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba: {mean: 0.66090, std: 0.00788}
+  kappa: {mean: 0.54785, std: 0.01053}
+  f1: {mean: 0.66183, std: 0.00791}
+notes: >-
+  Five-seed (42--46) PhysioNet-MI (motor imagery) run with ConvNeXt-Tiny (v1)
+  DINOv3 LVD-1689M self-supervised weights, flatten+FC head. PhysioNet-MI
+  geometry (P=1, 64x800), 4-way multiclass kappa selection, one final test
+  evaluation per seed. lr=1e-4 (ConvNeXt schedule); flatten head mirrors the
+  SHU-MI fix (gap stuck at chance, flatten learns). The rest mirrors the
+  locked recipe (wd 5e-3, warmup 3, ema 0.995, clip -1, no augmentation).
+  num_workers=0 avoids the LMDB fork-worker segfault. Population standard
+  deviations.
+output:
+  model_root: experiments/checkpoints/physionet_mi_convnext_tiny_dinov3_p1_flatten_5seed_v1/seed{seed}
+  log_root: experiments/logs/physionet_mi_convnext_tiny_dinov3_p1_flatten_5seed_v1/seed{seed}

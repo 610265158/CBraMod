@@ -1,0 +1,73 @@
+dataset: Mumtaz2016
+model_arch: vision
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter: {fold_factor: 4}
+  squeeze_binary: true
+  head_init_std: 0.002
+  feature_aggregation: flatten
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  mumtaz_lowpass_hz: null
+  mumtaz_filter_order: 4
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba: {mean: 0.91177, std: 0.01242}
+  pr_auc: {mean: 0.97689, std: 0.01045}
+  roc_auc: {mean: 0.97341, std: 0.01364}
+notes: >-
+  Five-seed (42--46) Mumtaz2016 (MDD depression detection) run with
+  ConvNeXt-Tiny (v1) DINOv3 LVD-1689M self-supervised weights. Mumtaz2016
+  geometry (P=4, 19x1000 -> [B,1,76,250] -> 96x256), binary PR-AUC selection,
+  flatten+FC head, one final test evaluation per seed. lr=1e-4 (ConvNeXt
+  schedule); the rest mirrors the locked recipe (wd 5e-4, warmup 3, ema 0.995,
+  head_init_std 0.002, time-roll augmentation, no runtime low-pass). This is a
+  physiological (resting-state) task, expected to fall in the high-SNR regime
+  where DINOv3 previously beat EfficientNet-B0. num_workers=0 avoids the LMDB
+  fork-worker segfault. Population standard deviations.
+output:
+  model_root: experiments/checkpoints/mumtaz2016_convnext_tiny_dinov3_p4_5seed_v1/seed{seed}
+  log_root: experiments/logs/mumtaz2016_convnext_tiny_dinov3_p4_5seed_v1/seed{seed}

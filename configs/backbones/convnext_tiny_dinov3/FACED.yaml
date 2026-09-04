@@ -1,0 +1,69 @@
+dataset: FACED
+model_arch: vision
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter: {fold_factor: 2}
+  feature_aggregation: flatten
+  head_init_std: 0.002
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 50
+  weight_decay: 0.0005
+  min_lr: 0.000001
+  warmup_epochs: 5
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  faced_input_norm: clip_scale
+  faced_robust_clip: 8.0
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba: {mean: 0.63634, std: 0.00270}
+  kappa: {mean: 0.58905, std: 0.00320}
+  f1: {mean: 0.63736, std: 0.00303}
+notes: >-
+  Five-seed (42--46) FACED run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M
+  self-supervised weights. FACED geometry (P=2, 32x2000 -> [B,1,64,1000] ->
+  64x1024), 9-way emotion classification kappa selection, one final test
+  evaluation per seed. lr=1e-4 because the ConvNeXt family is unstable at the
+  EfficientNet FACED lr=1e-3; the rest of the schedule (flatten+FC head,
+  head_init_std 0.002, wd 5e-4, warmup 5, ema 0.995) follows the FACED
+  recipe. Population standard deviations.
+output:
+  model_root: experiments/checkpoints/faced_convnext_tiny_dinov3_p2_5seed_v1/seed{seed}
+  log_root: experiments/logs/faced_convnext_tiny_dinov3_p2_5seed_v1/seed{seed}

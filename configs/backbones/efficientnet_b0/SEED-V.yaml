@@ -1,0 +1,65 @@
+dataset: SEED-V
+backbone_name: efficientnet_b0
+vision:
+  adapter: {fold_factor: 1}
+  feature_aggregation: gap
+  head_init_std: 0.002
+training:
+  lr: 0.0005
+  backbone_lr_scale: 1.0
+  batch_size: 32
+  epochs: 50
+  weight_decay: 0.005
+  min_lr: 0.000001
+  warmup_epochs: 0
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.0
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba: {mean: 0.36598, std: 0.00622}
+  kappa: {mean: 0.20556, std: 0.00779}
+  f1: {mean: 0.36779, std: 0.00570}
+notes: >-
+  Finalized five-seed (42--46) EfficientNet-B0 SEED-V run using the current
+  unified vision runner. Native geometry is kept at P=1 (62x200 -> 64x224),
+  with GAP aggregation, head initialization std 0.002, lr=5e-4, 50 epochs,
+  weight decay 0.005, no EMA, and no train-time augmentation. Validation Kappa
+  selects one checkpoint per seed, followed by one final test evaluation.
+output:
+  model_root: experiments/checkpoints/seedv_efficientnet_b0_p1_gap_50ep_5seed_v1/seed{seed}
+  log_root: experiments/logs/seedv_efficientnet_b0_p1_gap_50ep_5seed_v1/seed{seed}

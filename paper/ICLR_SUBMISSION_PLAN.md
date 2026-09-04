@@ -26,8 +26,8 @@ is likely to favor large EEG-pretrained encoders.
 
 ## Priority 0: required for submission
 
-- Reproduce CBraMod with the same split, preprocessing, seeds, epoch budget,
-  and validation-only selection.
+- Reproduce CBraMod under the already-matched split definitions, with the same
+  preprocessing, seeds, epoch budget, and validation-only selection.
 - Run EfficientNet-B0 with random initialization.
 - Run a frozen ImageNet linear probe.
 - Freeze a new protocol without consulting test results and repeat at least a
@@ -62,7 +62,7 @@ is likely to favor large EEG-pretrained encoders.
 - "This is only a reshape." Answer with the bijection, receptive-field
   remapping, padding occupancy analysis, and permutation controls.
 - "The comparison is unfair." Answer with same-pipeline CBraMod three-seed
-  runs and exact split manifests.
+  runs and split definitions matching the published CBraMod protocol.
 - "Hyperparameters were tuned on test." Answer only after a prospective rerun;
   prose cannot repair leakage.
 - "ImageNet semantics are irrelevant to EEG." Separate architecture from

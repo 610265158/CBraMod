@@ -140,18 +140,9 @@ The finalized SHU-MI five-seed recipe overrides this default with clip
 Vision folding supports one or more temporal phases. For factor `P`, row
 `c*P+p` contains `x[c, p::P]`; with `P=1` the time axis is unchanged. After
 folding, inputs are
-symmetrically zero-padded to the configured height stride and a width multiple
-of 32, so stride-only CNN downsampling does not discard channel rows or trailing
-time samples.
-For dataset-level standardization experiments, pass the training-split-only
-global scalar statistics, computed on raw clipped EEG before `/32`, with
-`--eeg_dataset_mean` and `--eeg_dataset_std`.
-The model then applies
-`eeg_target_std * (x - mean) / std` without removing sample- or
-channel-relative amplitude differences. `--eeg_target_std` defaults to `1`;
-for example, pass `--eeg_target_std 32` to make the training-split global
-input standard deviation approximately `32`.
-
+zero-padded on the bottom and right to multiples of the default CNN stride
+(32), so CNN downsampling does not discard channel rows or trailing time
+samples.
 The implementation uses one `PhaseFoldAdapter` for every dataset. It detects
 regular `[B,C,T]` and ISRUC `[B,S,C,T]` inputs automatically; there is no
 separate ISRUC folding algorithm. Override `P` with `--vision_fold_factor`.

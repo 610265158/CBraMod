@@ -1,7 +1,6 @@
 # Project Layout
 
-This repository keeps the original CBraMod components needed for compatibility
-plus the unified EEG-Vision downstream and pretraining pipelines. Prepared
+This repository contains the unified EEG-Vision downstream pipeline. Prepared
 datasets are expected in a sibling `../BigDownstream/` directory by default;
 the paths can be overridden from the command line.
 
@@ -11,9 +10,8 @@ the paths can be overridden from the command line.
 | --- | --- |
 | `experiments/downstream_11.py` | One runner for the 11 prepared downstream datasets. Use this for checks, dry runs, and training. |
 | `finetune_main.py` | Low-level finetuning entrypoint used by the experiment runner. |
-| `finetune_trainer.py` | Training loops for binary, multiclass, and regression tasks. |
+| `finetune_trainer.py` | Training loops for binary and multiclass tasks. |
 | `finetune_evaluator.py` | Metric calculation for validation and test splits. |
-| `pretrain_main.py` | EEG-Vision VICReg pretraining entrypoint. |
 | `experiments/run_downstream.sh` | Unified shell entrypoint for downstream experiments. |
 | `configs/backbones/*/*.yaml` | Backbone profiles and dataset-specific locked configurations, including recipes, seeds, results, and notes where finalized. |
 | `experiments/run_*5seed.sh` | Locked five-seed launchers for finalized recipes. |
@@ -37,10 +35,7 @@ runs.
 | --- | --- |
 | `models/vision_model.py` | Complete downstream flow: input preparation, backbone, global pooling, and head. |
 | `models/eeg_vision_adapter.py` | The single parameter-free phase-folding adapter; accepts both `[B,C,T]` and ISRUC `[B,S,C,T]`. |
-| `models/vision_backbone.py` | timm creation, global pooling, stride, and checkpoint helpers. |
-| `models/eeg_vision_pretrain.py` | VICReg head and EEG augmentations on the shared encoder. |
-| `models/legacy/model_for_*.py` | Legacy CBraMod wrappers for non-11-dataset tasks. |
-| `models/cbramod.py` | Original CBraMod foundation model. |
+| `models/vision_backbone.py` | timm creation and global pooling helpers. |
 
 ## Experiment Outputs
 
@@ -60,6 +55,6 @@ Local outputs are intentionally ignored by git:
 - Supervised dataloaders share `datasets.shape_utils.clip_eeg`. The default is
   `float32`, clipped to `[-1024, 1024]`, then divided by `32`; SHU-MI currently
   overrides this with `clip[-512, 512]`, then divides by `64`.
-- ISRUC is special: CBraMod keeps a batch of 20 consecutive sleep epochs and
+- ISRUC is special: the loader keeps a batch of 20 consecutive sleep epochs and
   computes loss over all 20 labels. Do not flatten ISRUC into regular
   `[B, C, T]` records unless the model and loss are changed accordingly.

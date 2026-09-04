@@ -1,8 +1,8 @@
 % Finalized phase-interleaved EfficientNet-B0 results. Every checkpoint was
 % selected using the validation primary metric and evaluated once on test.
-% Standard deviations are population statistics. ISRUC uses its locked
-% five-seed recipe (42--46); remaining unfinished five-seed conversions retain
-% the canonical 3407--3409 sweep values.
+% Standard deviations are population statistics. CHB-MIT, SHU-MI, ISRUC, and
+% TUEV use locked five-seed recipes (42--46); remaining formal rows retain the
+% canonical 3407--3409 sweep values.
 
 \newcommand{\numFinalized}{11}
 \newcommand{\numBenchmarks}{11}
@@ -24,28 +24,28 @@
 \newcommand{\cbMental}{\ensuremath{.6267/.7905}}
 
 % Corrected phase-interleaved EfficientNet-B0 repeated-seed results.
-\newcommand{\ourCHB}{\ensuremath{.4177\pm.0768\,/\,.9147\pm.0079}}
+\newcommand{\ourCHB}{\ensuremath{.4092\pm.0536\,/\,.8974\pm.0194}}
 \newcommand{\ourTUAB}{\ensuremath{.8703\pm.0033\,/\,.8697\pm.0048}}
-\newcommand{\ourTUEV}{\ensuremath{.6889\pm.0371\,/\,.8330\pm.0217}}
+\newcommand{\ourTUEV}{\ensuremath{.6901\pm.0190\,/\,.8380\pm.0076}}
 \newcommand{\ourISRUC}{\ensuremath{.7705\pm.0032\,/\,.8197\pm.0029}}
 \newcommand{\ourFACED}{\ensuremath{.3737\pm.0237\,/\,.4476\pm.0194}}
 \newcommand{\ourSEEDV}{\ensuremath{.2206\pm.0061\,/\,.3819\pm.0052}}
 \newcommand{\ourPhysio}{\ensuremath{.5415\pm.0178\,/\,.6566\pm.0128}}
-\newcommand{\ourSHU}{\ensuremath{.6780\pm.0049\,/\,.6656\pm.0060}}
+\newcommand{\ourSHU}{\ensuremath{.6982\pm.0178\,/\,.6962\pm.0139}}
 \newcommand{\ourBCIC}{\ensuremath{.5806\pm.0175\,/\,.6647\pm.0140}}
 \newcommand{\ourMumtaz}{\ensuremath{.9569\pm.0071\,/\,.9524\pm.0089}}
 \newcommand{\ourMental}{\ensuremath{.7273\pm.0419\,/\,.8927\pm.0204}}
 
 % Primary-metric deltas: EfficientNet-B0 mean minus published CBraMod value,
 % expressed in percentage points.
-\newcommand{\deltaCHB}{\ensuremath{+4.88}}
+\newcommand{\deltaCHB}{\ensuremath{+4.03}}
 \newcommand{\deltaTUAB}{\ensuremath{-5.18}}
-\newcommand{\deltaTUEV}{\ensuremath{+1.45}}
+\newcommand{\deltaTUEV}{\ensuremath{+1.57}}
 \newcommand{\deltaISRUC}{\ensuremath{+2.63}}
 \newcommand{\deltaFACED}{\ensuremath{-13.04}}
 \newcommand{\deltaSEEDV}{\ensuremath{-3.63}}
 \newcommand{\deltaPhysio}{\ensuremath{+1.93}}
-\newcommand{\deltaSHU}{\ensuremath{-3.59}}
+\newcommand{\deltaSHU}{\ensuremath{-1.57}}
 \newcommand{\deltaBCIC}{\ensuremath{+15.90}}
 \newcommand{\deltaMumtaz}{\ensuremath{-3.55}}
 \newcommand{\deltaMental}{\ensuremath{+10.06}}

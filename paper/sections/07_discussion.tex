@@ -42,13 +42,14 @@ unexpectedly strong component under end-to-end supervised adaptation.
 
 \begin{itemize}
     \item \textbf{Baseline comparability.}  BIOT, LaBraM, \cbramod{}, and
-    \reve{} are published references, not local paired reproductions. The
-    manifests follow shared benchmark partitions, but preprocessing,
-    optimization, seeds, and model selection remain method-specific. TUEV is a
-    cross-version comparison (local v2.0.1 versus published v2.0.0), and
-    REVE--ISRUC uses corrected channel selection. For TUAB and TUEV we use
-    \cbramod{}'s target-corpus-excluded controls rather than its full-pretraining
-    results.
+    \reve{} are published references, not local paired reproductions. Our
+    split definitions reproduce the subject- or trial-level partitions reported
+    by \cbramod{} and, where available, \reve{}
+    \citep{wang2024cbramod,elouahidi2025reve}; preprocessing, optimization,
+    seeds, and model selection remain method-specific. TUEV is a cross-version
+    comparison (local v2.0.1 versus published v2.0.0), and REVE--ISRUC uses
+    corrected channel selection. For TUAB and TUEV we use \cbramod{}'s
+    target-corpus-excluded controls rather than its full-pretraining results.
     \item \textbf{Development-set contamination.}  Formal runs evaluate the
     test set once, but some candidate recipes were inspired by earlier test-
     visible exploration.  A prospectively frozen rerun is needed for the final
@@ -63,8 +64,8 @@ unexpectedly strong component under end-to-end supervised adaptation.
     supervised architectures,
     identical-pipeline foundation baselines, FLOPs, throughput, and memory are
     not yet in the main table.
-    \item \textbf{Statistical uncertainty.}  Three seeds are informative but
-    limited, especially for MentalArithmetic.  Subject-level bootstrap
+    \item \textbf{Statistical uncertainty.} Three to five seeds are informative
+    but limited, especially for MentalArithmetic. Subject-level bootstrap
     intervals and paired tests would better reflect evaluation uncertainty.
 \end{itemize}
 

@@ -1,5 +1,4 @@
 dataset: PhysioNet-MI
-model_arch: vision
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
   adapter: {fold_factor: 1}
@@ -44,8 +43,6 @@ training:
   mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
-  physio_lowpass_hz: null
-  physio_filter_order: 4
   selection_metric: kappa
   test_each_epoch: false
   run_final_test: true

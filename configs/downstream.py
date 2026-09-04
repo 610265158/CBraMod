@@ -119,24 +119,11 @@ DEFAULT_TRAINING = {
 
 
 MODEL_TRAINING_OVERRIDES = {
-    'vision': {
-        # Keep efficientnet_b0 on the dataset/default training schedule.
-        'efficientnet_b0': {},
-        # convformer_s18 diverged with lr=5e-4 on CHB-MIT; 1e-4 is stable.
-        'convformer_s18': {
-            'lr': 0.0001,
-        },
-    },
-    'eegnet': {
-        '_default': {
-            'lr': 0.001,
-            'weight_decay': 0.0,
-            'optimizer': 'Adam',
-            'label_smoothing': 0.0,
-            'dropout': 0.5,
-            'multi_lr': False,
-            'use_pretrained_weights': False,
-        },
+    # Keep efficientnet_b0 on the dataset/default training schedule.
+    'efficientnet_b0': {},
+    # convformer_s18 diverged with lr=5e-4 on CHB-MIT; 1e-4 is stable.
+    'convformer_s18': {
+        'lr': 0.0001,
     },
 }
 
@@ -721,10 +708,6 @@ DOWNSTREAM_11_CONFIGS = {
             'test_each_epoch': False,
             'run_final_test': True,
             'selection_metric': 'pr_auc',
-            # The LMDB is already band-pass filtered to 0.3--75 Hz during
-            # preprocessing. Do not apply an additional runtime low-pass.
-            'mumtaz_lowpass_hz': None,
-            'mumtaz_filter_order': 4,
         },
         vision=_vision(squeeze_binary=True, head_init_std=0.002,
                        feature_aggregation='flatten',
@@ -750,23 +733,19 @@ def get_dataset_config(name):
     return deepcopy(DOWNSTREAM_11_CONFIGS[name])
 
 
-def training_config_for(name, model_arch='vision', backbone_name=None, backbone_config=None):
+def training_config_for(name, backbone_name=None, backbone_config=None):
     cfg = get_dataset_config(name)
     training = dict(cfg['training'])
-    training.update(model_training_overrides(cfg, model_arch, backbone_name))
+    training.update(model_training_overrides(cfg, backbone_name))
     if backbone_config:
         training.update(profile_training_overrides(load_backbone_config(backbone_config, dataset=name)))
     return training
 
 
-def model_training_overrides(cfg, model_arch='vision', backbone_name=None):
-    arch_overrides = MODEL_TRAINING_OVERRIDES.get(model_arch, {})
-    overrides = dict(arch_overrides.get('_default', {}))
-    if model_arch == 'vision':
-        if backbone_name is None:
-            backbone_name = cfg.get('vision', {}).get('backbone_name')
-        overrides.update(arch_overrides.get(backbone_name, {}))
-    return overrides
+def model_training_overrides(cfg, backbone_name=None):
+    if backbone_name is None:
+        backbone_name = cfg.get('vision', {}).get('backbone_name')
+    return dict(MODEL_TRAINING_OVERRIDES.get(backbone_name, {}))
 
 
 def dataset_registry():

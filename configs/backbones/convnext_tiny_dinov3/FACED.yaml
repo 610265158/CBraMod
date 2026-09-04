@@ -1,5 +1,4 @@
 dataset: FACED
-model_arch: vision
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
   adapter: {fold_factor: 2}
@@ -44,8 +43,6 @@ training:
   mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
-  faced_input_norm: clip_scale
-  faced_robust_clip: 8.0
   selection_metric: kappa
   test_each_epoch: false
   run_final_test: true

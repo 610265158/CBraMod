@@ -6,19 +6,16 @@ input geometry. Its phase-interleaved folding adapter maps
 `[batch, channel, time]` into a single-channel 2D tensor while preserving every
 sample exactly.
 
-The repository is built from the CBraMod codebase and provides a unified,
-validation-controlled comparison across 11 downstream EEG datasets. The main
-backbone is EfficientNet-B0; EEGNet and selected timm backbones are available
-as controlled baselines. The original CBraMod modules remain only where they
-are required by legacy tasks.
+The repository provides a unified, validation-controlled vision pipeline across
+11 downstream EEG datasets. EfficientNet-B0 is the main baseline, and other
+timm vision backbones can be selected through the backbone profiles.
 
 Finalized metrics, protocol constraints, and CBraMod reference values are kept
 in [`experiments/PHASE_FOLD_RESULTS.md`](experiments/PHASE_FOLD_RESULTS.md).
 
 ## Project Navigation
 
-The codebase keeps the original CBraMod-compatible entrypoints, but the current
-11-dataset downstream experiments should start from:
+The downstream experiments should start from:
 
 - `PROJECT_LAYOUT.md`: directory map and responsibilities.
 - `experiments/README.md`: configured datasets, split counts, and tensor shapes.
@@ -90,10 +87,9 @@ Locked experiment launchers and complete YAML configs are documented under
 See [`experiments/README.md`](experiments/README.md) for exact shapes,
 preprocessing, flags, and all 11 configured datasets.
 
-The original CBraMod pretrained checkpoint is available on
-[Hugging Face](https://huggingface.co/weighting666/CBraMod). It is used only by
-the legacy CBraMod model path; the default vision path loads timm ImageNet
-weights.
+Published CBraMod numbers are retained as external comparison references in
+the experiment reports. The executable model path in this repository uses timm
+vision backbones with ImageNet initialization or random initialization.
 
 ## References
 

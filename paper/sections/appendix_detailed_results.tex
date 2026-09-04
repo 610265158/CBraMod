@@ -7,21 +7,22 @@ Published supervised and foundation-model values are transcribed from the
 shared benchmark tables in \cbramod{} and \reve{}
 \citep{wang2024cbramod,elouahidi2025reve}. The supervised suite contains
 EEGNet, EEGConformer, SPaRCNet, ContraWR, CNN-Transformer, FFCL, and
-ST-Transformer. All use the same subject- or trial-level partition as our
-pipeline except for the documented TUEV version difference. Binary tasks
+ST-Transformer. All use the subject- or trial-level partitions reported by
+\cbramod{} and, where available, \reve{}, except for the documented TUEV
+version difference \citep{wang2024cbramod,elouahidi2025reve}. Binary tasks
 report PR-AUC/AUROC; multiclass tasks report Cohen's $\kappa$/weighted F1.
-Balanced accuracy is omitted because it was not part of our frozen formal
-reporting protocol and cannot be reconstructed from the saved aggregate
-metrics.
+Balanced accuracy is omitted from the formal tables because it was not part of
+our frozen reporting protocol.
 Published and local rows still differ in preprocessing, optimization, seeds,
 and checkpoint selection, so these are direct benchmark comparisons rather
 than paired reproductions. Bold denotes the best displayed mean per metric.
 
 \subsection{CHB-MIT: Seizure Detection}
 
-CHB-MIT \citep{shoeb2009application} uses subjects 1--19 for training,
-20--21 for validation, and 22--23 for testing. The benchmark contains 326,993
-ten-second segments after resampling and uses PR-AUC as its primary metric.
+CHB-MIT \citep{shoeb2009application,wang2024cbramod} follows the
+\cbramod{} subject split: CHB01--20 for training, CHB21--22 for validation,
+and CHB23--24 for testing. The benchmark contains 326,993 ten-second segments
+after resampling and uses PR-AUC as its primary metric.
 
 \begin{table}[t]
 \centering
@@ -47,17 +48,17 @@ ST-Transformer & $.1422\pm.0094$ & $.8237\pm.0491$ \\
 \midrule
 \familyrow{3}{Generic vision transfer}
 \oursrow
-\method{} (B0) & \textbf{$.4177\pm.0768$} & \textbf{$.9147\pm.0079$} \\
+\method{} (B0) & \textbf{$.4092\pm.0536$} & \textbf{$.8974\pm.0194$} \\
 \bottomrule
 \end{detailresults}
 \end{table}
 
 \subsection{TUAB: Abnormal EEG Detection}
 
-TUAB \citep{obeid2016temple} uses the shared
-297,103/75,407/36,945 train/validation/test split. We report \cbramod{}'s
-target-corpus-excluded control because TUAB is contained in its TUEG
-pretraining source.
+TUAB \citep{obeid2016temple,wang2024cbramod} uses the \cbramod{} benchmark
+split, reproduced locally as 297,103/75,407/36,945 train/validation/test
+examples. We report \cbramod{}'s target-corpus-excluded control because TUAB is
+contained in its TUEG pretraining source.
 
 \begin{table}[t]
 \centering
@@ -93,11 +94,11 @@ ST-Transformer & $.8521\pm.0026$ & $.8707\pm.0019$ \\
 
 \subsection{TUEV: Event Type Classification}
 
-TUEV \citep{obeid2016temple} uses the original test split and an 80/20
-subject-level division of the original training set. Published rows use
-v2.0.0 (112,491 segments), whereas our pipeline uses v2.0.1 (113,353), so the
-local row is a cross-version comparison. The \cbramod{} row excludes TUEV
-from its TUEG pretraining corpus.
+TUEV \citep{obeid2016temple,wang2024cbramod} uses the \cbramod{} benchmark
+split: the original test split and an 80/20 subject-level division of the
+original training set. Published rows use v2.0.0 (112,491 segments), whereas
+our pipeline uses v2.0.1 (113,353), so the local row is a cross-version
+comparison. The \cbramod{} row excludes TUEV from its TUEG pretraining corpus.
 
 \begin{table}[t]
 \centering
@@ -127,7 +128,7 @@ ST-Transformer & $.3765\pm.0306$ & $.6823\pm.0190$ \\
 \midrule
 \familyrow{3}{Generic vision transfer}
 \oursrow
-\method{} (B0) & \textbf{$.6889\pm.0371$} & $.8330\pm.0217$ \\
+\method{} (B0) & \textbf{$.6901\pm.0190$} & $.8380\pm.0076$ \\
 \bottomrule
 \end{detailresults}
 \end{table}
@@ -307,7 +308,7 @@ ST-Transformer & $.6394\pm.0122$ & $.6431\pm.0111$ \\
 \midrule
 \familyrow{3}{Generic vision transfer}
 \oursrow
-\method{} (B0) & $.6780\pm.0049$ & $.6656\pm.0060$ \\
+\method{} (B0) & $.6982\pm.0178$ & $.6962\pm.0139$ \\
 \bottomrule
 \end{detailresults}
 \end{table}

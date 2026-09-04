@@ -15,32 +15,11 @@ from finetune_trainer import Trainer
 
 
 DATASET_REGISTRY = dataset_registry()
-# Keep the two legacy datasets available outside the 11-dataset runner.
-for _legacy_name, _legacy_entry in {
-    'SEED-VIG': {
-        'dataset_module': 'datasets.seedvig_dataset',
-        'model_module': 'models.legacy.model_for_seedvig',
-        'task': 'regression',
-    },
-    'BCIC-IV-2a': {
-        'dataset_module': 'datasets.bciciv2a_dataset',
-        'model_module': 'models.legacy.model_for_bciciv2a',
-        'task': 'multiclass',
-    },
-}.items():
-    DATASET_REGISTRY.setdefault(_legacy_name, _legacy_entry)
 
 TRAIN_METHODS = {
     'binary': 'train_for_binaryclass',
     'multiclass': 'train_for_multiclass',
-    'regression': 'train_for_regression',
 }
-
-MODEL_MODULES = {
-    'vision': 'models.vision_model',
-    'eegnet': 'models.eegnet_model',
-}
-
 
 def str2bool(value):
     if isinstance(value, bool):
@@ -78,40 +57,21 @@ def main():
     parser.add_argument('--dropout', type=float, default=None, help='dropout')
     parser.add_argument('--drop_path_rate', type=float, default=None,
                         help='stochastic-depth rate passed to the vision backbone')
-    parser.add_argument('--model_arch', type=str, default='vision', choices=sorted(MODEL_MODULES),
-                        help='downstream model architecture')
     parser.add_argument('--backbone_name', type=str, default=None,
-                        help='override timm backbone name for --model_arch vision')
+                        help='override timm vision backbone name')
     parser.add_argument('--backbone_config', type=str, default=None,
                         help='backbone profile name or YAML path')
     parser.add_argument('--vision_fold_factor', type=int, default=None,
                         help='override phase-interleaved temporal fold factor P (minimum: 1)')
-    parser.add_argument('--vision_channel_repeat', type=int, default=1,
-                        help='repeat each EEG channel consecutively before the vision adapter')
-    parser.add_argument('--vision_height_stride', type=int, default=32,
-                        choices=[1, 2, 4, 8, 16, 32],
-                        help='target CNN output stride along EEG-channel height; time stride is unchanged')
     parser.add_argument('--vision_no_pad', type=str2bool, default=False,
                         help='disable zero-padding after EEG phase folding')
-    parser.add_argument('--vision_head_init', type=str, default=None,
-                        choices=['trunc_normal', 'small_trunc_normal', 'zero',
-                                 'xavier_uniform', 'rare_binary_prior'],
-                        help='initialization for the downstream vision classifier head')
     parser.add_argument('--vision_head_init_std', type=float, default=None,
                         help='override classifier-head truncated-normal weight std; bias is zero')
     parser.add_argument('--vision_squeeze_binary', type=str2bool, default=None,
                         help='return a scalar logit for single-class binary tasks')
-    parser.add_argument('--vision_init_head', type=str2bool, default=None,
-                        help='whether to initialize the vision classifier head')
     parser.add_argument('--vision_feature_aggregation', type=str, default=None,
                         choices=['gap', 'flatten'],
                         help='feature aggregation used before the vision head')
-    parser.add_argument('--eeg_dataset_mean', type=float, default=None,
-                        help='training-split global EEG mean in raw clipped units')
-    parser.add_argument('--eeg_dataset_std', type=float, default=None,
-                        help='training-split global EEG std in raw clipped units')
-    parser.add_argument('--eeg_target_std', type=float, default=1.0,
-                        help='target std after dataset-level EEG z-score (default: 1)')
     parser.add_argument('--shu_clip_limit', type=float, default=512.0,
                         help='SHU-MI raw-value clip limit before the vision adapter')
     parser.add_argument('--shu_scale', type=float, default=64.0,
@@ -135,14 +95,6 @@ def main():
                         help='FACED input normalization; robust_sample uses one median/MAD per trial')
     parser.add_argument('--faced_robust_clip', type=float, default=None,
                         help='absolute clip after FACED per-trial robust normalization')
-    parser.add_argument('--classifier', type=str, default='all_patch_reps',
-                        help='[all_patch_reps, all_patch_reps_twolayer, '
-                             'all_patch_reps_onelayer, avgpooling_patch_reps]')
-    # all_patch_reps: use all patch features with a three-layer classifier;
-    # all_patch_reps_twolayer: use all patch features with a two-layer classifier;
-    # all_patch_reps_onelayer: use all patch features with a one-layer classifier;
-    # avgpooling_patch_reps: use average pooling for patch features;
-
     """############ Downstream dataset settings ############"""
     parser.add_argument('--downstream_dataset', type=str, default='FACED',
                         choices=sorted(DATASET_REGISTRY.keys()),
@@ -197,11 +149,6 @@ def main():
                         help='probability of applying Mixup to a training batch')
     parser.add_argument('--mixup_alpha', type=float, default=None,
                         help='symmetric Beta distribution alpha for Mixup')
-    parser.add_argument('--foundation_dir', type=str,
-                        default='pretrained_weights/pretrained_weights.pth',
-                        help='foundation_dir')
-    parser.add_argument('--vision_pretrained_checkpoint', type=str, default=None,
-                        help='EEG-Vision backbone produced by pretrain_main.py')
     parser.add_argument('--early_stop', type=int,
                         default=None,
                         help='early_stop')
@@ -235,8 +182,7 @@ def main():
     registry = DATASET_REGISTRY[params.downstream_dataset]
     params.downstream_task = registry['task']
     dataset_module = import_selected_module(registry['dataset_module'])
-    model_module_name = registry.get('model_module', MODEL_MODULES[params.model_arch])
-    model_module = import_selected_module(model_module_name)
+    model_module = import_selected_module('models.vision_model')
     load_dataset = dataset_module.LoadDataset(params)
     data_loader = load_dataset.get_data_loader()
     model = model_module.Model(params)
@@ -258,87 +204,24 @@ def main():
 
 
 def apply_downstream_defaults(params):
-    cfg = DOWNSTREAM_11_CONFIGS.get(params.downstream_dataset)
-    if cfg:
-        training = training_config_for(
-            params.downstream_dataset,
-            model_arch=params.model_arch,
-            backbone_name=params.backbone_name,
-            backbone_config=params.backbone_config,
-        )
-    else:
-        training = legacy_training_defaults()
+    cfg = DOWNSTREAM_11_CONFIGS[params.downstream_dataset]
+    training = training_config_for(
+        params.downstream_dataset,
+        backbone_name=params.backbone_name,
+        backbone_config=params.backbone_config,
+    )
 
     for key in TRAINING_KEYS:
         if getattr(params, key, None) is None:
             setattr(params, key, training[key])
 
-    if cfg is not None:
-        if params.datasets_dir is None:
-            params.datasets_dir = cfg['datasets_dir']
-        if params.num_of_classes is None:
-            params.num_of_classes = cfg['classes']
-    else:
-        if params.num_of_classes is None:
-            params.num_of_classes = 9
+    if params.datasets_dir is None:
+        params.datasets_dir = cfg['datasets_dir']
+    if params.num_of_classes is None:
+        params.num_of_classes = cfg['classes']
 
     if params.model_dir is None:
         params.model_dir = str(Path('experiments/checkpoints/manual') / safe_name(params.downstream_dataset))
-
-
-def legacy_training_defaults():
-    return {
-        'lr': 0.0005,
-        'backbone_lr_scale': 0.1,
-        'batch_size': 64,
-        'epochs': 50,
-        'weight_decay': 5e-2,
-        'min_lr': 1e-6,
-        'warmup_epochs': 0,
-        'warmup_start_factor': 0.1,
-        'clip_value': 1,
-        'ema_decay': 0.0,
-        'num_workers': 16,
-        'optimizer': 'AdamW',
-        'label_smoothing': 0.1,
-        'binary_pos_weight': 1.0,
-        'dropout': 0.1,
-        'drop_path_rate': 0.0,
-        'early_stop': 10,
-        'frozen': False,
-        'multi_lr': True,
-        'use_pretrained_weights': True,
-        'balanced_sampling': False,
-        'balanced_sampling_power': 1.0,
-        'balanced_sampling_min_share': 0.0,
-        'mirror_augmentation': False,
-        'mirror_prob': 0.5,
-        'time_roll_augmentation': False,
-        'time_roll_prob': 1.0,
-        'time_roll_max_fraction': 0.5,
-        'amplitude_scale_augmentation': False,
-        'amplitude_scale_prob': 1.0,
-        'amplitude_scale_min': 0.5,
-        'amplitude_scale_max': 2.0,
-        'amplitude_scale_distribution': 'log_uniform',
-        'mixup_augmentation': False,
-        'mixup_prob': 1.0,
-        'mixup_alpha': 0.2,
-        'amp': True,
-        'amp_dtype': 'float16',
-        'mental_scale': 32.0,
-        'shu_clip_limit': 512.0,
-        'shu_scale': 64.0,
-        'shu_bandpass_low': None,
-        'shu_bandpass_high': None,
-        'shu_filter_order': 4,
-        'physio_lowpass_hz': None,
-        'physio_filter_order': 4,
-        'mumtaz_lowpass_hz': None,
-        'mumtaz_filter_order': 4,
-        'faced_input_norm': 'clip_scale',
-        'faced_robust_clip': 8.0,
-    }
 
 
 def safe_name(name):
@@ -403,10 +286,7 @@ def evaluate_checkpoint(params, data_loader, model):
                 ba, kappa, f1
             ))
         else:
-            corrcoef, r2, rmse = evaluator.get_metrics_for_regression(model)
-            print('Checkpoint Test Evaluation: corrcoef: {:.5f}, r2: {:.5f}, rmse: {:.5f}'.format(
-                corrcoef, r2, rmse
-            ))
+            raise ValueError('Unsupported downstream task: {}'.format(params.downstream_task))
         print(cm)
 
 

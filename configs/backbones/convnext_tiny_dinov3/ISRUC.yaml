@@ -1,5 +1,4 @@
 dataset: ISRUC
-model_arch: vision
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
   adapter: {fold_factor: 12}

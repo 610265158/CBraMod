@@ -41,17 +41,17 @@ AdamW, cosine decay, dropout .1, and bfloat16 mixed precision.
 \toprule
 Dataset & $P$ & Folded $H\times W$ & Epochs & LR & WD & Select & Special setting \\
 \midrule
-CHB-MIT & 4 & $64\times500$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & --- \\
+CHB-MIT & 4 & $64\times500$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & RA4 weights, head std .002, fixed 1:10 positive:negative sampling, no augmentation \\
 TUAB & 4 & $64\times500$ & 5 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & grad clip 1 \\
-TUEV & 4 & $64\times250$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
-ISRUC & 12 & $72\times500$ & 15 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, shift+mirror, head std .002 \\
+TUEV & 4 & $64\times250$ & 10 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & grad clip 1, head std .002, no augmentation/EMA \\
+ISRUC & 12 & $72\times500$ & 15 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, roll+mirror, head std .002 \\
 FACED & 2 & $64\times1000$ & 50 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
 SEED-V & 1 & $62\times200$ & 50 & $5\cdot10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
 PhysioNet-MI & 1 & $64\times800$ & 30 & $2\cdot10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, no folding \\
-SHU-MI & 2 & $64\times400$ & 20 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & warmup 3, EMA .995, shift, scale 64 \\
-BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no fold, warmup 3, EMA .995, bf16, clip 1, shift \\
-Mumtaz2016 & 4 & $76\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & warmup 3, EMA .995, shift \\
-MentalArithmetic & 4 & $80\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & EMA .99, weighted BCE, shift+mirror \\
+SHU-MI & 2 & $64\times400$ & 10 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & RA4 weights, clip 1024/scale 32, no augmentation, EMA .995 \\
+BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no fold, warmup 3, EMA .995, bf16, clip 1, time roll \\
+Mumtaz2016 & 4 & $76\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & warmup 3, EMA .995, time roll \\
+MentalArithmetic & 4 & $80\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & EMA .99, weighted BCE, roll+mirror \\
 \bottomrule
 \end{tabularx}
 \tablenote{``Select'' is the validation metric used for checkpointing. All
@@ -59,22 +59,27 @@ runs use ImageNet initialization, AdamW, cosine decay, dropout .1, average
 pooling, a linear head, and bfloat16 mixed precision.}
 \end{table*}
 
-ISRUC uses batch size 16, three warmup epochs, EMA decay .995, time roll
+CHB-MIT uses RA4 EfficientNet-B0 weights, classifier initialization std .002,
+fixed 1:10 positive-to-negative sampling, and no augmentation. TUEV uses
+bottom/right-only padding, classifier initialization std .002, gradient
+clipping at 1, and no augmentation or EMA. ISRUC uses batch size 16, three
+warmup epochs, EMA decay .995, time roll
 ($p=.5$, maximum fraction .25), and mirror augmentation ($p=.5$), which swaps
 left/right channel pairs according to the known montage. Its classifier uses
 truncated-normal weight initialization with standard deviation .002 and zero
 bias. PhysioNet-MI uses
 batch size 32, three warmup epochs, EMA decay .995, BF16 AMP, and no data
 augmentation; left/right mirror is disabled because its motor-imagery labels
-are side-specific. SHU-MI uses time roll with $p=.5$ and maximum fraction .25.
+are side-specific. SHU-MI uses three warmup epochs, EMA decay .995, RA4
+weights, and no train-time augmentation.
 BCIC2020-3 and Mumtaz2016 use time roll with $p=1$ and maximum fraction .5;
 neither uses mirror augmentation. MentalArithmetic
 uses batch size 64, three warmup epochs,
 \texttt{pos\_weight=3}, time roll ($p=.5$, maximum fraction .25), and mirror
 ($p=.5$).
-No finalized run uses random amplitude scaling.  SHU-MI uses its documented
-input-scale exception; all other datasets use the default clip-to-1024 and
-divide-by-32 preprocessing.
+No finalized run uses random amplitude scaling. SHU-MI uses the finalized
+clip-to-1024 and divide-by-32 scaling; all other datasets use the same default
+preprocessing.
 
 \paragraph{SHU-MI backbone-capacity ablation.}
 In the historical matched FP16 P=2 recipe, EfficientNet-B5 reaches
@@ -100,13 +105,10 @@ datasets whose locked five-seed replacements are still pending.}
 \toprule
 Dataset & Metrics & Seed 3407 & Seed 3408 & Seed 3409 \\
 \midrule
-CHB-MIT & PR/ROC & .52397/.92512 & .34542/.90605 & .38355/.91285 \\
 TUAB & PR/ROC & .86708/.86289 & .87481/.87229 & .86892/.87379 \\
-TUEV & $\kappa$/F1 & .63647/.80231 & .71484/.84858 & .71540/.84808 \\
 FACED & $\kappa$/F1 & .37429/.45404 & .40240/.46739 & .34432/.42133 \\
 SEED-V & $\kappa$/F1 & .22604/.38659 & .22359/.38433 & .21204/.37472 \\
 PhysioNet-MI & $\kappa$/F1 & .51783/.63940 & .56074/.67021 & .54592/.66012 \\
-SHU-MI & PR/ROC & .68458/.67286 & .67687/.65818 & .67267/.66568 \\
 BCIC2020-3 & $\kappa$/F1 & .57167/.65717 & .56500/.65252 & .60500/.68432 \\
 Mumtaz2016 & PR/ROC & .95662/.95016 & .96563/.96419 & .94831/.94269 \\
 MentalArithmetic & PR/ROC & .68154/.89062 & .78280/.91855 & .71758/.86878 \\
@@ -118,21 +120,27 @@ PR-AUC/AUROC for binary tasks and $\kappa$/weighted F1 for multiclass tasks.}
 
 \begin{table*}[tbp]
 \centering
-\caption{Finalized ISRUC five-seed test values from validation-kappa-selected
-checkpoints.}
+\caption{Finalized five-seed test values from validation-selected checkpoints.}
 \small
 \renewcommand{\arraystretch}{1.04}
 \begin{tabularx}{\textwidth}{@{}l*{5}{Y}Y@{}}
 \toprule
 Dataset & Seed 42 & Seed 43 & Seed 44 & Seed 45 & Seed 46 & Mean $\pm$ population std \\
 \midrule
+CHB-MIT (PR/ROC) & .40971/.92573 & .42591/.87683 & .49244/.91551 &
+.32659/.88349 & .39117/.88547 & .40916$\pm$.05359/.89741$\pm$.01944 \\
+SHU-MI (PR/ROC) & .68564/.68536 & .70343/.69731 & .70447/.70723 &
+.67264/.67661 & .72479/.71457 & .69819$\pm$.01780/.69622$\pm$.01387 \\
 ISRUC ($\kappa$/F1) & .77291/.82287 & .77096/.81935 & .77465/.82294 &
 .76719/.81772 & .76654/.81563 & .77045$\pm$.00316/.81970$\pm$.00287 \\
+TUEV ($\kappa$/F1) & .69178/.83861 & .66643/.83048 & .72077/.85193 &
+.69702/.83692 & .67444/.83193 & .69009$\pm$.01896/.83797$\pm$.00760 \\
 \bottomrule
 \end{tabularx}
-\tablenote{The EfficientNet-B0 recipe uses bottom/right-only padding and a
-truncated-normal classifier initialization with standard deviation .002. Each
-checkpoint is evaluated once on the test split.}
+\tablenote{CHB-MIT and SHU-MI use their locked RA4 EfficientNet-B0 recipes;
+ISRUC and TUEV use bottom/right-only padding and classifier initialization
+with standard deviation .002. Each checkpoint is evaluated once on the test
+split.}
 \end{table*}
 
 \section{Backbone Input Shapes}
@@ -174,11 +182,13 @@ The executable protocol is:
     \texttt{run\_final\_test=false}.  Rank candidates by mean best validation
     metric across two search seeds.
     \item Freeze the winning recipe before the formal runs.
-    \item Train seeds 3407, 3408, and 3409 with
-    \texttt{test\_each\_epoch=false}.  Save the best validation checkpoint.
+    \item Train each pending dataset with seeds 3407, 3408, and 3409, and each
+    locked five-seed dataset with seeds 42--46, always with
+    \texttt{test\_each\_epoch=false}. Save the best validation checkpoint.
     \item Restore that checkpoint and evaluate the test set exactly once.
-    \item Aggregate the three final test values as mean and population standard
-    deviation.  Do not choose a seed or epoch using test performance.
+    \item Aggregate the final test values as mean and population standard
+    deviation over the recipe's seed set. Do not choose a seed or epoch using
+    test performance.
 \end{enumerate}
 
 All downstream training is launched through
@@ -246,7 +256,11 @@ textures; they are illustrations rather than diagnostic templates.}
 The codebase records exact dataset paths, input shapes, preprocessing, seeds,
 training arguments, logs, and validation-selected checkpoints.  Public data
 licenses and access conditions differ by benchmark; no dataset is redistributed
-with the paper. Reproduction additionally requires the documented dataset
-versions and split manifests; TUAB and TUEV version numbers are especially
-important because sample counts differ across releases and historical
-pipelines.
+with the paper.  The CHB-MIT manifest follows the subject split reported by
+\cbramod{} (CHB01--20/CHB21--22/CHB23--24 for train/validation/test)
+\citep{wang2024cbramod}; the other manifests follow the subject- or trial-level
+benchmark partitions documented by \cbramod{} and \reve{}
+\citep{wang2024cbramod,elouahidi2025reve}.  Reproduction still requires the
+documented dataset versions and local split manifests; TUAB and TUEV version
+numbers are especially important because sample counts differ across releases
+and historical pipelines.

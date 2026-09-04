@@ -1,19 +1,18 @@
-dataset: SHU-MI
+dataset: BCIC2020-3
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
-  adapter: {fold_factor: 2}
-  squeeze_binary: true
+  adapter: {fold_factor: 1}
   feature_aggregation: flatten
 training:
   lr: 0.0001
   backbone_lr_scale: 1.0
   batch_size: 32
-  epochs: 10
-  weight_decay: 0.0005
+  epochs: 30
+  weight_decay: 0.005
   min_lr: 0.000001
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
   num_workers: 0
   optimizer: AdamW
@@ -21,7 +20,7 @@ training:
   binary_pos_weight: 1.0
   dropout: 0.1
   drop_path_rate: 0.0
-  early_stop: 20
+  early_stop: 30
   frozen: false
   multi_lr: false
   use_pretrained_weights: true
@@ -31,7 +30,7 @@ training:
   balanced_sampling_negative_ratio: 0.0
   mirror_augmentation: false
   mirror_prob: 0.5
-  time_roll_augmentation: false
+  time_roll_augmentation: true
   time_roll_prob: 1.0
   time_roll_max_fraction: 0.5
   amplitude_scale_augmentation: false
@@ -44,26 +43,22 @@ training:
   mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
-  shu_clip_limit: 1024.0
-  shu_scale: 32.0
-  selection_metric: pr_auc
+  selection_metric: kappa
   test_each_epoch: false
   run_final_test: true
 protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
-results:
-  ba: {mean: 0.63579, std: 0.00752}
-  pr_auc: {mean: 0.69096, std: 0.01290}
-  roc_auc: {mean: 0.70055, std: 0.01123}
+results: {}
 notes: >-
-  Five-seed (42--46) SHU-MI run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M
-  self-supervised weights. SHU-MI canonical geometry (P=2, 32x800 -> 64x416),
-  clip=1024/scale=32, flatten feature aggregation, binary PR-AUC selection,
-  one final test evaluation per seed. lr=1e-4 because the ConvNeXt family is
-  unstable at the EfficientNet SHU-MI lr=1e-3. num_workers=0 avoids the LMDB
-  fork-worker segfault (does not affect sampling or model numerics).
-  Population standard deviations.
+  Five-seed (42--46) BCIC2020-3 (imagined speech) run with ConvNeXt-Tiny (v1)
+  DINOv3 LVD-1689M self-supervised weights, flatten+FC head. BCIC2020-3
+  geometry (P=1, 64x600 -> 64x608), 5-way multiclass kappa selection, one
+  final test evaluation per seed. lr=1e-4 (ConvNeXt schedule); flatten head
+  mirrors the SHU-MI fix, where gap (768-dim) stuck at chance but flatten
+  (large FC) learned. The rest mirrors the locked recipe (wd 5e-3, warmup 3,
+  ema 0.995, clip 1.0, time-roll augmentation). num_workers=0 avoids the LMDB
+  fork-worker segfault. Population standard deviations.
 output:
-  model_root: experiments/checkpoints/shumi_convnext_tiny_dinov3_p2_flatten_5seed_v1/seed{seed}
-  log_root: experiments/logs/shumi_convnext_tiny_dinov3_p2_flatten_5seed_v1/seed{seed}
+  model_root: experiments/checkpoints/bcic2020_3_convnext_tiny_dinov3_p1_flatten_5seed_v1/seed{seed}
+  log_root: experiments/logs/bcic2020_3_convnext_tiny_dinov3_p1_flatten_5seed_v1/seed{seed}

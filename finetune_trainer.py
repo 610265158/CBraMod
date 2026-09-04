@@ -6,7 +6,7 @@ from timeit import default_timer as timer
 
 import numpy as np
 import torch
-from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss, MSELoss
+from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 from timm.utils import ModelEmaV2
 from tqdm import tqdm
 
@@ -72,7 +72,7 @@ class Trainer(object):
                 self.mixup_prob,
                 self.mixup_alpha,
             ))
-        if self.params.downstream_dataset in ['FACED', 'SEED-V', 'PhysioNet-MI', 'ISRUC', 'BCIC2020-3', 'TUEV', 'BCIC-IV-2a']:
+        if self.params.downstream_dataset in ['FACED', 'SEED-V', 'PhysioNet-MI', 'ISRUC', 'BCIC2020-3', 'TUEV']:
             self.criterion = CrossEntropyLoss(label_smoothing=self.params.label_smoothing).to(self.device)
         elif self.params.downstream_dataset in ['SHU-MI', 'CHB-MIT', 'Mumtaz2016', 'MentalArithmetic', 'TUAB']:
             binary_pos_weight = float(getattr(self.params, 'binary_pos_weight', 1.0))
@@ -82,9 +82,6 @@ class Trainer(object):
             self.criterion = BCEWithLogitsLoss(pos_weight=pos_weight).to(self.device)
             if binary_pos_weight != 1.0:
                 print('Weighted BCE enabled: pos_weight={}'.format(binary_pos_weight))
-        elif self.params.downstream_dataset == 'SEED-VIG':
-            self.criterion = MSELoss().to(self.device)
-
         self.best_model_states = None
 
         self.optimizer = self.configure_optimizers()
@@ -468,101 +465,6 @@ class Trainer(object):
             if not os.path.isdir(self.params.model_dir):
                 os.makedirs(self.params.model_dir)
             model_path = self.params.model_dir + "/epoch{}_ba_{:.5f}_pr_{:.5f}_roc_{:.5f}.pth".format(best_f1_epoch, ba, pr_auc, roc_auc)
-            torch.save(self.model.state_dict(), model_path)
-            print("model save in " + model_path)
-
-    def train_for_regression(self):
-        corrcoef_best = 0
-        r2_best = float('-inf')
-        rmse_best = 0
-        best_r2_epoch = 0
-        epochs_without_improvement = 0
-        early_stop_patience = int(getattr(self.params, 'early_stop', 0))
-        if early_stop_patience < 0:
-            raise ValueError('--early_stop must be non-negative')
-        for epoch in range(self.params.epochs):
-            self.model.train()
-            start_time = timer()
-            loss_sum = torch.zeros((), device=self.device)
-            for batch_index, (x, y) in enumerate(tqdm(self.data_loader['train'], mininterval=10)):
-                self.optimizer.zero_grad(set_to_none=True)
-                x = x.to(self.device, non_blocking=self.use_amp)
-                y = y.to(self.device, non_blocking=self.use_amp)
-                pred = self.model(x)
-                loss = self.criterion(pred, y)
-
-                self.ensure_finite_loss(loss, epoch, batch_index)
-                loss.backward()
-                loss_sum += loss.detach()
-                if self.params.clip_value > 0:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.params.clip_value)
-                    # torch.nn.utils.clip_grad_value_(self.model.parameters(), self.params.clip_value)
-                self.optimizer.step()
-                self.update_ema()
-                self.optimizer_scheduler.step()
-
-            mean_loss = (loss_sum / self.data_length).item()
-            current_lr = self.optimizer.param_groups[0]['lr']
-
-            with torch.no_grad():
-                eval_model = self.evaluation_model()
-                corrcoef, r2, rmse = self.val_eval.get_metrics_for_regression(eval_model)
-                print(
-                    "Epoch {} : Training Loss: {:.5f}, corrcoef: {:.5f}, r2: {:.5f}, rmse: {:.5f}, LR: {:.5f}, Time elapsed {:.2f} mins".format(
-                        epoch + 1,
-                        mean_loss,
-                        corrcoef,
-                        r2,
-                        rmse,
-                        current_lr,
-                        (timer() - start_time) / 60
-                    )
-                )
-                if r2 > r2_best:
-                    epochs_without_improvement = 0
-                    print("r2 increasing....saving weights !! ")
-                    print("Val Evaluation: corrcoef: {:.5f}, r2: {:.5f}, rmse: {:.5f}".format(
-                        corrcoef,
-                        r2,
-                        rmse,
-                    ))
-                    best_r2_epoch = epoch + 1
-                    corrcoef_best = corrcoef
-                    r2_best = r2
-                    rmse_best = rmse
-                    self.best_model_states = copy.deepcopy(eval_model.state_dict())
-                    self.save_best_model_state()
-                else:
-                    epochs_without_improvement += 1
-
-                if early_stop_patience > 0 and epochs_without_improvement >= early_stop_patience:
-                    print(
-                        "Early stopping at epoch {}: r2 did not improve for {} consecutive epochs "
-                        "(best epoch {}, best score {:.5f}).".format(
-                            epoch + 1,
-                            early_stop_patience,
-                            best_r2_epoch,
-                            r2_best,
-                        )
-                    )
-                    break
-
-        self.model.load_state_dict(self.best_model_states)
-        with torch.no_grad():
-            print("***************************Test************************")
-            corrcoef, r2, rmse = self.test_eval.get_metrics_for_regression(self.model)
-            print("***************************Test results************************")
-            print(
-                "Test Evaluation: corrcoef: {:.5f}, r2: {:.5f}, rmse: {:.5f}".format(
-                    corrcoef,
-                    r2,
-                    rmse,
-                )
-            )
-
-            if not os.path.isdir(self.params.model_dir):
-                os.makedirs(self.params.model_dir)
-            model_path = self.params.model_dir + "/epoch{}_corrcoef_{:.5f}_r2_{:.5f}_rmse_{:.5f}.pth".format(best_r2_epoch, corrcoef, r2, rmse)
             torch.save(self.model.state_dict(), model_path)
             print("model save in " + model_path)
 

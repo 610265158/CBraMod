@@ -53,10 +53,14 @@ epochs per record; all other rows are channel $\times$ time. ``Classes''
 reports semantic classes, while binary heads use one output logit.}
 \end{table*}
 
-CHB-MIT segments are resampled to 2,000 samples in the dataloader.  TUAB and
-TUEV use the repository's deterministic preprocessing rather than the older
-hardware-dependent splits inherited from BIOT and LaBraM.  Dataset versions
-and sample counts must therefore be reported with every comparison.
+CHB-MIT segments are resampled to 2,000 samples in the dataloader.  Its
+subject partition is exactly the one reported by \cbramod{}---CHB01--20 for
+training, CHB21--22 for validation, and CHB23--24 for testing
+\citep{wang2024cbramod}.  For TUAB and TUEV, the repository's deterministic
+preprocessing materializes the same subject-level assignment while
+superseding the older hardware-dependent implementations inherited from BIOT
+and LaBraM.  Dataset versions and sample counts must therefore be reported
+with every comparison.
 
 \subsection{Reference methods and comparability}
 
@@ -77,18 +81,19 @@ peh2022transformer,li2022motor,song2021transformer}. These published baselines
 are useful architecture controls but are kept out of the headline table so the
 main comparison remains readable.
 
-Our manifests follow the same subject- or trial-level partitions. Eight tasks
-are shared by both reference papers and our study: TUAB, TUEV, ISRUC, FACED,
-PhysioNet-MI, BCIC2020-3, Mumtaz2016, and MentalArithmetic. CHB-MIT, SEED-V,
-and SHU-MI are covered by \cbramod{} but not \reve{}. ``Shared split'' does
-not mean a paired rerun: preprocessing, optimization, seeds, and checkpoint
-selection remain method-specific. Two exceptions require stronger caveats.
-Our TUEV uses v2.0.1 (113,353 segments), whereas the references use v2.0.0
-(112,491); and \reve{} reports corrected ISRUC channel selection under the
-same subject split but a different input pipeline. We therefore call the
-remaining published rows direct benchmark comparisons, TUEV a cross-version
-comparison, and REVE--ISRUC a shared-split comparison with preprocessing
-differences.
+Our manifests follow the subject- or trial-level partitions reported by
+\cbramod{} and, on overlapping tasks, by \reve{}
+\citep{wang2024cbramod,elouahidi2025reve}. Eight tasks are shared by both
+reference papers and our study: TUAB, TUEV, ISRUC, FACED, PhysioNet-MI,
+BCIC2020-3, Mumtaz2016, and MentalArithmetic. CHB-MIT, SEED-V, and SHU-MI are
+covered by \cbramod{} but not \reve{}. ``Shared split'' does not mean a paired
+rerun: preprocessing, optimization, seeds, and checkpoint selection remain
+method-specific. Two exceptions require stronger caveats. Our TUEV uses
+v2.0.1 (113,353 segments), whereas the references use v2.0.0 (112,491); and
+\reve{} reports corrected ISRUC channel selection under the same subject split
+but a different input pipeline. We therefore call the remaining published
+rows direct benchmark comparisons, TUEV a cross-version comparison, and
+REVE--ISRUC a shared-split comparison with preprocessing differences.
 
 \subsection{Training and implementation}
 
@@ -102,16 +107,17 @@ and augmentations are reported in Appendix~\ref{app:recipes}.
 
 Unless stated otherwise, samples are converted to float32, clipped to
 $[-1024,1024]$, and divided by 32, bounding the visual input to $[-32,32]$.
-SHU-MI is the only finalized exception: it is clipped to $[-512,512]$ and
-divided by 64. No finalized recipe uses random amplitude scaling.
+The finalized SHU-MI recipe follows this same clip-to-1024/divide-by-32
+scaling, replacing its earlier no-divisor preprocessing. No finalized recipe
+uses random amplitude scaling.
 
 The fold factor is fixed before training using
 Eq.~\ref{eq:p-geometry-rule}: we choose the smallest valid $P$ that reaches at
 least 64 folded rows, while treating SEED-V's native 62 rows as sufficiently
 close and leaving it at $P=1$. All 11 datasets use the same EfficientNet-B0
-architecture and have completed repeated-seed evaluation. ISRUC uses its
-locked five-seed confirmation (42--46); datasets awaiting five-seed replacement
-retain the canonical 3407--3409 sweep.
+architecture and have completed repeated-seed evaluation. CHB-MIT, SHU-MI,
+ISRUC, and TUEV use locked five-seed confirmations (42--46); datasets awaiting
+five-seed replacement retain the canonical 3407--3409 sweep.
 
 \subsection{Evaluation protocol}
 
@@ -120,8 +126,9 @@ class prevalence varies across datasets. Multiclass tasks report Cohen's
 $\kappa$ and weighted F1, with $\kappa$ primary. We omit balanced accuracy from
 the result tables to keep the binary reporting protocol consistent.
 
-For each frozen recipe, we train seeds 3407, 3408, and 3409 and report the
-arithmetic mean and population standard deviation. The checkpoint is selected
-only by validation PR-AUC or validation $\kappa$ and is then evaluated once on
-the test set. Detailed per-seed values and the executable protocol are provided
-in Appendix~\ref{app:per-seed} and Appendix~\ref{app:protocol}.
+For each frozen recipe, we train its prescribed seed set: 42--46 for CHB-MIT,
+SHU-MI, ISRUC, and TUEV, and 3407--3409 for the remaining datasets. We report
+the arithmetic mean and population standard deviation. The checkpoint is
+selected only by validation PR-AUC or validation $\kappa$ and is then evaluated
+once on the test set. Detailed per-seed values and the executable protocol are
+provided in Appendix~\ref{app:per-seed} and Appendix~\ref{app:protocol}.

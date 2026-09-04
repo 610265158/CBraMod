@@ -41,40 +41,21 @@ def main():
                         help='directory that will contain per-run logs')
     parser.add_argument('--no_log_file', action='store_true',
                         help='stream output only; do not write an experiment log file')
-    parser.add_argument('--model_arch', choices=['vision', 'eegnet'], default='vision',
-                        help='downstream model architecture')
     parser.add_argument('--backbone_name', type=str, default=None,
-                        help='override timm backbone name for --model_arch vision')
+                        help='override timm vision backbone name')
     parser.add_argument('--backbone_config', type=str, default=None,
                         help='backbone profile name or YAML path (e.g. convnextv2_tiny)')
     parser.add_argument('--vision_fold_factor', type=int, default=None,
                         help='override phase-interleaved temporal fold factor P (minimum: 1)')
-    parser.add_argument('--vision_channel_repeat', type=int, default=None,
-                        help='repeat each EEG channel before phase folding')
-    parser.add_argument('--vision_height_stride', type=int, default=None,
-                        choices=[1, 2, 4, 8, 16, 32],
-                        help='target CNN output stride along EEG-channel height')
     parser.add_argument('--vision_no_pad', action='store_true',
                         help='disable zero-padding after EEG phase folding')
-    parser.add_argument('--vision_head_init', type=str,
-                        choices=['trunc_normal', 'small_trunc_normal', 'zero',
-                                 'xavier_uniform', 'rare_binary_prior'], default=None,
-                        help='initialization for the downstream vision classifier head')
     parser.add_argument('--vision_head_init_std', type=float, default=None,
                         help='override classifier-head truncated-normal weight std')
     parser.add_argument('--vision_squeeze_binary', type=str, default=None,
                         help='return a scalar logit for single-class binary tasks')
-    parser.add_argument('--vision_init_head', type=str, default=None,
-                        help='whether to initialize the vision classifier head')
     parser.add_argument('--vision_feature_aggregation', type=str, default=None,
                         choices=['gap', 'flatten'],
                         help='feature aggregation used before the vision head')
-    parser.add_argument('--eeg_dataset_mean', type=float, default=None,
-                        help='training-split global EEG mean in raw clipped units')
-    parser.add_argument('--eeg_dataset_std', type=float, default=None,
-                        help='training-split global EEG std in raw clipped units')
-    parser.add_argument('--eeg_target_std', type=float, default=1.0,
-                        help='target std after dataset-level EEG z-score (default: 1)')
     parser.add_argument('--cuda', type=int, default=0, help='CUDA index passed to finetune_main.py')
     parser.add_argument('--device', choices=['cuda', 'cpu', 'auto'], default=None,
                         help='device policy passed to finetune_main.py')
@@ -119,7 +100,7 @@ def main():
     parser.add_argument('--frozen', type=str, default=None, help='whether to freeze backbone, true/false')
     parser.add_argument('--multi_lr', type=str, default=None, help='whether to use multi learning rates, true/false')
     parser.add_argument('--use_pretrained_weights', type=str, default=None,
-                        help='whether to use timm/foundation pretrained weights, true/false')
+                        help='whether to use timm pretrained weights, true/false')
     parser.add_argument('--balanced_sampling', type=str, default=None,
                         help='whether to balance classes with a weighted training sampler, true/false')
     parser.add_argument('--balanced_sampling_power', type=float, default=None,
@@ -234,7 +215,6 @@ def build_command(name, args, extra_args=None, seed=None):
     cfg = EXPERIMENTS[name]
     training = training_config_for(
         name,
-        model_arch=args.model_arch,
         backbone_name=args.backbone_name,
         backbone_config=args.backbone_config,
     )
@@ -248,7 +228,6 @@ def build_command(name, args, extra_args=None, seed=None):
         args.python,
         str(ROOT / 'finetune_main.py'),
         '--downstream_dataset', name,
-        '--model_arch', args.model_arch,
         '--num_of_classes', str(cfg['classes']),
         '--model_dir', str(model_dir),
         '--num_workers', str(configured_value(args, training, 'num_workers')),
@@ -267,30 +246,14 @@ def build_command(name, args, extra_args=None, seed=None):
         command.extend(['--backbone_config', str(args.backbone_config)])
     if args.vision_fold_factor is not None:
         command.extend(['--vision_fold_factor', str(args.vision_fold_factor)])
-    if args.vision_channel_repeat is not None:
-        command.extend(['--vision_channel_repeat', str(args.vision_channel_repeat)])
-    if args.vision_height_stride is not None:
-        command.extend(['--vision_height_stride', str(args.vision_height_stride)])
     if args.vision_no_pad:
         command.extend(['--vision_no_pad', 'true'])
-    if args.vision_head_init is not None:
-        command.extend(['--vision_head_init', args.vision_head_init])
     if args.vision_head_init_std is not None:
         command.extend(['--vision_head_init_std', str(args.vision_head_init_std)])
     if args.vision_squeeze_binary is not None:
         command.extend(['--vision_squeeze_binary', str(args.vision_squeeze_binary)])
-    if args.vision_init_head is not None:
-        command.extend(['--vision_init_head', str(args.vision_init_head)])
     if args.vision_feature_aggregation is not None:
         command.extend(['--vision_feature_aggregation', str(args.vision_feature_aggregation)])
-    if args.eeg_dataset_mean is not None:
-        # Use --key=value so a negative mean in scientific notation is not
-        # mistaken for another argparse option by the child process.
-        command.append('--eeg_dataset_mean={}'.format(args.eeg_dataset_mean))
-    if args.eeg_dataset_std is not None:
-        command.extend(['--eeg_dataset_std', str(args.eeg_dataset_std)])
-    if args.eeg_target_std != 1.0:
-        command.extend(['--eeg_target_std', str(args.eeg_target_std)])
     if device:
         command.extend(['--device', device])
     if args.dry_run:
@@ -328,7 +291,7 @@ def build_log_path(name, args, seed=None):
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = '{}_{}_pid{}.log'.format(timestamp, safe_name(name), os.getpid())
     log_root = format_output_root(args.log_root, args, name, seed)
-    return Path(log_root) / args.model_arch / safe_name(name) / filename
+    return Path(log_root) / 'vision' / safe_name(name) / filename
 
 
 def format_output_root(root, args, dataset, seed):
@@ -355,15 +318,14 @@ def apply_experiment_config(args, config):
                 ', '.join(datasets), ', '.join(args.dataset)
             )
         )
-    set_if_absent('model_arch', config.get('model_arch'), 'model_arch')
     set_if_absent('backbone_name', config.get('backbone_name') or config.get('backbone', {}).get('name'), 'backbone_name')
     set_if_absent('backbone_config', config.get('backbone_config'), 'backbone_config')
     vision = config.get('vision', {})
     for key, attr in {
-        'fold_factor': 'vision_fold_factor', 'channel_repeat': 'vision_channel_repeat',
-        'height_stride': 'vision_height_stride', 'no_pad': 'vision_no_pad',
-        'head_init': 'vision_head_init', 'head_init_std': 'vision_head_init_std',
-        'squeeze_binary': 'vision_squeeze_binary', 'init_head': 'vision_init_head',
+        'fold_factor': 'vision_fold_factor',
+        'no_pad': 'vision_no_pad',
+        'head_init_std': 'vision_head_init_std',
+        'squeeze_binary': 'vision_squeeze_binary',
         'feature_aggregation': 'vision_feature_aggregation',
     }.items():
         set_if_absent(attr, vision.get(key), attr)
@@ -443,7 +405,6 @@ def list_experiments(args):
     for name, cfg in EXPERIMENTS.items():
         training = training_config_for(
             name,
-            model_arch=args.model_arch,
             backbone_name=args.backbone_name,
             backbone_config=args.backbone_config,
         )
@@ -463,8 +424,6 @@ def list_experiments(args):
 
 
 def model_summary(cfg, args):
-    if args.model_arch != 'vision':
-        return args.model_arch
     return args.backbone_name or cfg.get('vision', {}).get('backbone_name', 'vision')
 
 

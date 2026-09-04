@@ -40,9 +40,9 @@ editing. Do not upload an invented or unofficial ICLR style file.
 The adapter was corrected on 25 August 2026 from contiguous-chunk folding to
 the intended phase-interleaved permutation. The finalized EfficientNet-B0
 table now contains all 11 datasets, each with validation-selected checkpoints
-and one final test evaluation per seed. ISRUC has been replaced by its locked
-five-seed run (42--46); datasets still awaiting five-seed replacement retain
-the canonical 3407--3409 sweep. The headline
+and one final test evaluation per seed. CHB-MIT, SHU-MI, ISRUC, and TUEV have
+been replaced by their locked five-seed runs (42--46); datasets still awaiting
+five-seed replacement retain the canonical 3407--3409 sweep. The headline
 table also includes published BIOT, LaBraM-Base, and CBraMod references for all
 11 datasets, plus REVE-Base on its eight overlapping tasks. The
 CBraMod TUAB and TUEV cells use the target-corpus-excluded controls; TUEV and
@@ -55,16 +55,19 @@ individual two-metric tables containing the shared supervised architecture
 suite, EEG foundation models, REVE where available, and the finalized local B0
 result.
 
-The current headline table is the completed unified all-BF16 min-64
-reproduction. Fold-factor selection chooses the smallest valid `P` that
-reaches at least 64 folded rows; SEED-V's native 62 rows are treated as close
-enough and left at `P=1`. ISRUC has completed its locked five-seed rerun.
+The local subject/trial split definitions reproduce the partitions reported by
+CBraMod; the overlapping REVE benchmark values are included as an additional
+published comparison. The current headline table is the completed unified
+all-BF16 min-64 reproduction. Fold-factor selection chooses the smallest valid `P`
+that reaches at least 64 folded rows; SEED-V's native 62 rows are treated as
+close enough and left at `P=1`. CHB-MIT, SHU-MI, ISRUC, and TUEV have completed
+their locked five-seed reruns.
 SEED-V remains a documented limitation because this prespecified `P=1` result
 underperforms the historical `P=8` recipe.
 
 Before submission:
 
-1. reproduce CBraMod on identical splits and seeds;
+1. reproduce CBraMod under the identical split definitions and seeds;
 2. rerun the formal comparison table from a prospectively frozen protocol;
 3. add random-init and frozen-transfer controls;
 4. compile using the official ICLR template and check the page limit.

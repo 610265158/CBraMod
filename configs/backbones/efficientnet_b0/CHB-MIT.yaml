@@ -1,5 +1,4 @@
 dataset: CHB-MIT
-model_arch: vision
 backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
 vision:
   adapter: {fold_factor: 4}

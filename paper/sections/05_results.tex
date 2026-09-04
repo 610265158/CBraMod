@@ -33,7 +33,7 @@ Method & \shortstack{CHB-MIT\\PR-AUC} & \shortstack{TUAB\\PR-AUC} &
 \reve{}-Base & -- & \textbf{$.9281\pm.0009$} & $.6783\pm.0199$ & $.7500\pm.0156$ & \textbf{$.5080\pm.0191$} & -- \\
 \midrule
 \oursrow
-\method{} (B0) & \textbf{$.4177\pm.0768$} & $.8703\pm.0033$ & \textbf{$.6889\pm.0371$} & \textbf{$.7705\pm.0032$} & $.3737\pm.0237$ & $.2206\pm.0061$ \\
+\method{} (B0) & \textbf{$.4092\pm.0536$} & $.8703\pm.0033$ & \textbf{$.6901\pm.0190$} & \textbf{$.7705\pm.0032$} & $.3737\pm.0237$ & $.2206\pm.0061$ \\
 \bottomrule
 \end{tabularx}
 
@@ -52,30 +52,41 @@ Method & \shortstack{PhysioNet-MI\\$\kappa$} & \shortstack{SHU-MI\\PR-AUC} &
 \reve{}-Base & $.5306\pm.0187$ & -- & $.4543\pm.0154$ & \textbf{$.9961\pm.0013$} & \textbf{$.7470\pm.0807$} \\
 \midrule
 \oursrow
-\method{} (B0) & \textbf{$.5415\pm.0178$} & $.6780\pm.0049$ & \textbf{$.5806\pm.0175$} & $.9569\pm.0071$ & $.7273\pm.0419$ \\
+\method{} (B0) & \textbf{$.5415\pm.0178$} & $.6982\pm.0178$ & \textbf{$.5806\pm.0175$} & $.9569\pm.0071$ & $.7273\pm.0419$ \\
 \bottomrule
 \end{tabularx}
 \tablenote{Binary tasks use PR-AUC; multiclass tasks use Cohen's $\kappa$.
 Published rows are transcribed from \cbramod{} and \reve{}
 \citep{wang2024cbramod,elouahidi2025reve}; \method{} is mean$\pm$population
-standard deviation. ISRUC uses seeds 42--46; the other cells shown here retain
-the canonical 3407--3409 sweep. Bold marks the best displayed mean.
+standard deviation. CHB-MIT, SHU-MI, ISRUC, and TUEV use seeds 42--46; the
+other local \method{} cells shown here retain the canonical 3407--3409 sweep.
+Bold marks the best displayed mean.
 $^\dagger$Local TUEV is v2.0.1; published rows use v2.0.0.
 $^\ddagger$The CBraMod TUAB/TUEV values exclude the target corpus from
 pretraining. $^*$REVE--ISRUC shares the subject split but uses corrected
 channel selection and different preprocessing.}
 \end{table*}
 
-The expanded table supports a more precise claim than a single win count.
+The expanded table supports a more precise claim than a single win count. The
+REVE rows are transcribed from its published benchmark tables
+\citep{elouahidi2025reve}; they provide an additional EEG-foundation-model
+reference on the eight overlapping tasks.
 EfficientNet-B0 exceeds published \cbramod{} on six primary metrics and is
-lower on five. It is also the best displayed method on CHB-MIT, TUEV, ISRUC,
-PhysioNet-MI, and BCIC2020-3, although TUEV is cross-version and REVE--ISRUC
-uses different channel preprocessing. Among the eight tasks shared with
-\reve{}, \method{} is higher on four (TUEV, ISRUC, PhysioNet-MI, and
-BCIC2020-3) and lower on four (TUAB, FACED, Mumtaz2016, and
-MentalArithmetic). The cleanest gains over the 69M-parameter REVE-Base are
-therefore PhysioNet-MI and BCIC2020-3. Conversely, TUAB and FACED show a clear
-advantage for large-scale, coordinate-aware EEG pretraining.
+lower on five. The largest gains are BCIC2020-3 (+15.90 points),
+MentalArithmetic (+10.06), and CHB-MIT (+4.03). It is also the best displayed
+method on the primary metric for CHB-MIT, TUEV, ISRUC, PhysioNet-MI, and
+BCIC2020-3, although TUEV is cross-version and REVE--ISRUC uses different
+channel preprocessing. Among the eight tasks shared with \reve{}, \method{} is
+higher on four (TUEV, ISRUC, PhysioNet-MI, and BCIC2020-3) and lower on four
+(TUAB, FACED, Mumtaz2016, and MentalArithmetic). The cleanest gains over the
+69M-parameter REVE-Base are therefore PhysioNet-MI and BCIC2020-3. Conversely,
+TUAB and FACED show higher reported values for the large-scale, coordinate-aware
+EEG-pretrained references.
+For completeness, the primary-metric differences relative to REVE-Base are
+$-5.78$, $+1.18$, $+2.05$, $-13.43$, $+1.09$, $+12.63$, $-3.92$, and $-1.97$
+percentage points for TUAB, TUEV, ISRUC, FACED, PhysioNet-MI, BCIC2020-3,
+Mumtaz2016, and MentalArithmetic, respectively. Both metrics and their
+reported standard deviations are listed in Appendix~\ref{app:detailed-results}.
 
 \subsection{Case studies: gains, uncertainty, and failure}
 
@@ -115,9 +126,9 @@ mean per metric.}
 
 \paragraph{Stable folded-input gain: ISRUC.}
 All five kappa values (.7729, .7710, .7747, .7672, and .7665) exceed the
-published .7442 reference, with population standard deviation .0032. ISRUC uses $P=12$
-and retains 20 consecutive sleep epochs, showing that the adapter also works
-inside a sequence-to-sequence task.
+published .7442 reference, with population standard deviation .0032. ISRUC uses
+$P=12$ and retains 20 consecutive sleep epochs, showing that the adapter also
+works on a multi-epoch record with per-epoch classification.
 
 \paragraph{Seed-sensitive folded-input gain: MentalArithmetic.}
 The model improves PR-AUC by 10.06 points and AUROC by 10.22 points over
@@ -149,9 +160,10 @@ still provides a clear advantage on selected tasks.
 
 \subsection{Stability and model scale}
 
-The standard deviations reveal two regimes. ISRUC (.0032), TUAB (.0033), and
-SHU-MI (.0049) are the most stable primary-metric results, while CHB-MIT
-(.0768), MentalArithmetic (.0419), and TUEV (.0371) are seed-sensitive.
+The standard deviations reveal two regimes. ISRUC (.0032) and TUAB (.0033)
+are the most stable primary-metric results, followed by SHU-MI (.0178) and
+TUEV (.0190). CHB-MIT (.0536) and MentalArithmetic (.0419) remain the most
+seed-sensitive.
 MentalArithmetic has only 1,343
 training examples and 172 validation examples, including a roughly 3:1 class
 imbalance.  Weighted BCE, moderate time roll and mirror augmentation, and

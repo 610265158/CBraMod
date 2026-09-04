@@ -30,7 +30,5 @@ def load_experiment_config(path):
         raise ValueError("Experiment config 'backbone' must be a mapping: {}".format(path))
     if "backbone_name" in config and not isinstance(config["backbone_name"], str):
         raise ValueError("Experiment config 'backbone_name' must be a string: {}".format(path))
-    if "model_arch" in config and not isinstance(config["model_arch"], str):
-        raise ValueError("Experiment config 'model_arch' must be a string: {}".format(path))
     config["_path"] = str(path.resolve())
     return deepcopy(config)

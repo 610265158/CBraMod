@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from sklearn.metrics import balanced_accuracy_score, f1_score, confusion_matrix, cohen_kappa_score, roc_auc_score, \
-    precision_recall_curve, auc, r2_score, mean_squared_error
+    precision_recall_curve, auc
 from tqdm import tqdm
 
 
@@ -59,22 +59,3 @@ class Evaluator:
         pr_auc = auc(recall, precision)
         cm = confusion_matrix(truths, preds)
         return ba, pr_auc, roc_auc, cm
-
-    @torch.inference_mode()
-    def get_metrics_for_regression(self, model):
-        model.eval()
-
-        truths = []
-        preds = []
-        for x, y in tqdm(self.data_loader, mininterval=1):
-            x = x.to(self.device, non_blocking=self.device.type == 'cuda')
-            pred = model(x)
-            truths.extend(y.numpy().reshape(-1).tolist())
-            preds.extend(pred.detach().cpu().numpy().reshape(-1).tolist())
-
-        truths = np.array(truths)
-        preds = np.array(preds)
-        corrcoef = np.corrcoef(truths, preds)[0, 1]
-        r2 = r2_score(truths, preds)
-        rmse = mean_squared_error(truths, preds) ** 0.5
-        return corrcoef, r2, rmse

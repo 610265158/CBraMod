@@ -38,18 +38,6 @@ training:
   mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
-  mental_scale: 32.0
-  shu_clip_limit: 512.0
-  shu_scale: 64.0
-  shu_bandpass_low: null
-  shu_bandpass_high: null
-  shu_filter_order: 4
-  physio_lowpass_hz: null
-  physio_filter_order: 4
-  mumtaz_lowpass_hz: null
-  mumtaz_filter_order: 4
-  faced_input_norm: clip_scale
-  faced_robust_clip: 8.0
   test_each_epoch: false
   run_final_test: true
   selection_metric: kappa

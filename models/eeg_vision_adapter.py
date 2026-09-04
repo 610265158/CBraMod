@@ -1,4 +1,4 @@
-"""EEG-to-image folding used by downstream and pretraining models."""
+"""EEG-to-image folding used by the downstream vision model."""
 
 import torch
 import torch.nn as nn
@@ -68,16 +68,6 @@ class PhaseFoldAdapter(nn.Module):
             return features
         batch, chunks = chunk_shape
         return features.reshape(batch, chunks, -1)
-
-
-def repeat_eeg_channels(eeg, repeats):
-    if repeats == 1:
-        return eeg
-    if eeg.ndim not in (3, 4):
-        raise ValueError(
-            'Channel repetition expects [B,C,T] or [B,S,C,T], got {}'.format(tuple(eeg.shape))
-        )
-    return torch.repeat_interleave(eeg, repeats=repeats, dim=eeg.ndim - 2)
 
 
 def _pad_to_multiple(image, multiple):

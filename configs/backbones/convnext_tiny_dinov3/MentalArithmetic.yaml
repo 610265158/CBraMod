@@ -1,0 +1,73 @@
+dataset: MentalArithmetic
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter: {fold_factor: 4}
+  squeeze_binary: true
+  feature_aggregation: flatten
+  head_init_std: 0.002
+training:
+  lr: 0.0001
+  backbone_lr_scale: 1.0
+  batch_size: 64
+  epochs: 50
+  weight_decay: 0.0005
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.999
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 3.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 0.5
+  time_roll_max_fraction: 0.25
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+    42: {ba: 0.72917, pr_auc: 0.69913, auroc: 0.82567}
+    43: {ba: 0.78472, pr_auc: 0.83313, auroc: 0.92361}
+    44: {ba: 0.77083, pr_auc: 0.75977, auroc: 0.88093}
+    45: {ba: 0.79514, pr_auc: 0.76694, auroc: 0.86806}
+    46: {ba: 0.75347, pr_auc: 0.74020, auroc: 0.87760}
+  mean: {ba: 0.76667, pr_auc: 0.75983, auroc: 0.87517}
+  std_population: {ba: 0.02338, pr_auc: 0.04357, auroc: 0.03126}
+notes: >-
+  Five-seed (42--46) MentalArithmetic run with ConvNeXt-Tiny (v1) DINOv3
+  LVD-1689M self-supervised weights. MentalArithmetic geometry (P=4,
+  20x1000 -> 80x250 -> 96x256), binary PR-AUC selection, flatten feature
+  aggregation, classifier-head initialization std 0.002, one final test
+  evaluation per seed. lr=1e-4, warmup 3, EMA 0.999, positive weight 3,
+  mirror and time-roll augmentation.
+output:
+  model_root: experiments/checkpoints/mentalarithmetic_convnext_tiny_dinov3_p4_flatten_50ep_bs64_posw3_ema999_mlrfalse_5seed_v1/seed{seed}
+  log_root: experiments/logs/mentalarithmetic_convnext_tiny_dinov3_p4_flatten_50ep_bs64_posw3_ema999_mlrfalse_5seed_v1/seed{seed}

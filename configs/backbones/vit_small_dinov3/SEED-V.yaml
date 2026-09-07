@@ -1,0 +1,54 @@
+dataset: SEED-V
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter: {fold_factor: 1}
+  feature_aggregation: flatten
+  head_init_std: 0.02
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 50
+  weight_decay: 0.01
+  min_lr: 0.000001
+  warmup_epochs: 5
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  time_roll_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  feature_aggregation: flatten
+  seeds: [42, 43, 44, 45, 46]
+  mean: {ba: 0.39298, kappa: 0.24419, f1: 0.40163}
+  std_population: {ba: 0.00351, kappa: 0.00450, f1: 0.00378}
+head_comparison:
+  cls_token:
+    status: complete
+    seeds: [42, 43, 44, 45, 46]
+    mean: {ba: 0.39551, kappa: 0.24613, f1: 0.40228}
+    std_population: {ba: 0.00453, kappa: 0.00558, f1: 0.00408}
+  recommendation: cls_token
+notes: >-
+  Initial five-seed ViT-Small DINOv3 SEED-V probe using native P=1 geometry,
+  flatten token aggregation, and the ConvNeXt schedule.
+output:
+  model_root: experiments/checkpoints/vit_small_dinov3_seedv_p1_flatten_wd1e2_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_seedv_p1_flatten_wd1e2_5seed_v1/seed{seed}

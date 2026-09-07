@@ -1,0 +1,58 @@
+dataset: ISRUC
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter: {fold_factor: 12}
+  feature_aggregation: flatten
+  head_init_std: 0.02
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 16
+  epochs: 15
+  weight_decay: 0.01
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 15
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 0.5
+  time_roll_max_fraction: 0.25
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  feature_aggregation: flatten
+  seeds: [42, 43, 44, 45, 46]
+  mean: {ba: 0.80575, kappa: 0.77854, f1: 0.82864}
+  std_population: {ba: 0.00168, kappa: 0.00277, f1: 0.00207}
+head_comparison:
+  cls_token:
+    status: complete
+    seeds: [42, 43, 44, 45, 46]
+    mean: {ba: 0.80896, kappa: 0.78255, f1: 0.83176}
+    std_population: {ba: 0.00317, kappa: 0.00352, f1: 0.00261}
+  recommendation: cls_token
+notes: >-
+  Initial five-seed ViT-Small DINOv3 ISRUC probe. The [B,20,C,T] loader
+  contract is retained; P=12 and the ConvNeXt ISRUC schedule are retained.
+output:
+  model_root: experiments/checkpoints/vit_small_dinov3_isruc_p12_flatten_wd1e2_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_isruc_p12_flatten_wd1e2_5seed_v1/seed{seed}

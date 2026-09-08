@@ -1,0 +1,60 @@
+dataset: HMC
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter: {fold_factor: 16}
+  feature_aggregation: flatten
+  head_init_std: 0.02
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.01
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  mirror_augmentation: false
+  time_roll_augmentation: false
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: kappa
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  feature_aggregation: flatten
+  seeds: [42, 43, 44, 45, 46]
+  per_seed:
+    seed42: {ba: 0.74411, kappa: 0.69731, f1: 0.76439}
+    seed43: {ba: 0.74664, kappa: 0.69740, f1: 0.76357}
+    seed44: {ba: 0.74453, kappa: 0.69586, f1: 0.76363}
+    seed45: {ba: 0.75279, kappa: 0.70012, f1: 0.76501}
+    seed46: {ba: 0.74913, kappa: 0.69957, f1: 0.76480}
+  mean: {ba: 0.74744, kappa: 0.69805, f1: 0.76428}
+  std_population: {ba: 0.00321, kappa: 0.00157, f1: 0.00059}
+notes: >-
+  HMC ViT-Small DINOv3 five-seed experiment. Four-channel 30-second epochs
+  use P=16 phase-interleaved folding, flatten token aggregation, and head
+  initialization std=.02; no channel mirror or time-roll augmentation.
+  Results are recorded after all five seeds complete. Flatten is retained
+  here for comparison with the earlier HMC GAP run.
+output:
+  model_root: experiments/checkpoints/hmc_vit_small_dinov3_p16_flatten_lr1e4_wd1e2_ema995_5seed_v1/seed{seed}
+  log_root: experiments/logs/hmc_vit_small_dinov3_p16_flatten_lr1e4_wd1e2_ema995_5seed_v1/seed{seed}

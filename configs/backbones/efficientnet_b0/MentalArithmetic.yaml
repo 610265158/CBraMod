@@ -48,6 +48,7 @@ training:
   run_final_test: true
 protocol: {seeds: [42, 43, 44, 45, 46], selection: validation_selected_checkpoint_once_on_test}
 results:
+  ba: {mean: 0.69097, std: 0.04184}
   pr_auc: {mean: 0.79029, std: 0.05364}
   roc_auc: {mean: 0.87789, std: 0.02513}
 notes: Finalized five-seed recipe; population standard deviation and one final test evaluation per seed.

@@ -113,6 +113,15 @@ statistics.
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | HMC (BA/Kappa/F1) | .75550/.70810/.76941 | .75318/.70322/.76761 | .75424/.70679/.76925 | .75860/.70660/.77119 | .75671/.71032/.77263 | **.75565 +/- .00189 / .70701 +/- .00231 / .77002 +/- .00173** |
 
+The HMC ConvNeXt-Tiny DINOv3 GAP ablation uses the same P=16
+phase-interleaved input folding, five seeds (42--46), validation-selected
+checkpoints, and one final test evaluation per seed. Its recipe uses
+`lr=1e-4`, `weight_decay=5e-3`, EMA decay `.995`, and `head_init_std=.002`.
+
+| Dataset | Seed 42 | Seed 43 | Seed 44 | Seed 45 | Seed 46 | Mean +/- population std |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| HMC ConvNeXt-Tiny GAP (BA/Kappa/F1) | .75140/.70638/.77006 | .76307/.71849/.78009 | .76558/.71907/.77924 | .75298/.70660/.77102 | .75747/.70510/.77159 | **.75810 +/- .00552 / .71113 +/- .00627 / .77440 +/- .00433** |
+
 All five ISRUC kappa values exceed the published CBraMod reference
 (.7442 +/- .0152), and the population standard deviation remains below .0032.
 The locked TUEV five-seed kappa mean (.69009 +/- .01896) improves on both the

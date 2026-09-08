@@ -724,6 +724,32 @@ DOWNSTREAM_11_CONFIGS = {
         training=FINALIZED_FIVE_SEED_RECIPES['MentalArithmetic']['training'],
         vision=FINALIZED_FIVE_SEED_RECIPES['MentalArithmetic']['vision'],
     ),
+    # Finalized five-seed HMC sleep staging recipe.  The preprocessing script writes
+    # one 4-channel, 30-second epoch (4 x 6000 samples) per pickle file.
+    'HMC': _dataset(
+        task='multiclass',
+        classes=5,
+        input_shape=(4, 6000),
+        dataset_module='datasets.hmc_dataset',
+        datasets_dir='/data/lz/public/BigDownstream/haaglanden-medisch-centrum-sleep-staging-database-1.1/processed',
+        storage='pkl_split',
+        split_dirs={'train': 'train', 'val': 'val', 'test': 'test'},
+        training={
+            'lr': 1e-3,
+            'batch_size': 32,
+            'epochs': 30,
+            'weight_decay': 5e-4,
+            'warmup_epochs': 3,
+            'ema_decay': 0.995,
+            'selection_metric': 'kappa',
+            'test_each_epoch': False,
+            'run_final_test': True,
+        },
+        vision=_vision(
+            backbone_name='efficientnet_b0.ra4_e3600_r224_in1k',
+            adapter={'fold_factor': 16},
+        ),
+    ),
 }
 
 

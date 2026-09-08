@@ -100,6 +100,19 @@ search. Each entry replaces the corresponding three-seed row above.
 | ISRUC (kappa/F1) | .77291/.82287 | .77096/.81935 | .77465/.82294 | .76719/.81772 | .76654/.81563 | **.77045 +/- .00316 / .81970 +/- .00287** |
 | TUEV (kappa/F1) | .69178/.83861 | .66643/.83048 | .72077/.85193 | .69702/.83692 | .67444/.83193 | **.69009 +/- .01896 / .83797 +/- .00760** |
 
+### Finalized HMC five-seed results
+
+HMC is an additional sleep-staging dataset outside the canonical 11-dataset
+suite. It uses four EEG channels and one 30-second epoch per sample, with
+phase-interleaved folding P=16. The recipe uses RA4 EfficientNet-B0 weights,
+weight decay `5e-4`, EMA decay `.995`, validation-only checkpoint selection,
+and one final test evaluation per seed. Standard deviations are population
+statistics.
+
+| Dataset | Seed 42 | Seed 43 | Seed 44 | Seed 45 | Seed 46 | Mean +/- population std |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| HMC (BA/Kappa/F1) | .75550/.70810/.76941 | .75318/.70322/.76761 | .75424/.70679/.76925 | .75860/.70660/.77119 | .75671/.71032/.77263 | **.75565 +/- .00189 / .70701 +/- .00231 / .77002 +/- .00173** |
+
 All five ISRUC kappa values exceed the published CBraMod reference
 (.7442 +/- .0152), and the population standard deviation remains below .0032.
 The locked TUEV five-seed kappa mean (.69009 +/- .01896) improves on both the

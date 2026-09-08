@@ -72,7 +72,7 @@ class Trainer(object):
                 self.mixup_prob,
                 self.mixup_alpha,
             ))
-        if self.params.downstream_dataset in ['FACED', 'SEED-V', 'PhysioNet-MI', 'ISRUC', 'BCIC2020-3', 'TUEV']:
+        if self.params.downstream_dataset in ['FACED', 'SEED-V', 'PhysioNet-MI', 'ISRUC', 'BCIC2020-3', 'TUEV', 'HMC']:
             self.criterion = CrossEntropyLoss(label_smoothing=self.params.label_smoothing).to(self.device)
         elif self.params.downstream_dataset in ['SHU-MI', 'CHB-MIT', 'Mumtaz2016', 'MentalArithmetic', 'TUAB']:
             binary_pos_weight = float(getattr(self.params, 'binary_pos_weight', 1.0))

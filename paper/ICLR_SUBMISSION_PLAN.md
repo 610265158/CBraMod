@@ -28,7 +28,8 @@ is likely to favor large EEG-pretrained encoders.
 
 - Reproduce CBraMod under the already-matched split definitions, with the same
   preprocessing, seeds, epoch budget, and validation-only selection.
-- Run EfficientNet-B0 with random initialization.
+- [x] Run matched random-initialization controls for EfficientNet-B0,
+  ConvNeXt-Tiny DINOv3, and ViT-Small DINOv3 on TUEV and PhysioNet-MI.
 - Run a frozen ImageNet linear probe.
 - Freeze a new protocol without consulting test results and repeat at least a
   representative set of datasets.
@@ -66,7 +67,8 @@ is likely to favor large EEG-pretrained encoders.
 - "Hyperparameters were tuned on test." Answer only after a prospective rerun;
   prose cannot repair leakage.
 - "ImageNet semantics are irrelevant to EEG." Separate architecture from
-  initialization using random-init and linear-probe controls.
+  initialization using the completed random-init controls and a future
+  linear-probe control.
 - "The method ignores electrode topology." Present this as a measured
   limitation and add coordinate/channel-order experiments.
 - "Wins on only part of the benchmark." Emphasize the scientific question:

@@ -158,6 +158,59 @@ two claims that a single headline table can obscure: geometry-aligned vision
 transfer is a strong supervised architecture baseline, while EEG pretraining
 still provides a clear advantage on selected tasks.
 
+\subsection{Matched initialization ablation}
+\label{sec:pretraining-ablation}
+
+The random-initialization controls provide a direct test of whether the visual
+weights themselves transfer to EEG. Table~\ref{tab:vision-pretraining-ablation}
+compares the same architecture and downstream recipe with and without its
+ImageNet/DINOv3 initialization. Every value is a five-seed mean with population
+standard deviation; the checkpoint is selected on validation and the test set
+is evaluated once.
+
+\begin{table*}[t]
+\centering
+\caption{Matched visual-pretraining ablation on TUEV and PhysioNet-MI. The
+only changed factor is backbone initialization; $\Delta$ is pretrained minus
+random Cohen's $\kappa$ in absolute points.}
+\label{tab:vision-pretraining-ablation}
+\scriptsize
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabular}{@{}lccc|ccc@{}}
+\toprule
+& \multicolumn{3}{c|}{TUEV $\kappa$} & \multicolumn{3}{c}{PhysioNet-MI $\kappa$} \\
+Backbone & Pretrained & Random & $\Delta$ & Pretrained & Random & $\Delta$ \\
+\midrule
+EfficientNet-B0
+  & $.6901\pm.0190$ & $.5995\pm.0346$ & $+.0906$
+  & $.5322\pm.0167$ & $.4573\pm.0184$ & $+.0748$ \\
+ConvNeXt-Tiny DINOv3
+  & $.7095\pm.0305$ & $.5070\pm.0094$ & $+.2025$
+  & $.5479\pm.0105$ & $.2697\pm.0119$ & $+.2782$ \\
+ViT-Small DINOv3
+  & $.7263\pm.0043$ & $.4615\pm.0160$ & $+.2648$
+  & $.4363\pm.0070$ & $.3152\pm.0092$ & $+.1211$ \\
+\bottomrule
+\end{tabular}
+\tablenote{All runs use seeds 42--46 and the same validation-selected,
+single-final-test protocol. Pretrained means ImageNet initialization for
+EfficientNet-B0 and DINOv3 visual initialization for ConvNeXt/ViT.}
+\end{table*}
+
+Pretraining improves the primary metric in all six matched comparisons, by
+$7.48$--$27.82$ percentage points. The same direction holds for the auxiliary
+metrics: on TUEV, pretrained initialization improves balanced accuracy by
+$10.95$, $24.61$, and $24.30$ points and weighted F1 by $4.66$, $10.79$, and
+$13.62$ points for EfficientNet, ConvNeXt, and ViT, respectively. On
+PhysioNet-MI, the corresponding balanced-accuracy gains are $5.60$, $20.86$,
+and $9.08$ points, while weighted-F1 gains are $5.13$, $20.89$, and $9.07$
+points. The result is therefore not explained by architecture capacity alone:
+generic visual representations provide a reusable initialization for EEG
+fine-tuning after the lossless geometry adapter is applied. This is transfer
+from visual pretraining to EEG, not evidence that EEG-specific pretraining is
+unnecessary in frozen, few-shot, or cross-montage settings.
+
 \subsection{Stability and model scale}
 
 The standard deviations reveal two regimes. ISRUC (.0032) and TUAB (.0033)

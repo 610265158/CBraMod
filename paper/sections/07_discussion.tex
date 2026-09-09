@@ -16,6 +16,16 @@ controls are needed before an improvement can be attributed specifically to
 large-scale EEG pretraining; it is not evidence that foundation models are
 categorically unnecessary.
 
+The matched initialization ablation now isolates one part of this claim. On
+both TUEV and PhysioNet-MI, and for all three tested backbones, replacing the
+ImageNet/DINOv3 visual weights with random initialization lowers test $\kappa$
+by 7.48--27.82 points under the same five-seed, validation-selected protocol.
+Balanced accuracy and weighted F1 move in the same direction. Thus the result
+is not only that a particular architecture can fit EEG after folding: the
+pretrained visual representation itself supplies transferable structure for
+EEG fine-tuning. The control still leaves open whether EEG pretraining is
+better for frozen, few-shot, unseen-montage, or topology-sensitive transfer.
+
 The expanded comparison also sharpens the role of scale and spatial identity.
 Against 69M-parameter \reve{}-Base, \method{} is higher on four of eight shared
 primary metrics, but two of those comparisons carry TUEV-version or
@@ -60,10 +70,10 @@ unexpectedly strong component under end-to-end supervised adaptation.
     prespecified geometry rule in Eq.~\ref{eq:p-geometry-rule} to reduce this
     freedom. The unified geometry confirmations are complete, while SEED-V
     remains a measured counterexample to shape-only selection.
-    \item \textbf{Incomplete controls.} Random initialization, matched
-    supervised architectures,
-    identical-pipeline foundation baselines, FLOPs, throughput, and memory are
-    not yet in the main table.
+    \item \textbf{Remaining controls.} Matched random initialization is now
+    reported on TUEV and PhysioNet-MI, but frozen transfer, identical-pipeline
+    EEG-foundation baselines, FLOPs, throughput, and memory are not yet in the
+    main table.
     \item \textbf{Statistical uncertainty.} Three to five seeds are informative
     but limited, especially for MentalArithmetic. Subject-level bootstrap
     intervals and paired tests would better reflect evaluation uncertainty.

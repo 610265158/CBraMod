@@ -151,6 +151,29 @@ model configs:
 `configs/backbones/convnext_tiny_dinov3/Mumtaz2016.yaml`,
 and `configs/backbones/vit_small_dinov3/Mumtaz2016.yaml`.
 
+### Vision-pretraining versus random-initialization controls
+
+The following five-seed controls isolate initialization on TUEV and
+PhysioNet-MI. Each random row matches its pretrained backbone's downstream
+recipe and changes only `use_pretrained_weights` to `false`; checkpoints are
+validation-selected and test is evaluated once per seed. Values are
+mean +/- population standard deviation.
+
+| Backbone | TUEV pretrained kappa | TUEV random kappa | Physio pretrained kappa | Physio random kappa |
+| --- | ---: | ---: | ---: | ---: |
+| EfficientNet-B0 | .69009 +/- .01896 | .59945 +/- .03456 | .53215 +/- .01672 | .45734 +/- .01835 |
+| ConvNeXt-Tiny DINOv3 | .70946 +/- .03046 | .50699 +/- .00936 | .54785 +/- .01053 | .26965 +/- .01190 |
+| ViT-Small DINOv3 | .72625 +/- .00426 | .46146 +/- .01597 | .43634 +/- .00698 | .31522 +/- .00922 |
+
+Pretrained initialization improves all six primary-metric comparisons. The
+random-init recipes are recorded in the six files
+`configs/backbones/efficientnet_b0/TUEV_random_init.yaml`,
+`configs/backbones/efficientnet_b0/PhysioNet-MI_random_init.yaml`,
+`configs/backbones/convnext_tiny_dinov3/TUEV_random_init.yaml`,
+`configs/backbones/convnext_tiny_dinov3/PhysioNet-MI_random_init.yaml`,
+`configs/backbones/vit_small_dinov3/TUEV_random_init.yaml`, and
+`configs/backbones/vit_small_dinov3/PhysioNet-MI_random_init.yaml`.
+
 ## Comparison with published CBraMod
 
 CBraMod values are published references, not same-pipeline reruns. Primary

@@ -69,7 +69,7 @@ Before submission:
 
 1. reproduce CBraMod under the identical split definitions and seeds;
 2. rerun the formal comparison table from a prospectively frozen protocol;
-3. add random-init and frozen-transfer controls;
+3. add frozen-transfer controls (matched random-init controls are now reported);
 4. compile using the official ICLR template and check the page limit.
 
 ## Result policy

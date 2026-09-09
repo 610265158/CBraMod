@@ -119,6 +119,18 @@ architecture and have completed repeated-seed evaluation. CHB-MIT, SHU-MI,
 ISRUC, and TUEV use locked five-seed confirmations (42--46); datasets awaiting
 five-seed replacement retain the canonical 3407--3409 sweep.
 
+\paragraph{Initialization ablation.}
+To separate the benefit of visual pretraining from the benefit of the encoder
+architecture itself, we run matched five-seed controls on TUEV and
+PhysioNet-MI. Each control keeps the dataset recipe, temporal folding,
+optimizer, epoch budget, validation checkpoint selection, and one-final-test
+protocol fixed, changing only the backbone initialization from the available
+ImageNet/DINOv3 visual weights to random initialization
+(``\texttt{use\_pretrained\_weights=false}''). The comparison covers
+EfficientNet-B0, ConvNeXt-Tiny DINOv3, and ViT-Small DINOv3. Thus the control
+tests whether the generic visual prior contributes beyond the capacity and
+inductive bias of the same architecture.
+
 \subsection{Evaluation protocol}
 
 Binary tasks report PR-AUC and AUROC, with PR-AUC primary because positive

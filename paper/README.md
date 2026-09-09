@@ -8,8 +8,8 @@ baseline through lossless geometry alignment.
 ## Structure
 
 - `main.tex`: entrypoint and ICLR-style fallback setup.
-- `results.tex`: headline numerical macros mirrored from
-  `experiments/PHASE_FOLD_RESULTS.md`, the repository source of truth.
+- `results.tex`: headline numerical macros mirrored from the finalized YAML
+  configs; those configs are the source of truth.
 - `sections/00_abstract.tex` through `sections/08_conclusion.tex`: main paper.
 - `sections/appendix.tex`: recipes, padded shapes, protocol, per-seed values,
   and additional visualizations.
@@ -40,18 +40,20 @@ editing. Do not upload an invented or unofficial ICLR style file.
 The adapter was corrected on 25 August 2026 from contiguous-chunk folding to
 the intended phase-interleaved permutation. The finalized EfficientNet-B0
 table now contains all 11 datasets, each with validation-selected checkpoints
-and one final test evaluation per seed. CHB-MIT, SHU-MI, ISRUC, and TUEV have
-been replaced by their locked five-seed runs (42--46); datasets still awaiting
-five-seed replacement retain the canonical 3407--3409 sweep. The headline
-table also includes published BIOT, LaBraM-Base, and CBraMod references for all
-11 datasets, plus REVE-Base on its eight overlapping tasks. The
+and one final test evaluation per seed. All formal EfficientNet-B0 datasets use
+the five-seed recipes recorded in their YAML configs; those configs are the
+source of truth for means, standard deviations, and per-seed results. The headline
+paper tables retain the published supervised baselines, BIOT, LaBraM, CBraMod,
+and REVE references, plus the finalized local B0 rows. Binary tasks use BA,
+PR-AUC, and ROC-AUC; multiclass tasks use BA, Cohen's $\kappa$, and weighted
+F1. The
 CBraMod TUAB and TUEV cells use the target-corpus-excluded controls; TUEV and
 REVE--ISRUC are marked with comparability caveats. PhysioNet-MI uses `P=1`, so its
 input mapping is unaffected. ConvNeXt probes are exploratory and are not
 included in the headline table.
 
 Appendix C mirrors REVE's detailed-results organization: all 11 datasets have
-individual two-metric tables containing the shared supervised architecture
+individual three-metric tables containing the shared supervised architecture
 suite, EEG foundation models, REVE where available, and the finalized local B0
 result.
 

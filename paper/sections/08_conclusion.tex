@@ -4,13 +4,13 @@ We introduced a phase-interleaved, lossless temporal-folding interface between
 raw EEG and generic vision backbones.  The method changes no waveform values
 and adds no learned adapter parameters, yet it substantially changes the
 neighborhoods and downsampling trajectory seen by a 2D CNN.  Across 11
-benchmarks, EfficientNet-B0 exceeds published \cbramod{} primary metrics on
-six datasets and trails on five. The expanded foundation-model comparison
-places it first among the displayed methods on five
-tasks; across the eight REVE-overlap tasks it is higher on four, with explicit
-version or preprocessing caveats on two. The pattern supports competitiveness,
-not universal superiority, and still requires same-pipeline foundation-model
-reproduction for a paired claim.
+benchmarks, EfficientNet-B0 is competitive with the displayed supervised and
+EEG-foundation baselines on several tasks, while FACED, TUAB, and other
+topology-sensitive cases retain a clear advantage for EEG-specific models. The
+uniform BA/PR-AUC/ROC-AUC and BA/$\kappa$/F1 reporting makes these trade-offs
+visible without collapsing unlike metrics into one score. The pattern supports
+competitiveness, not universal superiority, and still requires same-pipeline
+foundation-model reproduction for a paired claim.
 
 The broader message is methodological: before attributing downstream accuracy
 to large-scale EEG pretraining, representation geometry must be treated as a

@@ -54,8 +54,9 @@ This viewpoint leads to three questions:
 
 We study these questions with one EfficientNet-B0 across 11 downstream
 benchmarks, using repeated seeds, validation checkpoint selection, and one final
-test evaluation.  The corrected phase-interleaved benchmark exceeds the
-published \cbramod{} primary metric on six datasets and is lower on five.
+test evaluation. The comparison reports the full metric set used by the source
+benchmarks and keeps conventional supervised models, BIOT, LaBraM, CBraMod,
+and REVE as contextual baselines.
 
 Our contributions are:
 
@@ -66,10 +67,11 @@ Our contributions are:
     \item \textbf{A geometry account of CNN transfer.}  We characterize how
     folding remaps temporal distance, increases signal occupancy after padding,
     and changes the receptive field induced by hierarchical 2D convolution.
-    \item \textbf{A broad foundation-model comparison.}  We
-    evaluate one ImageNet-pretrained EfficientNet-B0 across 11 datasets under
-    a validation-selected repeated-seed protocol and place it beside published
-    BIOT, LaBraM, CBraMod, and REVE results on the shared benchmark partitions.
+    \item \textbf{A broad benchmark comparison.}  We evaluate one
+    ImageNet-pretrained EfficientNet-B0 across 11 datasets under a
+    validation-selected repeated-seed protocol and place it beside published
+    supervised baselines, BIOT, LaBraM, CBraMod, and REVE results on the shared
+    benchmark partitions.
     \item \textbf{An initialization control.}  Matched five-seed TUEV and
     PhysioNet-MI experiments show how much ImageNet/DINOv3 visual weights add
     beyond the same backbone trained from random initialization.

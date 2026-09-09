@@ -6,7 +6,10 @@ The study is designed around a narrow but important question: full fine-tuning
 performance alone may not identify the source of a foundation model's gains.
 The corrected phase-interleaved benchmark shows that a compact generic encoder
 can be competitive on several tasks, while the deficits on FACED, TUAB,
-SEED-V, SHU-MI, and Mumtaz2016 reject a universal replacement claim. More generally, new
+SEED-V, SHU-MI, and Mumtaz2016 reject a universal replacement claim. The
+retained EEGNet, BIOT, and LaBraM rows also show why the comparison should be
+read as a ladder of architecture and pretraining controls, not as a single
+winner-take-all leaderboard. More generally, new
 foundation models should compare against strong architecture-and-geometry
 controls, not only task-specific networks with weaker transfer recipes.
 This interpretation is consistent with recent calls to reassess EEG
@@ -27,9 +30,9 @@ EEG fine-tuning. The control still leaves open whether EEG pretraining is
 better for frozen, few-shot, unseen-montage, or topology-sensitive transfer.
 
 The expanded comparison also sharpens the role of scale and spatial identity.
-Against 69M-parameter \reve{}-Base, \method{} is higher on four of eight shared
-primary metrics, but two of those comparisons carry TUEV-version or
-ISRUC-preprocessing caveats. The clean PhysioNet-MI and BCIC2020-3 gains show
+Against 69M-parameter \reve{}-Base, \method{} is competitive on selected
+shared tasks, but the TUEV-version and ISRUC-preprocessing caveats remain
+important. The clean PhysioNet-MI and BCIC2020-3 gains show
 that large-scale EEG pretraining is not always necessary under full
 fine-tuning. The TUAB and FACED deficits show the converse: physical
 coordinates and heterogeneous EEG pretraining remain valuable when montage or
@@ -38,8 +41,8 @@ subject shift dominates.
 In the terminology of our title, vision pretraining is a \emph{conditional}
 free lunch: its weights are available without additional EEG pretraining, but
 their value depends on input geometry, downstream optimization, and task
-characteristics. Six gains and five deficits across the 11
-benchmarks make this conditionality empirically visible.
+characteristics. The mixed pattern across the 11 benchmarks makes this
+conditionality empirically visible.
 
 The results do \emph{not} show that EEG pretraining is unnecessary.  This work
 does not yet evaluate few-shot learning, missing-channel robustness, frozen
@@ -51,8 +54,8 @@ unexpectedly strong component under end-to-end supervised adaptation.
 \subsection{Threats to validity}
 
 \begin{itemize}
-    \item \textbf{Baseline comparability.}  BIOT, LaBraM, \cbramod{}, and
-    \reve{} are published references, not local paired reproductions. Our
+    \item \textbf{Baseline comparability.}  EEGNet, BIOT, LaBraM, \cbramod{},
+    and \reve{} are published references, not local paired reproductions. Our
     split definitions reproduce the subject- or trial-level partitions reported
     by \cbramod{} and, where available, \reve{}
     \citep{wang2024cbramod,elouahidi2025reve}; preprocessing, optimization,

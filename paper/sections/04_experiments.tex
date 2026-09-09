@@ -64,22 +64,16 @@ with every comparison.
 
 \subsection{Reference methods and comparability}
 
-The main comparison places BIOT, LaBraM-Base, \cbramod{}, and \reve{}-Base as
-EEG-pretrained foundation models against \method{} as generic vision transfer
-without EEG pretraining.
-Published values are transcribed from the \cbramod{} and \reve{} benchmark
-tables \citep{wang2024cbramod,elouahidi2025reve}. For TUAB and TUEV we use
+The result tables retain the complete published comparison context: EEGNet,
+EEGConformer, SPaRCNet, ContraWR, CNN-Transformer, FFCL, ST-Transformer,
+BIOT, LaBraM, \cbramod{}, and \reve{}-Base. The main interpretation emphasizes
+\cbramod{}, \reve{}-Base, and \method{} because they isolate the paper's
+central foundation-model question, while the remaining rows stay visible as
+architecture controls. Published values are transcribed from the source
+benchmark tables \citep{wang2024cbramod,elouahidi2025reve}; the local row is
+our validation-selected repeated-seed run. For TUAB and TUEV we use
 \cbramod{}'s target-corpus-excluded controls, avoiding overlap between those
 downstream corpora and its TUEG pretraining set.
-
-Appendix~\ref{app:detailed-results} additionally reports the complete
-shared-partition supervised suite for every dataset, subject to the TUEV
-version caveat: EEGNet, EEGConformer, SPaRCNet, ContraWR, CNN-Transformer,
-FFCL, and ST-Transformer
-\citep{lawhern2018eegnet,song2022eeg,jing2023development,yang2021self,
-peh2022transformer,li2022motor,song2021transformer}. These published baselines
-are useful architecture controls but are kept out of the headline table so the
-main comparison remains readable.
 
 Our manifests follow the subject- or trial-level partitions reported by
 \cbramod{} and, on overlapping tasks, by \reve{}
@@ -108,16 +102,17 @@ and augmentations are reported in Appendix~\ref{app:recipes}.
 Unless stated otherwise, samples are converted to float32, clipped to
 $[-1024,1024]$, and divided by 32, bounding the visual input to $[-32,32]$.
 The finalized SHU-MI recipe follows this same clip-to-1024/divide-by-32
-scaling, replacing its earlier no-divisor preprocessing. No finalized recipe
-uses random amplitude scaling.
+scaling, replacing its earlier no-divisor preprocessing. The formal
+Mumtaz2016 recipe additionally enables log-uniform amplitude scaling in
+$[0.5,2.0]$; all other formal recipes leave amplitude scaling disabled.
 
 The fold factor is fixed before training using
 Eq.~\ref{eq:p-geometry-rule}: we choose the smallest valid $P$ that reaches at
 least 64 folded rows, while treating SEED-V's native 62 rows as sufficiently
 close and leaving it at $P=1$. All 11 datasets use the same EfficientNet-B0
-architecture and have completed repeated-seed evaluation. CHB-MIT, SHU-MI,
-ISRUC, and TUEV use locked five-seed confirmations (42--46); datasets awaiting
-five-seed replacement retain the canonical 3407--3409 sweep.
+architecture and have completed five-seed evaluation. The YAML files are the
+source of truth for the formal means, standard deviations, and per-seed
+checkpoints.
 
 \paragraph{Initialization ablation.}
 To separate the benefit of visual pretraining from the benefit of the encoder
@@ -133,14 +128,20 @@ inductive bias of the same architecture.
 
 \subsection{Evaluation protocol}
 
-Binary tasks report PR-AUC and AUROC, with PR-AUC primary because positive
-class prevalence varies across datasets. Multiclass tasks report Cohen's
-$\kappa$ and weighted F1, with $\kappa$ primary. We omit balanced accuracy from
-the result tables to keep the binary reporting protocol consistent.
+All tasks use the same metric vocabulary in the tables. Binary tasks report
+balanced accuracy (BA), PR-AUC, and ROC-AUC; multiclass tasks report BA,
+Cohen's $\kappa$, and weighted F1. BA is thresholded balanced accuracy, while
+the two AUC metrics use the continuous score. We transcribe BA from the
+original CBraMod and REVE benchmark tables and retain it in local YAML result
+artifacts when it belongs to the same finalized recipe; we do not mix a BA
+from a different run with the formal PR-AUC/ROC-AUC row. Checkpoint selection remains based
+only on validation PR-AUC for binary tasks or validation $\kappa$ for
+multiclass tasks; the other metrics are strictly test-time reporting metrics.
 
-For each frozen recipe, we train its prescribed seed set: 42--46 for CHB-MIT,
-SHU-MI, ISRUC, and TUEV, and 3407--3409 for the remaining datasets. We report
+For each frozen recipe, we train the seed set recorded in its YAML
+configuration (42--46 for the current formal EfficientNet-B0 recipes). We report
 the arithmetic mean and population standard deviation. The checkpoint is
 selected only by validation PR-AUC or validation $\kappa$ and is then evaluated
-once on the test set. Detailed per-seed values and the executable protocol are
-provided in Appendix~\ref{app:per-seed} and Appendix~\ref{app:protocol}.
+once on the test set. The executable protocol is provided in
+Appendix~\ref{app:protocol}; per-seed values are stored in the corresponding
+YAML configuration files.

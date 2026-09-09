@@ -1,40 +1,40 @@
 % Finalized phase-interleaved EfficientNet-B0 results. Every checkpoint was
-% selected using the validation primary metric and evaluated once on test.
-% Standard deviations are population statistics. CHB-MIT, SHU-MI, ISRUC, and
-% TUEV use locked five-seed recipes (42--46); remaining formal rows retain the
-% canonical 3407--3409 sweep values.
+% selected using the validation selection metric and evaluated once on test.
+% Standard deviations are population statistics. All formal EfficientNet-B0
+% rows use the five-seed recipes recorded in their YAML configuration files.
 
 \newcommand{\numFinalized}{11}
 \newcommand{\numBenchmarks}{11}
 
-% Published CBraMod reference values. Binary: PR-AUC / AUROC.
-% Multiclass: Cohen's kappa / weighted F1. For TUAB and TUEV we use the
+% Published CBraMod reference values. Binary: BA / PR-AUC / ROC-AUC.
+% Multiclass: BA / Cohen's kappa / weighted F1. For TUAB and TUEV we use the
 % paper's target-corpus-excluded controls, because both datasets are subsets
 % of the TUEG pretraining corpus used by the full CBraMod model.
-\newcommand{\cbCHB}{\ensuremath{.3689/.8892}}
-\newcommand{\cbTUAB}{\ensuremath{.9221/.9156}}
-\newcommand{\cbTUEV}{\ensuremath{.6744/.8331}}
-\newcommand{\cbISRUC}{\ensuremath{.7442/.8011}}
-\newcommand{\cbFACED}{\ensuremath{.5041/.5618}}
-\newcommand{\cbSEEDV}{\ensuremath{.2569/.4101}}
-\newcommand{\cbPhysio}{\ensuremath{.5222/.6427}}
-\newcommand{\cbSHU}{\ensuremath{.7139/.6988}}
-\newcommand{\cbBCIC}{\ensuremath{.4216/.5383}}
-\newcommand{\cbMumtaz}{\ensuremath{.9923/.9921}}
-\newcommand{\cbMental}{\ensuremath{.6267/.7905}}
-
+\newcommand{\cbCHB}{\ensuremath{.7398/.3689/.8892}}
+\newcommand{\cbTUAB}{\ensuremath{.8249/.9221/.9156}}
+\newcommand{\cbTUEV}{\ensuremath{.6659/.6744/.8331}}
+\newcommand{\cbISRUC}{\ensuremath{.7865/.7442/.8011}}
+\newcommand{\cbFACED}{\ensuremath{.5509/.5041/.5618}}
+\newcommand{\cbSEEDV}{\ensuremath{.4091/.2569/.4101}}
+\newcommand{\cbPhysio}{\ensuremath{.6417/.5222/.6427}}
+\newcommand{\cbSHU}{\ensuremath{.6370/.7139/.6988}}
+\newcommand{\cbBCIC}{\ensuremath{.5373/.4216/.5383}}
+\newcommand{\cbMumtaz}{\ensuremath{.9560/.9923/.9921}}
+\newcommand{\cbMental}{\ensuremath{.7256/.6267/.7905}}
+% Values are ordered as BA/PR-AUC/ROC-AUC for binary tasks and
+% BA/kappa/weighted-F1 for multiclass tasks.
 % Corrected phase-interleaved EfficientNet-B0 repeated-seed results.
-\newcommand{\ourCHB}{\ensuremath{.4092\pm.0536\,/\,.8974\pm.0194}}
-\newcommand{\ourTUAB}{\ensuremath{.8703\pm.0033\,/\,.8697\pm.0048}}
-\newcommand{\ourTUEV}{\ensuremath{.6901\pm.0190\,/\,.8380\pm.0076}}
-\newcommand{\ourISRUC}{\ensuremath{.7705\pm.0032\,/\,.8197\pm.0029}}
-\newcommand{\ourFACED}{\ensuremath{.3737\pm.0237\,/\,.4476\pm.0194}}
-\newcommand{\ourSEEDV}{\ensuremath{.2206\pm.0061\,/\,.3819\pm.0052}}
-\newcommand{\ourPhysio}{\ensuremath{.5415\pm.0178\,/\,.6566\pm.0128}}
-\newcommand{\ourSHU}{\ensuremath{.6982\pm.0178\,/\,.6962\pm.0139}}
-\newcommand{\ourBCIC}{\ensuremath{.5806\pm.0175\,/\,.6647\pm.0140}}
-\newcommand{\ourMumtaz}{\ensuremath{.9569\pm.0071\,/\,.9524\pm.0089}}
-\newcommand{\ourMental}{\ensuremath{.7273\pm.0419\,/\,.8927\pm.0204}}
+\newcommand{\ourCHB}{\ensuremath{.7552\pm.0599\,/\,.4092\pm.0536\,/\,.8974\pm.0194}}
+\newcommand{\ourTUAB}{\ensuremath{.8184\pm.0060\,/\,.9063\pm.0016\,/\,.8984\pm.0011}}
+\newcommand{\ourTUEV}{\ensuremath{.6423\pm.0164\,/\,.6901\pm.0190\,/\,.8380\pm.0076}}
+\newcommand{\ourISRUC}{\ensuremath{.8025\pm.0027\,/\,.7705\pm.0032\,/\,.8197\pm.0029}}
+\newcommand{\ourFACED}{\ensuremath{.5516\pm.0179\,/\,.4953\pm.0197\,/\,.5567\pm.0163}}
+\newcommand{\ourSEEDV}{\ensuremath{.3660\pm.0062\,/\,.2056\pm.0078\,/\,.3678\pm.0057}}
+\newcommand{\ourPhysio}{\ensuremath{.6491\pm.0125\,/\,.5322\pm.0167\,/\,.6485\pm.0133}}
+\newcommand{\ourSHU}{\ensuremath{.6273\pm.0085\,/\,.6982\pm.0178\,/\,.6962\pm.0139}}
+\newcommand{\ourBCIC}{\ensuremath{.6539\pm.0128\,/\,.5673\pm.0160\,/\,.6539\pm.0130}}
+\newcommand{\ourMumtaz}{\ensuremath{.9153\pm.0061\,/\,.9864\pm.0045\,/\,.9846\pm.0053}}
+\newcommand{\ourMental}{\ensuremath{.6910\pm.0418\,/\,.7903\pm.0536\,/\,.8779\pm.0251}}
 
 % Primary-metric deltas: EfficientNet-B0 mean minus published CBraMod value,
 % expressed in percentage points.

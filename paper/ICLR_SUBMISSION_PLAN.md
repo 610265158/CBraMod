@@ -62,8 +62,8 @@ is likely to favor large EEG-pretrained encoders.
 
 - "This is only a reshape." Answer with the bijection, receptive-field
   remapping, padding occupancy analysis, and permutation controls.
-- "The comparison is unfair." Answer with same-pipeline CBraMod three-seed
-  runs and split definitions matching the published CBraMod protocol.
+- "The comparison is unfair." Answer with the published CBraMod/REVE tables,
+  explicit split definitions, and the YAML-backed five-seed local protocol.
 - "Hyperparameters were tuned on test." Answer only after a prospective rerun;
   prose cannot repair leakage.
 - "ImageNet semantics are irrelevant to EEG." Separate architecture from

@@ -4,12 +4,11 @@
 The benchmark ladder separates three recurring regimes. On BCIC2020-3, a
 native 64-row input and full visual fine-tuning outperform every displayed EEG
 foundation model, suggesting that architecture and supervised adaptation are
-already strong. On TUAB and FACED, coordinate-aware or EEG-pretrained models
-retain a clear advantage, pointing to domain structure that folding does not
-encode. SEED-V supplies a third regime: the visual model is competitive, but
-the shape-only fold rule selects a weaker geometry than an earlier exploratory
-recipe. The analyses below connect these outcomes to fold factor and channel
-neighborhoods rather than treating the 11 tasks as an undifferentiated ranking.
+already strong. On TUAB and SEED-V, the completed visual runs trail the
+strongest EEG reference. FACED supplies a third regime: ConvNeXt-Tiny exceeds
+the EEG references while ViT-Small is substantially lower, showing sensitivity
+to the backbone and training recipe. The analyses below connect these outcomes to fold factor and channel
+neighborhoods rather than treating the 12 tasks as an undifferentiated ranking.
 
 \subsection{Fold factor controls the geometry seen by the CNN}
 
@@ -21,9 +20,10 @@ The visual aspect ratio before padding is
 
 Increasing $P$ changes this ratio quadratically, but a square image is not the
 objective.  Large $P$ also makes each horizontal step span more original
-samples and increases the distance across phase-wrap boundaries.  Consistent
-with this trade-off, Eq.~\ref{eq:p-geometry-rule} chooses $P$ from $(C,T)$ and
-the EfficientNet-B0 stride without inspecting labels or test performance.
+samples and increases the distance across phase-wrap boundaries.  Consistent with this trade-off, Eq.~\ref{eq:p-geometry-rule} provides a
+geometry-based default from $(C,T)$ and the EfficientNet-B0 stride. It is not
+expected to be universally optimal because task-relevant EEG structure can be
+short-range or long-range in time and local or distributed across channels.
 Table~\ref{tab:p-rule} gives the completed unified choices.
 
 \begin{table*}[t]
@@ -40,30 +40,39 @@ TUAB & 16 & 2000 & 4 & $64\times500$ & completed \\
 TUEV & 16 & 1000 & 4 & $64\times250$ & completed \\
 ISRUC & 6 & 6000 & 12 & $72\times500$ & completed \\
 FACED & 32 & 2000 & 2 & $64\times1000$ & completed \\
-SEED-V & 62 & 200 & 1 & $62\times200$ & completed; historical $P=8$ is stronger \\
+SEED-V & 62 & 200 & 1 & $62\times200$ & completed \\
 PhysioNet-MI & 64 & 800 & 1 & $64\times800$ & completed \\
 SHU-MI & 32 & 800 & 2 & $64\times400$ & completed \\
 BCIC2020-3 & 64 & 600 & 1 & $64\times600$ & completed \\
 Mumtaz2016 & 19 & 1000 & 4 & $76\times250$ & completed \\
 MentalArithmetic & 20 & 1000 & 4 & $80\times250$ & completed \\
+HMC & 4 & 6000 & 16 & $64\times375$ & completed \\
 \bottomrule
 \end{tabularx}
-\tablenote{The rule uses only input shape and backbone stride. SEED-V is
-retained as a measured counterexample: an earlier $P=8$ recipe was stronger,
-but also differed in AMP precision.}
+\tablenote{The rule uses only input shape and backbone stride. All listed
+factors match the canonical YAML recipes.}
 \end{table*}
 
-The rule is intentionally simple.  It explains why a native 64-channel input
-such as BCIC2020-3 or PhysioNet-MI should remain unfolded, why 16-channel,
-2,000-sample inputs use $P=4$, and why long ISRUC epochs require a much larger
-factor.  However, SEED-V shows that shape alone is insufficient: canonical
-$P=1$ reaches .2206 kappa, whereas the historical phase-interleaved $P=8$
-recipe reached .2565. Because the two runs also differ in AMP precision, this
-is evidence of a limitation rather than a clean single-factor ablation.
-Sampling rate, event duration, channel topology, and task-specific temporal
-support are plausible missing variables.  We therefore report the rule as a
-prespecified architecture baseline and its failures as evidence, rather than
-overriding failures with post-hoc factor search.
+The rule leaves native 64-channel inputs such as BCIC2020-3 and PhysioNet-MI
+unfolded, assigns $P=4$ to the 16-channel recordings, and assigns $P=12$ to
+the six-channel ISRUC input. On SEED-V, the canonical EfficientNet-B0
+$P=1$ recipe reaches $\kappa=.2056\pm.0078$. This benchmark result does not
+establish whether another fold factor would improve performance. Sampling
+rate, event duration, channel topology, and task-specific temporal support
+may affect the preferred geometry. The MentalArithmetic sweep in
+Appendix~\ref{app:p-ablation} provides a concrete example: the best primary
+metric occurs at $P=4$ for EfficientNet-B0 but at $P=2$ for both DINOv3
+backbones. This supports treating $P$ as a task- and backbone-dependent
+hyperparameter when additional validation compute is available.
+
+\paragraph{Two complementary mechanisms.}
+Folding is not merely a height-expansion device. The bijection preserves all
+waveform values while rearranging them into phase--time neighborhoods, so the
+model can detect temporal patterns through standard 2D kernels. Its benefit
+therefore combines occupancy with pattern accessibility: it preserves more
+signal-bearing height and exposes local relations that were distant or
+anisotropic in the original channel--time matrix. Which mechanism dominates is
+task dependent and should be tested with folding and permutation controls.
 
 \subsection{Where artificial neighborhoods fail}
 

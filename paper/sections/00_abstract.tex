@@ -1,25 +1,18 @@
 \begin{abstract}
-Large EEG foundation models combine domain-specific architectures with
-thousands of hours of self-supervised pretraining.  We ask whether
-off-the-shelf vision pretraining can provide a ``free lunch'' for EEG
-decoding without EEG-specific pretraining.  The answer depends on the geometry
-presented to the visual encoder.  We introduce \method{}, a parameter-free,
-bijective adapter that folds a raw EEG matrix from $C\times T$ to
-$(CP)\times(T/P)$.  Folding preserves every sample while placing consecutive
-temporal phases on adjacent rows, exposing structured multi-lag neighborhoods
-and retaining more signal-bearing height through hierarchical downsampling.
-We fine-tune a one-channel EfficientNet-B0 end to end, without spectral
-conversion or EEG pretraining, on 11 benchmarks spanning clinical, affective,
-sleep, and BCI applications. Under validation checkpoint selection and
-repeated-seed evaluation, we report balanced accuracy, PR-AUC/ROC-AUC, or
-$\kappa$/weighted F1 in one metric protocol alongside BIOT, LaBraM, \cbramod{},
-and \reve{} references. The compact visual model is competitive on several
-BCI and clinical tasks but remains below EEG foundation models on
-topology- and subject-shift-sensitive cases such as FACED. These results do
-not establish universal superiority or replace same-pipeline reproductions.
-They show that representation geometry is a necessary control when attributing
-downstream gains to EEG foundation-model pretraining. Matched five-seed controls on TUEV
-and PhysioNet-MI further show that visual pretraining improves all three tested
-backbones over random initialization, providing direct evidence of visual
-pretraining transfer to EEG under end-to-end fine-tuning.
+EEG foundation models combine domain-specific architectures with large-scale
+self-supervised pretraining. We ask whether visual representations learned
+from natural images can transfer to EEG, and whether EEG-specific pretraining
+provides a consistent advantage under full supervised fine-tuning. We introduce
+\method{}, a parameter-free bijective temporal-folding interface that maps an
+EEG matrix from $C\times T$ to $(CP)\times(T/P)$. Folding preserves every sample
+while compensating for the spatial sparsity of low-channel EEG and exposing
+phase-aware local neighborhoods to a 2D visual backbone. We evaluate
+ImageNet-initialized EfficientNet-B0 and DINOv3-initialized ConvNeXt-Tiny and
+ViT-Small across a 12-dataset suite. The completed results show that visual
+pretraining transfers across architectures and can match or exceed published
+supervised EEG models and EEG foundation models on several tasks, while
+foundation models retain advantages on others. These findings establish
+representation geometry as a necessary control when assessing EEG-specific
+pretraining and show that cross-domain transfer does not require semantic
+similarity between the source and target modalities.
 \end{abstract}

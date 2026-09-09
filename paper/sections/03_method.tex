@@ -60,6 +60,7 @@ parameters. The architecture rule in Eq.~\ref{eq:p-geometry-rule} also selects
 $P=4$ for the formal TUEV runs.}
 \label{fig:temporal-folding}
 \end{figure*}
+\FloatBarrier
 
 The resulting raster is a computational view, not a claim that EEG becomes a
 physical image. Humans follow amplitude along time; the CNN instead responds
@@ -85,6 +86,12 @@ averaged, interpolated, or discarded.
 
 Folding is consequently not a filter and should not be described as denoising.
 It changes only the neighborhoods on which the following network operates.
+Its purpose is twofold: to preserve signal-bearing height for sparse montages,
+and to expose existing temporal patterns in a structured phase--time layout.
+The model can still access every waveform value, while local 2D kernels now
+combine adjacent phases and $P$-spaced context. Information preservation alone
+does not guarantee an advantage; the benefit depends on whether this new
+computational neighborhood matches the task.
 
 \subsection{Locality induced by folding}
 
@@ -121,11 +128,12 @@ interaction with the hierarchical receptive fields of EfficientNet-B0.
 lossless permutation that places temporal phase rows next to one another. A
 local 2D kernel therefore acts as a structured multi-lag temporal operator
 with offsets $\Delta t=P\Delta w+\Delta p$. Deeper receptive fields integrate
-progressively longer waveform, rhythm, and cross-electrode context; global
-pooling then aggregates evidence over the complete segment. Time spans are
-illustrative for $P=4$ at 200\,Hz.}
+progressively longer waveform, rhythm, and cross-electrode context; the
+backbone's aggregation head then produces a task representation. Time spans
+are illustrative for $P=4$ at 200\,Hz.}
 \label{fig:receptive-field-mechanism}
 \end{figure*}
+\FloatBarrier
 
 The rasterization introduces a phase-wrap boundary.  The original consecutive
 pair at phases $P-1$ and $0$ lies across adjacent columns rather than adjacent
@@ -158,7 +166,11 @@ The fraction of non-padding rows is
 \end{equation}
 
 For a 16-channel recording, $P=1$ occupies only half of a 32-row padded input,
-whereas $P=2$ occupies every row.  More generally, increasing $P$ delays the
+whereas $P=4$ produces 64 signal-bearing rows. A four-channel PSG recording
+such as HMC requires $P=16$, whereas a 64-channel recording already satisfies
+the occupancy target and remains at $P=1$. Dense montages may also preserve
+finer spatial information, but the present benchmark cannot separate channel
+count from montage and task effects. More generally, increasing $P$ delays the
 collapse of signal-bearing height positions through the convolutional stages.
 This does not guarantee improvement: an excessively large $P$ coarsens the
 horizontal time step, increases phase-wrap distance, and creates more
@@ -167,8 +179,9 @@ artificial vertical boundaries.
 \subsection{Architecture-aligned fold-factor selection}
 \label{sec:p-selection}
 
-To avoid choosing $P$ independently by test-set performance, we define a
-deterministic geometry rule from the input shape and the backbone stride.  For
+To provide a reproducible starting point, we define a geometry-based default
+from the input shape and the backbone stride rather than selecting an arbitrary
+value for each dataset.  For
 each divisor $P$ of $T$, let
 
 \begin{equation}
@@ -176,8 +189,8 @@ each divisor $P$ of $T$, let
 \end{equation}
 
 EfficientNet-B0 has total spatial stride 32. To retain at least two
-signal-bearing cells along height before global pooling, we target at least 64
-folded rows and choose the smallest valid factor. A native channel count very
+signal-bearing cells along height before feature aggregation, we target at least
+64 folded rows and choose the smallest valid factor. A native channel count very
 close to 64 is treated as sufficient; specifically, SEED-V's 62 channels are
 left unfolded. We select
 
@@ -201,6 +214,13 @@ occupancy but shortens the horizontal sequence and makes one horizontal pixel
 span $P$ original samples. Selecting the smallest factor that reaches the
 height target limits
 this loss of horizontal resolution and the number of phase-wrap boundaries.
+The geometry rule is a structural prior, not a claim that one value of $P$ is
+optimal for every task or backbone. EEG datasets differ in channel topology,
+sampling rate, temporal support, and signal quality: discriminative patterns
+may be short and local or may depend on long temporal context. When additional
+compute is available, a task-specific sweep over admissible factors can
+therefore be selected on the validation split; the test set is accessed once
+after the factor and checkpoint have been fixed.
 
 \begin{hypothesis}[Geometry alignment]
 Temporal folding helps when it improves signal occupancy and exposes useful
@@ -212,25 +232,64 @@ long uninterrupted horizontal context is more important.
 
 \subsection{Vision backbone and task head}
 
-The main model is intentionally small:
+All three visual backbones share the folding interface and use a
+dataset-specific feature aggregation followed by a linear classifier:
 
 \begin{center}
 \fbox{%
 \begin{minipage}{0.91\linewidth}
 \centering
-$[B,C,T]$
-$\xrightarrow{\;F_P\;}$
-$[B,1,CP,T/P]$
-$\xrightarrow{\;\text{zero pad}\;}$
-$\xrightarrow{\;\text{ImageNet EfficientNet-B0}\;}$
-$\xrightarrow{\;\text{global average pool}\;}$
-$\xrightarrow{\;\text{linear}\;}$ logits.
+\(\begin{gathered}
+[B,C,T]
+\xrightarrow{\;F_P\;}
+[B,1,CP,T/P]
+\xrightarrow{\;\text{zero pad}\;}
+\text{Vision backbone}
+\longrightarrow \mathbf{Z}
+\\[6pt]
+\mathbf{Z}
+\xrightarrow{\;\text{GAP / CLS token / Flatten}\;}
+\mathbf{z}
+\xrightarrow{\;\text{dropout + linear}\;}
+\text{logits}
+\end{gathered}\)
 \end{minipage}}
 \end{center}
 
-We instantiate the timm EfficientNet-B0 with one input channel and ImageNet
-weights \citep{wightman2019timm}.  The natural-image classifier is not used;
-the feature encoder contains approximately 4.0M parameters.  A dropout layer
-and task-specific linear classifier are trained together with the backbone.
-The model contains no EEG-specific self-supervised weights, Fourier features,
-self-attention mechanism, or learned positional embedding.
+We use timm backbones with one input channel \citep{wightman2019timm}:
+EfficientNet-B0 initialized from ImageNet, and ConvNeXt-Tiny and ViT-Small
+initialized from DINOv3 LVD-1689M visual weights. The natural-image classifier
+is bypassed; the encoder and a new task-specific head are fine-tuned jointly,
+without EEG self-supervised pretraining. EfficientNet-B0 has approximately
+4.01M encoder parameters, excluding the task head.
+
+For CNN feature maps, \textbf{global average pooling (GAP)} averages over
+the final spatial positions. For ViT, \textbf{CLS-token aggregation} uses the
+final classification-token representation. \textbf{Flatten aggregation}
+instead vectorizes the complete CNN feature map or ViT token tensor before
+the dropout and linear layer, retaining separate features for each position.
+The ViT tensor includes the prefix tokens returned by the encoder.
+
+When EEG signals are weak, discriminative responses may be confined to a
+small subset of feature locations. GAP can dilute these responses by averaging
+them with background activations, making learning difficult. Flatten allows
+the classifier to learn separate weights for each position and feature,
+providing an alternative when global aggregation is insufficient. This adds
+head parameters and requires a fixed feature shape within each dataset.
+
+We use a two-stage readout policy during recipe selection. We first try the
+compact aggregation appropriate to the backbone—GAP for CNNs and the CLS token
+for ViT. If this representation does not converge stably or underfits on the
+validation split, we fall back to a flatten--FC head, following the practical
+principle of retaining the complete encoder representation for a learned
+task readout used in prior EEG foundation-model pipelines
+\citep{wang2024cbramod,elouahidi2025reve}. The fallback changes only the
+readout capacity; it does not alter the folding interface or the input values.
+The aggregation choice is made from validation behavior and recorded in the
+corresponding YAML configuration, without consulting the test set.
+
+The reported EfficientNet-B0 recipes use GAP except for FACED, which uses
+flatten. ConvNeXt-Tiny uses GAP on TUEV and ISRUC and flatten on the other
+completed tasks in the 12-dataset suite; the reported ViT-Small recipes use
+flatten, with CLS-token variants recorded as separate comparisons. All head
+choices follow the corresponding YAML recipes.

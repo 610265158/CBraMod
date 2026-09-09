@@ -8,7 +8,7 @@
 \renewcommand{\arraystretch}{1.06}
 \begin{tabularx}{\textwidth}{@{}lXXX@{}}
 \toprule
- & \method{} & \cbramod{} & \reve{}-Base \\
+ & \method{} (B0) & \cbramod{} & \reve{}-Base \\
 \midrule
 Input & phase-folded raw waveform & raw patches + FFT magnitude & raw waveform patches \\
 Encoder & EfficientNet-B0 & criss-cross transformer & coordinate-aware transformer \\
@@ -18,8 +18,8 @@ Spatial identity & row order & learned fixed-order encoding & physical coordinat
 Main target & full fine-tuning & compact EEG transfer & montage-flexible transfer \\
 \bottomrule
 \end{tabularx}
-\tablenote{The unused 1.28M-class ImageNet classifier is excluded from the
-\method{} parameter count. Sizes for published models follow their papers.}
+\tablenote{The B0 encoder count excludes its unused ImageNet classifier and
+the task-specific head. Sizes for published models follow their papers.}
 \end{table*}
 
 \section{Dataset-Specific Training Recipes}
@@ -28,8 +28,9 @@ Main target & full fine-tuning & compact EEG transfer & montage-flexible transfe
 The corresponding YAML files are the source of truth for the formal
 EfficientNet-B0 runs; Table~\ref{tab:recipes} mirrors their recipes for
 readability. ``Folded'' is the non-padded image shape; zero padding is appended only
-at the bottom and right. All runs use average pooling, a linear head, ImageNet initialization,
-AdamW, cosine decay, dropout .1, and bfloat16 mixed precision.
+at the bottom and right. EfficientNet-B0 uses GAP except for FACED, which
+uses flatten aggregation. All B0 runs use a linear head, ImageNet
+initialization, AdamW, cosine decay, dropout .1, and bfloat16 mixed precision.
 
 \begin{table*}[tbp]
 \centering
@@ -43,21 +44,23 @@ AdamW, cosine decay, dropout .1, and bfloat16 mixed precision.
 Dataset & $P$ & Folded $H\times W$ & Epochs & LR & WD & Select & Special setting \\
 \midrule
 CHB-MIT & 4 & $64\times500$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & RA4 weights, head std .002, fixed 1:10 positive:negative sampling, no augmentation \\
-TUAB & 4 & $64\times500$ & 5 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & grad clip 1 \\
+TUAB & 4 & $64\times500$ & 10 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & RA4 weights, head std .002, EMA .995, grad clip 1 \\
 TUEV & 4 & $64\times250$ & 10 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & grad clip 1, head std .002, no augmentation/EMA \\
 ISRUC & 12 & $72\times500$ & 15 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, roll+mirror, head std .002 \\
-FACED & 2 & $64\times1000$ & 50 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & --- \\
+FACED & 2 & $64\times1000$ & 50 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & RA4 weights, flatten, head std .002, warmup 5, EMA .995 \\
 SEED-V & 1 & $62\times200$ & 50 & $5\cdot10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
 PhysioNet-MI & 1 & $64\times800$ & 30 & $2\cdot10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, no folding \\
 SHU-MI & 2 & $64\times400$ & 10 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & RA4 weights, clip 1024/scale 32, no augmentation, EMA .995 \\
-BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & no fold, warmup 3, EMA .995, bf16, clip 1, time roll \\
+BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & no fold, warmup 3, EMA .995, bf16, clip 1, time roll \\
 Mumtaz2016 & 4 & $76\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & warmup 3, no EMA, amplitude scale $[.5,2.0]$ \\
-MentalArithmetic & 4 & $80\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & EMA .99, weighted BCE, roll+mirror \\
+MentalArithmetic & 4 & $80\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & EMA .995, weighted BCE, roll+mirror \\
+HMC & 16 & $64\times375$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & four-channel PSG, EMA .995, no augmentation \\
 \bottomrule
 \end{tabularx}
 \tablenote{``Select'' is the validation metric used for checkpointing. All
-runs use ImageNet initialization, AdamW, cosine decay, dropout .1, average
-pooling, a linear head, and bfloat16 mixed precision.}
+runs use ImageNet initialization, AdamW, cosine decay, dropout .1, a linear
+head, and bfloat16 mixed precision. FACED uses flatten; the other B0 recipes
+use GAP.}
 \end{table*}
 
 CHB-MIT uses RA4 EfficientNet-B0 weights, classifier initialization std .002,
@@ -83,41 +86,7 @@ SHU-MI uses the finalized clip-to-1024 and divide-by-32 scaling; all other
 datasets use the same default
 preprocessing.
 
-\paragraph{SHU-MI backbone-capacity ablation.}
-In the historical matched FP16 P=2 recipe, EfficientNet-B5 reaches
-$.69426\pm.01483/.68949\pm.01163$ PR-AUC/AUROC, compared with
-$.68584\pm.02053/.67720\pm.02232$ for B0. This capacity ablation is not
-directly comparable to the new unified all-BF16 headline result. We retain B0
-in the headline table
-because it is the common encoder used across all 11 datasets; B5 is a
-dataset-specific capacity ablation.
-
 \input{sections/appendix_detailed_results}
-
-\begin{table*}[tbp]
-\centering
-\caption{Finalized five-seed test values from validation-selected checkpoints.}
-\small
-\renewcommand{\arraystretch}{1.04}
-\begin{tabularx}{\textwidth}{@{}l*{5}{Y}Y@{}}
-\toprule
-Dataset & Seed 42 & Seed 43 & Seed 44 & Seed 45 & Seed 46 & Mean $\pm$ population std \\
-\midrule
-CHB-MIT (PR/ROC) & .40971/.92573 & .42591/.87683 & .49244/.91551 &
-.32659/.88349 & .39117/.88547 & .40916$\pm$.05359/.89741$\pm$.01944 \\
-SHU-MI (PR/ROC) & .68564/.68536 & .70343/.69731 & .70447/.70723 &
-.67264/.67661 & .72479/.71457 & .69819$\pm$.01780/.69622$\pm$.01387 \\
-ISRUC ($\kappa$/F1) & .77291/.82287 & .77096/.81935 & .77465/.82294 &
-.76719/.81772 & .76654/.81563 & .77045$\pm$.00316/.81970$\pm$.00287 \\
-TUEV ($\kappa$/F1) & .69178/.83861 & .66643/.83048 & .72077/.85193 &
-.69702/.83692 & .67444/.83193 & .69009$\pm$.01896/.83797$\pm$.00760 \\
-\bottomrule
-\end{tabularx}
-\tablenote{CHB-MIT and SHU-MI use their locked RA4 EfficientNet-B0 recipes;
-ISRUC and TUEV use bottom/right-only padding and classifier initialization
-with standard deviation .002. Each checkpoint is evaluated once on the test
-split.}
-\end{table*}
 
 \section{Backbone Input Shapes}
 
@@ -140,6 +109,7 @@ SHU-MI & $64\times400$ & $64\times416$ \\
 BCIC2020-3 & $64\times600$ & $64\times608$ \\
 Mumtaz2016 & $76\times250$ & $96\times256$ \\
 MentalArithmetic & $80\times250$ & $96\times256$ \\
+HMC & $4\times6000$ & $64\times384$ \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -172,19 +142,24 @@ All downstream training is launched through
 \texttt{bash experiments/run\_downstream.sh}; direct invocation of the legacy
 entrypoint can silently change path resolution.
 
+\FloatBarrier
+\clearpage
 \section{Additional Visualizations}
 
 Figure~\ref{fig:waveforms} shows representative raw EEG traces rendered in an
 MNE-like layout.  The figure is diagnostic rather than a training input.
 
-\begin{figure}[tbp]
+\begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{downstream_waveforms_mne/all_datasets_mne_overview.png}
-\caption{Representative waveforms from the 11 downstream datasets.  Datasets
-differ greatly in channel count, duration, and amplitude distribution, which
-motivates an adapter that does not assume a single fixed image size.}
+\includegraphics[width=0.98\linewidth]{downstream_waveforms_mne/all_datasets_mne_overview.png}
+\caption{Representative validation waveforms from the 12 downstream datasets.
+Each panel shows up to ten channels after dataset preprocessing and uses an
+independent display scale. The variation in channel count, duration, and
+amplitude distribution motivates an adapter that does not assume a fixed EEG
+image size.}
 \label{fig:waveforms}
 \end{figure}
+\FloatBarrier
 
 Figure~\ref{fig:side-top-view} gives an intuitive side-view/top-view reading of
 the same samples. Figure~\ref{fig:seizure-folding} then applies the interface
@@ -205,6 +180,7 @@ indicate a change of representation and local adjacency, not a change in the
 signal itself.}
 \label{fig:side-top-view}
 \end{figure*}
+\FloatBarrier
 
 \begin{figure*}[t]
 \centering
@@ -217,6 +193,7 @@ $64\times500$ tensor after $P=4$ folding; and panel D expands its four phase
 rows. All 32,000 values are retained.}
 \label{fig:seizure-folding}
 \end{figure*}
+\FloatBarrier
 
 \begin{figure*}[t]
 \centering
@@ -227,6 +204,7 @@ folded maps preserve the samples and expose motif-specific phase--time
 textures; they are illustrations rather than diagnostic templates.}
 \label{fig:synthetic-folding-patterns}
 \end{figure*}
+\FloatBarrier
 
 \section{Data and Code Reproducibility Statement}
 

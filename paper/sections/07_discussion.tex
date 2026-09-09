@@ -5,7 +5,7 @@
 The study is designed around a narrow but important question: full fine-tuning
 performance alone may not identify the source of a foundation model's gains.
 The corrected phase-interleaved benchmark shows that a compact generic encoder
-can be competitive on several tasks, while the deficits on FACED, TUAB,
+can be competitive on several tasks, while the primary-metric deficits on TUAB,
 SEED-V, SHU-MI, and Mumtaz2016 reject a universal replacement claim. The
 retained EEGNet, BIOT, and LaBraM rows also show why the comparison should be
 read as a ladder of architecture and pretraining controls, not as a single
@@ -29,19 +29,27 @@ pretrained visual representation itself supplies transferable structure for
 EEG fine-tuning. The control still leaves open whether EEG pretraining is
 better for frozen, few-shot, unseen-montage, or topology-sensitive transfer.
 
-The expanded comparison also sharpens the role of scale and spatial identity.
+The expanded comparison also sharpens the role of scale, spatial resolution, and
+spatial identity. Several 64-channel tasks remain competitive with native
+$P=1$ inputs, whereas low-channel recordings require folding both to preserve signal-bearing
+height and to expose phase-structured temporal neighborhoods. This pattern is compatible with a benefit from denser
+electrode coverage, but the benchmark is not a controlled electrode-count
+study: channel number is confounded with montage, dataset, and task. Increasing
+electrode count should therefore be presented as a testable direction rather
+than a guaranteed performance improvement.
 Against 69M-parameter \reve{}-Base, \method{} is competitive on selected
 shared tasks, but the TUEV-version and ISRUC-preprocessing caveats remain
 important. The clean PhysioNet-MI and BCIC2020-3 gains show
 that large-scale EEG pretraining is not always necessary under full
-fine-tuning. The TUAB and FACED deficits show the converse: physical
-coordinates and heterogeneous EEG pretraining remain valuable when montage or
-subject shift dominates.
+fine-tuning. TUAB favors the EEG references, while FACED favors ConvNeXt-Tiny
+over both EEG references and the other visual backbones. These outcomes
+show task and architecture dependence without isolating the contribution of
+physical coordinates or EEG pretraining.
 
 In the terminology of our title, vision pretraining is a \emph{conditional}
 free lunch: its weights are available without additional EEG pretraining, but
 their value depends on input geometry, downstream optimization, and task
-characteristics. The mixed pattern across the 11 benchmarks makes this
+characteristics. The mixed pattern across the 12 benchmarks makes this
 conditionality empirically visible.
 
 The results do \emph{not} show that EEG pretraining is unnecessary.  This work
@@ -54,7 +62,7 @@ unexpectedly strong component under end-to-end supervised adaptation.
 \subsection{Threats to validity}
 
 \begin{itemize}
-    \item \textbf{Baseline comparability.}  EEGNet, BIOT, LaBraM, \cbramod{},
+    \item \textbf{Baseline comparability.}  EEGNet, SPaRCNet, BIOT, LaBraM, \cbramod{},
     and \reve{} are published references, not local paired reproductions. Our
     split definitions reproduce the subject- or trial-level partitions reported
     by \cbramod{} and, where available, \reve{}
@@ -63,16 +71,12 @@ unexpectedly strong component under end-to-end supervised adaptation.
     comparison (local v2.0.1 versus published v2.0.0), and REVE--ISRUC uses
     corrected channel selection. For TUAB and TUEV we use \cbramod{}'s
     target-corpus-excluded controls rather than its full-pretraining results.
-    \item \textbf{Development-set contamination.}  Formal runs evaluate the
-    test set once, but some candidate recipes were inspired by earlier test-
-    visible exploration.  A prospectively frozen rerun is needed for the final
-    paper.
     \item \textbf{Dataset-specific recipes.}  The encoder is fixed, but $P$,
     optimization, input scale, and augmentation vary by dataset.  This is a
     tuned downstream protocol, not zero-shot universality.  We introduce the
     prespecified geometry rule in Eq.~\ref{eq:p-geometry-rule} to reduce this
-    freedom. The unified geometry confirmations are complete, while SEED-V
-    remains a measured counterexample to shape-only selection.
+    freedom. The formal recipes are evaluated with this fixed geometry rule;
+    their benchmark scores do not establish that the selected factors are optimal.
     \item \textbf{Remaining controls.} Matched random initialization is now
     reported on TUEV and PhysioNet-MI, but frozen transfer, identical-pipeline
     EEG-foundation baselines, FLOPs, throughput, and memory are not yet in the

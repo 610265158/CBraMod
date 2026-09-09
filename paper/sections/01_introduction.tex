@@ -28,7 +28,11 @@ networks reduce both spatial axes by a factor near 32.  The electrode dimension
 can therefore collapse after only a few stages, while a large fraction of the
 spatial computation is spent traversing a long time axis.  Resizing the matrix
 would change values; a spectrogram would discard phase and introduce analysis
-choices.
+choices. The problem is especially severe for spatially sparse EEG: clinical
+recordings may have 4--16 channels, while some motor-imagery and imagined-speech
+benchmarks have 64. Dense montages provide finer scalp sampling and can remain unfolded; sparse
+montages need a geometry adapter both to preserve signal-bearing height and to
+expose structured temporal patterns to local 2D operators.
 
 Our alternative is a lossless index transformation.  For fold factor $P$, we
 reshape each channel into groups of $P$ consecutive samples and transpose the
@@ -52,9 +56,9 @@ This viewpoint leads to three questions:
     need for channel identity, physical coordinates, or EEG pretraining?
 \end{enumerate}
 
-We study these questions with one EfficientNet-B0 across 11 downstream
-benchmarks, using repeated seeds, validation checkpoint selection, and one final
-test evaluation. The comparison reports the full metric set used by the source
+We study these questions with EfficientNet-B0, ConvNeXt-Tiny, and ViT-Small
+across 12 downstream benchmarks. The comparison reports the full metric set
+used by the source
 benchmarks and keeps conventional supervised models, BIOT, LaBraM, CBraMod,
 and REVE as contextual baselines.
 
@@ -63,26 +67,22 @@ Our contributions are:
 \begin{itemize}
     \item \textbf{A lossless EEG--vision interface.}  We formulate temporal
     folding as a bijective channel--time reindexing requiring no interpolation,
-    filtering, or learned adapter.
-    \item \textbf{A geometry account of CNN transfer.}  We characterize how
-    folding remaps temporal distance, increases signal occupancy after padding,
-    and changes the receptive field induced by hierarchical 2D convolution.
-    \item \textbf{A broad benchmark comparison.}  We evaluate one
-    ImageNet-pretrained EfficientNet-B0 across 11 datasets under a
-    validation-selected repeated-seed protocol and place it beside published
-    supervised baselines, BIOT, LaBraM, CBraMod, and REVE results on the shared
-    benchmark partitions.
-    \item \textbf{An initialization control.}  Matched five-seed TUEV and
-    PhysioNet-MI experiments show how much ImageNet/DINOv3 visual weights add
-    beyond the same backbone trained from random initialization.
-    \item \textbf{Boundary evidence.} Task-level analyses identify when
-    generic visual locality is useful and when missing electrode topology
-    remains a limiting factor.
+    filtering, or learned adapter.  The operation compensates for the spatial
+    sparsity of low-channel EEG while leaving already-dense 64-channel inputs
+    unfolded.
+    \item \textbf{Evidence that visual representations transfer to EEG.}  Across
+    heterogeneous EEG tasks, ImageNet-initialized EfficientNet-B0 and
+    DINOv3-initialized ConvNeXt-Tiny and ViT-Small learn from the same folded
+    waveform interface, despite the lack of semantic correspondence between
+    natural images and EEG.
+    \item \textbf{A broad benchmark comparison.}  We evaluate the visual
+    transfer approach across 12 datasets and compare it with published
+    supervised EEG architectures and EEG
+    foundation models, including CBraMod and REVE, using the shared benchmark
+    splits.
 \end{itemize}
 
-The intended claim is not that a small CNN universally replaces EEG foundation
-models, nor that vision weights provide a universal free lunch.  Rather,
-off-the-shelf vision pretraining is a surprisingly strong prior on several EEG
-tasks once the representation geometry is aligned, and this baseline is
-necessary before downstream gains can be attributed to domain-specific
-pretraining.
+Our claim is that visual pretraining is a transferable cross-domain prior for
+EEG when the representation geometry is aligned.  The transfer is conditional:
+EEG-specific foundation models retain advantages on some tasks, but their
+advantage is not universal under full supervised fine-tuning.

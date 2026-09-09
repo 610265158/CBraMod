@@ -1,12 +1,12 @@
 dataset: Mumtaz2016
-backbone_name: convnext_tiny.dinov3_lvd1689m
+backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
 vision:
   adapter: {fold_factor: 4}
   squeeze_binary: true
-  feature_aggregation: flatten
+  feature_aggregation: gap
   head_init_std: 0.002
 training:
-  lr: 0.0001
+  lr: 0.001
   backbone_lr_scale: 0.1
   batch_size: 32
   epochs: 30
@@ -53,21 +53,20 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   protocol: validation_selected_checkpoint_once_on_test
-  feature_aggregation: flatten
+  feature_aggregation: gap
   per_seed:
-    42: {epoch: 1, ba: 0.93786, pr_auc: 0.98565, roc_auc: 0.98521}
-    43: {epoch: 1, ba: 0.90970, pr_auc: 0.98359, roc_auc: 0.97985}
-    44: {epoch: 2, ba: 0.93024, pr_auc: 0.98638, roc_auc: 0.98681}
-    45: {epoch: 3, ba: 0.90635, pr_auc: 0.98451, roc_auc: 0.98294}
-    46: {epoch: 2, ba: 0.90385, pr_auc: 0.98071, roc_auc: 0.97746}
-  mean: {ba: 0.91760, pr_auc: 0.98417, roc_auc: 0.98245}
-  std_population: {ba: 0.01377, pr_auc: 0.00197, roc_auc: 0.00342}
+    42: {epoch: 21, ba: 0.91308, pr_auc: 0.98778, roc_auc: 0.98597}
+    43: {epoch: 22, ba: 0.90472, pr_auc: 0.97781, roc_auc: 0.97451}
+    44: {epoch: 28, ba: 0.91983, pr_auc: 0.99013, roc_auc: 0.98967}
+    45: {epoch: 23, ba: 0.91641, pr_auc: 0.98954, roc_auc: 0.98792}
+    46: {epoch: 20, ba: 0.92232, pr_auc: 0.98660, roc_auc: 0.98487}
+  mean: {ba: 0.91527, pr_auc: 0.98637, roc_auc: 0.98459}
+  std_population: {ba: 0.00613, pr_auc: 0.00446, roc_auc: 0.00530}
 notes: >-
-  Formal five-seed Mumtaz2016 ConvNeXt-Tiny DINOv3 run using the same
-  amplitude-scale augmentation as the EfficientNet comparison: log-uniform
-  scaling in [0.5, 2.0], with EMA, time-roll, mirror, mixup, label smoothing,
-  and dropout disabled. ConvNeXt-specific stable lr=1e-4 and flatten head are
-  retained. One validation-selected checkpoint and one final test per seed.
+  Formal five-seed Mumtaz2016 amplitude-scale run. EfficientNet-B0 with P=4,
+  no EMA, no time-roll/mirror/mixup augmentation, no label smoothing, and no
+  dropout. Only log-uniform amplitude scaling in [0.5, 2.0] is enabled.
+  Each seed selects one checkpoint on validation and evaluates test once.
 output:
-  model_root: experiments/checkpoints/mumtaz2016_convnext_tiny_dinov3_p4_simple_amp_scale_5seed/seed{seed}
-  log_root: experiments/logs/mumtaz2016_convnext_tiny_dinov3_p4_simple_amp_scale_5seed/seed{seed}
+  model_root: experiments/checkpoints/mumtaz2016_efficientnet_b0_p4_simple_amp_scale_5seed/seed{seed}
+  log_root: experiments/logs/mumtaz2016_efficientnet_b0_p4_simple_amp_scale_5seed/seed{seed}

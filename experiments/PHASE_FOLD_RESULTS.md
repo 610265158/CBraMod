@@ -130,6 +130,27 @@ kappa reference (.6744); the population standard deviation is roughly half of
 the three-seed value, while the same recipe at bs=64/ep=30 scored only
 .65546 +/- .04870 kappa and is retained here only as search history.
 
+### Mumtaz2016 amplitude-scale backbone comparison
+
+These are additional Mumtaz2016 five-seed runs using the same simple
+amplitude-scale augmentation (`log_uniform` factor in `[0.5, 2.0]`), with EMA,
+time-roll, mirror, mixup, label smoothing, and dropout disabled. All runs use
+P=4, seeds 42--46, validation-selected checkpoints, and one final test
+evaluation per seed. They are a controlled backbone comparison for the
+simple/no-EMA recipe and do not replace the canonical B0 row above.
+
+| Backbone | Seed 42 | Seed 43 | Seed 44 | Seed 45 | Seed 46 | Mean +/- population std |
+| --- | --- | --- | --- | --- | --- | --- |
+| EfficientNet-B0 (BA/PR-AUC/ROC-AUC) | .91308/.98778/.98597 | .90472/.97781/.97451 | .91983/.99013/.98967 | .91641/.98954/.98792 | .92232/.98660/.98487 | **.91527 +/- .00613 / .98637 +/- .00446 / .98459 +/- .00530** |
+| ConvNeXt-Tiny DINOv3 (BA/PR-AUC/ROC-AUC) | .93786/.98565/.98521 | .90970/.98359/.97985 | .93024/.98638/.98681 | .90635/.98451/.98294 | .90385/.98071/.97746 | **.91760 +/- .01377 / .98417 +/- .00197 / .98245 +/- .00342** |
+| ViT-Small DINOv3 (BA/PR-AUC/ROC-AUC) | .92693/.98055/.97803 | .91315/.98150/.97885 | .88050/.97761/.97536 | .91064/.98163/.97997 | .90485/.98205/.98177 | **.90721 +/- .01520 / .98067 +/- .00161 / .97880 +/- .00213** |
+
+The exact recipes and per-seed selected epochs are recorded in the original
+model configs:
+`configs/backbones/efficientnet_b0/Mumtaz2016.yaml`,
+`configs/backbones/convnext_tiny_dinov3/Mumtaz2016.yaml`,
+and `configs/backbones/vit_small_dinov3/Mumtaz2016.yaml`.
+
 ## Comparison with published CBraMod
 
 CBraMod values are published references, not same-pipeline reruns. Primary

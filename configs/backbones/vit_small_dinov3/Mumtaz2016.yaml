@@ -15,20 +15,34 @@ training:
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: -1.0
-  ema_decay: 0.995
+  ema_decay: 0.0
   num_workers: 0
   optimizer: AdamW
-  label_smoothing: 0.1
+  label_smoothing: 0.0
   binary_pos_weight: 1.0
-  dropout: 0.1
+  dropout: 0.0
   drop_path_rate: 0.0
   early_stop: 30
   frozen: false
   multi_lr: false
   use_pretrained_weights: true
-  time_roll_augmentation: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
   time_roll_prob: 1.0
   time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: true
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
   selection_metric: pr_auc
@@ -40,19 +54,20 @@ protocol:
 results:
   protocol: validation_selected_checkpoint_once_on_test
   feature_aggregation: flatten
-  seeds: [42, 43, 44, 45, 46]
-  mean: {ba: 0.89905, pr_auc: 0.97370, roc_auc: 0.97068}
-  std_population: {ba: 0.00551, pr_auc: 0.00111, roc_auc: 0.00205}
-head_comparison:
-  cls_token:
-    status: complete
-    seeds: [42, 43, 44, 45, 46]
-    mean: {ba: 0.89882, pr_auc: 0.97184, roc_auc: 0.96685}
-    std_population: {ba: 0.00510, pr_auc: 0.00774, roc_auc: 0.00968}
-  recommendation: flatten
+  per_seed:
+    42: {epoch: 3, ba: 0.92693, pr_auc: 0.98055, roc_auc: 0.97803}
+    43: {epoch: 8, ba: 0.91315, pr_auc: 0.98150, roc_auc: 0.97885}
+    44: {epoch: 2, ba: 0.88050, pr_auc: 0.97761, roc_auc: 0.97536}
+    45: {epoch: 8, ba: 0.91064, pr_auc: 0.98163, roc_auc: 0.97997}
+    46: {epoch: 5, ba: 0.90485, pr_auc: 0.98205, roc_auc: 0.98177}
+  mean: {ba: 0.90721, pr_auc: 0.98067, roc_auc: 0.97880}
+  std_population: {ba: 0.01520, pr_auc: 0.00161, roc_auc: 0.00213}
 notes: >-
-  Initial five-seed ViT-Small DINOv3 Mumtaz2016 probe using P=4 and the
-  ConvNeXt schedule.
+  Formal five-seed Mumtaz2016 ViT-Small DINOv3 run using the same
+  amplitude-scale augmentation as the EfficientNet comparison: log-uniform
+  scaling in [0.5, 2.0], with EMA, time-roll, mirror, mixup, label smoothing,
+  and dropout disabled. ViT-specific lr=1e-4, wd=1e-2, and flatten head are
+  retained. One validation-selected checkpoint and one final test per seed.
 output:
-  model_root: experiments/checkpoints/vit_small_dinov3_mumtaz2016_p4_flatten_wd1e2_5seed_v1/seed{seed}
-  log_root: experiments/logs/vit_small_dinov3_mumtaz2016_p4_flatten_wd1e2_5seed_v1/seed{seed}
+  model_root: experiments/checkpoints/mumtaz2016_vit_small_dinov3_p4_simple_amp_scale_5seed/seed{seed}
+  log_root: experiments/logs/mumtaz2016_vit_small_dinov3_p4_simple_amp_scale_5seed/seed{seed}

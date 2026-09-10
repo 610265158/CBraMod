@@ -1,0 +1,49 @@
+dataset: MentalArithmetic
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision: {adapter: {fold_factor: 8}, squeeze_binary: true, feature_aggregation: flatten, head_init_std: 0.02}
+training:
+  lr: 0.0001
+  backbone_lr_scale: 1.0
+  batch_size: 64
+  epochs: 50
+  weight_decay: 0.01
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.999
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 3.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 0.5
+  time_roll_max_fraction: 0.25
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol: {seeds: [42, 43, 44, 45, 46], selection: validation_selected_checkpoint_once_on_test}
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  per_seed:
+    42: {ba: 0.57639, pr_auc: 0.46086, roc_auc: 0.72642}
+    43: {ba: 0.60417, pr_auc: 0.43095, roc_auc: 0.69575}
+    44: {ba: 0.67708, pr_auc: 0.43424, roc_auc: 0.74103}
+    45: {ba: 0.62847, pr_auc: 0.39871, roc_auc: 0.69604}
+    46: {ba: 0.60764, pr_auc: 0.38115, roc_auc: 0.66189}
+  mean: {ba: 0.61875, pr_auc: 0.42118, roc_auc: 0.70423}
+  std_population: {ba: 0.03355, pr_auc: 0.02810, roc_auc: 0.02749}
+notes: MentalArithmetic P ablation; identical to the existing ViT-Small DINOv3 recipe except fold factor P=8.
+output:
+  model_root: experiments/checkpoints/ablation_p/vit_small_dinov3/mentalarithmetic_p8/seed{seed}
+  log_root: experiments/logs/ablation_p/vit_small_dinov3/mentalarithmetic_p8/seed{seed}

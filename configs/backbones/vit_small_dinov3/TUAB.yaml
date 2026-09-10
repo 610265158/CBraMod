@@ -3,10 +3,10 @@ backbone_name: vit_small_patch16_dinov3.lvd1689m
 vision:
   adapter: {fold_factor: 4}
   squeeze_binary: true
-  feature_aggregation: flatten
+  feature_aggregation: gap
   head_init_std: 0.02
 training:
-  lr: 0.0001
+  lr: 0.0005
   backbone_lr_scale: 0.1
   batch_size: 32
   epochs: 10
@@ -26,7 +26,16 @@ training:
   frozen: false
   multi_lr: false
   use_pretrained_weights: true
-  time_roll_augmentation: false
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: true
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
   amp: true
   amp_dtype: bfloat16
   selection_metric: pr_auc
@@ -37,20 +46,29 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   protocol: validation_selected_checkpoint_once_on_test
-  feature_aggregation: flatten
+  feature_aggregation: gap
+  lr: 0.0005
+  augmentation: [mirror, time_roll, amplitude_scale]
   seeds: [42, 43, 44, 45, 46]
-  mean: {ba: 0.80102, pr_auc: 0.88331, roc_auc: 0.87106}
-  std_population: {ba: 0.00165, pr_auc: 0.00343, roc_auc: 0.00311}
+  mean: {ba: 0.82262, pr_auc: 0.91141, roc_auc: 0.90658}
+  std_population: {ba: 0.00073, pr_auc: 0.00188, roc_auc: 0.00138}
 head_comparison:
-  cls_token:
-    status: partial
-    completed_seeds: [42]
-    mean: {ba: 0.81112, pr_auc: 0.89800, roc_auc: 0.88476}
-    note: Seeds 43-46 are still being rerun with num_workers=0.
-  recommendation: pending
+  flatten:
+    status: complete
+    feature_aggregation: flatten
+    seeds: [42, 43, 44, 45, 46]
+    mean: {ba: 0.80491, pr_auc: 0.88428, roc_auc: 0.87591}
+    std_population: {ba: 0.00409, pr_auc: 0.00397, roc_auc: 0.00522}
+    note: >-
+      flatten head (51072-dim FC) overfits; val peaks at epoch 1 then
+      declines. Superseded by the gap head.
+  recommendation: gap
 notes: >-
-  Initial five-seed ViT-Small DINOv3 TUAB probe using P=4, EMA 0.995, no
-  train-time augmentation, and the ConvNeXt-compatible lower learning rate.
+  ViT-Small DINOv3 TUAB with cls_token (gap) head, lr 5e-4, and train-time
+  augmentation (channel mirror, time roll, amplitude scale). The gap head plus
+  higher lr fix the flatten-head overfitting (val-test gap shrinks from ~0.024
+  to ~0.007); augmentation further shrinks it to ~0.002. Final pr_auc 0.91141
+  is on par with ConvNeXt-Tiny and above EfficientNet-B0.
 output:
-  model_root: experiments/checkpoints/vit_small_dinov3_tuab_p4_flatten_wd1e2_5seed_v1/seed{seed}
-  log_root: experiments/logs/vit_small_dinov3_tuab_p4_flatten_wd1e2_5seed_v1/seed{seed}
+  model_root: experiments/checkpoints/vit_small_dinov3_tuab_p4_gap_lr5e4_aug_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_tuab_p4_gap_lr5e4_aug_5seed_v1/seed{seed}

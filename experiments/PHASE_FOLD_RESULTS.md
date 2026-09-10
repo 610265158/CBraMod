@@ -58,17 +58,29 @@ recipe and is retained as a supplementary ablation:
 | ConvNeXt-Tiny DINOv3 | .91760 +/- .01377 | .98417 +/- .00197 | .98245 +/- .00342 |
 | ViT-Small DINOv3 | .90721 +/- .01520 | .98067 +/- .00161 | .97880 +/- .00213 |
 
-The matched visual-pretraining controls on TUEV and PhysioNet-MI are also
-five-seed, validation-selected, single-final-test evaluations:
+The matched visual-pretraining controls on TUEV, PhysioNet-MI, ISRUC, and
+SHU-MI are five-seed, validation-selected, single-final-test evaluations. The
+multiclass controls (TUEV, PhysioNet-MI, ISRUC) report validation-selected
+kappa; the binary SHU-MI control reports validation-selected PR-AUC:
 
-| Backbone | TUEV pretrained kappa | TUEV random kappa | Physio pretrained kappa | Physio random kappa |
-| --- | ---: | ---: | ---: | ---: |
-| EfficientNet-B0 | .69009 +/- .01896 | .59945 +/- .03456 | .53215 +/- .01672 | .45734 +/- .01835 |
-| ConvNeXt-Tiny DINOv3 | .70946 +/- .03046 | .50699 +/- .00936 | .54785 +/- .01053 | .26965 +/- .01190 |
-| ViT-Small DINOv3 | .72625 +/- .00426 | .46146 +/- .01597 | .43634 +/- .00698 | .31522 +/- .00922 |
+| Backbone | TUEV pretrain kappa | TUEV random kappa | Physio pretrain kappa | Physio random kappa | ISRUC pretrain kappa | ISRUC random kappa |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| EfficientNet-B0 | .69009 +/- .01896 | .59945 +/- .03456 | .53215 +/- .01672 | .45734 +/- .01835 | .77045 +/- .00316 | .77328 +/- .00378 |
+| ConvNeXt-Tiny DINOv3 | .70946 +/- .03046 | .50699 +/- .00936 | .54785 +/- .01053 | .26965 +/- .01190 | .79055 +/- .00176 | .63783 +/- .02164 |
+| ViT-Small DINOv3 | .72625 +/- .00426 | .46146 +/- .01597 | .43634 +/- .00698 | .31522 +/- .00922 | .77854 +/- .00277 | .64486 +/- .02032 |
 
-Pretrained initialization improves all six matched kappa comparisons. The
-random-init recipes are recorded in the six `*_random_init.yaml` files.
+The binary SHU-MI control (validation PR-AUC selection):
+
+| Backbone | SHU-MI pretrain PR-AUC | SHU-MI random PR-AUC |
+| --- | ---: | ---: |
+| EfficientNet-B0 | .69819 +/- .01780 | .51572 +/- .01750 |
+| ConvNeXt-Tiny DINOv3 | .69096 +/- .01290 | .59832 +/- .00758 |
+| ViT-Small DINOv3 | .66185 +/- .01610 | .63803 +/- .00423 |
+
+Pretrained initialization improves every matched comparison except the
+EfficientNet-B0 ISRUC pair, where random initialization already matches
+ImageNet pretraining on the large ISRUC training set. The random-init recipes
+live in `configs/ablation_random_init/`.
 
 ## Provenance policy
 

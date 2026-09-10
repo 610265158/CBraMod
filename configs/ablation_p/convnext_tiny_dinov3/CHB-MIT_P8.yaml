@@ -1,0 +1,60 @@
+dataset: CHB-MIT
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter: {fold_factor: 8}
+  squeeze_binary: true
+  feature_aggregation: flatten
+  head_init_std: 0.002
+training:
+  lr: 0.0001
+  backbone_lr_scale: 1.0
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: true
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 10.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  mean: {ba: 0.73910, pr_auc: 0.42640, roc_auc: 0.90837}
+  std_population: {ba: 0.04299, pr_auc: 0.03341, roc_auc: 0.01177}
+notes: CHB-MIT P ablation; same recipe as the original convnext_tiny_dinov3 CHB-MIT config, with only fold factor changed to P=8.
+output:
+  model_root: experiments/checkpoints/ablation_p/convnext_tiny_dinov3/chb_mit_p8/seed{seed}
+  log_root: experiments/logs/ablation_p/convnext_tiny_dinov3/chb_mit_p8/seed{seed}

@@ -33,7 +33,8 @@ is likely to favor large EEG-pretrained encoders.
 - Run a frozen ImageNet linear probe.
 - Freeze a new protocol without consulting test results and repeat at least a
   representative set of datasets.
-- Report parameter count, FLOPs, throughput, memory, and wall time.
+- [x] Report parameter count and FLOPs at a shared input (throughput, memory,
+  and wall time still pending).
 - Verify every dataset citation, license, version, subject split, and sample
   count.
 

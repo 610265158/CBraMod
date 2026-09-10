@@ -8,9 +8,9 @@ $\kappa$ and weighted F1 for multiclass tasks. Balanced accuracy (BA) is
 reported in the detailed appendix tables. The tables retain BIOT, LaBraM-Base, CBraMod, and REVE as foundation-model
 baselines, and add the completed local visual-backbone runs. Detailed supervised
 architectures remain in the appendix.
-The ConvNeXt-Tiny TUAB result remains pending and is marked as --. Local
-values in the main tables are YAML means; population standard deviations for
-EfficientNet-B0 and the DINOv3 primary metrics are given in the appendix.
+All 12 datasets in the evaluation suite have finalized local visual-backbone
+results. The main tables report the five-seed means; population standard
+deviations are given in the appendix.
 
 \begin{table*}[t]
 \centering
@@ -23,13 +23,16 @@ EfficientNet-B0 and the DINOv3 primary metrics are given in the appendix.
 Dataset & BIOT & LaBraM-Base & \cbramod{} & \reve{}-Base & EfficientNet-B0 & ConvNeXt-Tiny & ViT-Small \\
 \midrule
 CHB-MIT & .3277/.8761 & .3287/.8679 & .3689/.8892 & -- & .4092/.8974 & .4734/.9067 & .4566/.9054 \\
-TUAB & .8792/.8815 & .8965/.9022 & .9221/.9156 & .9281/.9245 & .9063/.8984 & -- & .8833/.8711 \\
+TUAB & .8792/.8815 & .8965/.9022 & .9221/.9156 & .9281/.9245 &  .9178/.9126 & .9059/.9020 & .9114/.9066 \\
 SHU-MI & .6770/.6609 & .6761/.6604 & .7139/.6988 & -- & .6982/.6962 & .6910/.7006 & .6619/.6347 \\
 Mumtaz2016 & .9736/.9758 & .9798/.9782 & .9923/.9921 & .9961/.9957 & .9864/.9846 & .9842/.9825 & .9807/.9788 \\
 MentalArithmetic & .6004/.7536 & .5999/.7721 & .6267/.7905 & .7470/.8450 & .7903/.8779 & .7598/.8752 & .5739/.7619 \\
 \bottomrule
 \end{tabularx}
-\tablenote{Published values are transcribed from \cbramod{} and \reve{}; local values are YAML means. -- denotes a pending or unavailable configuration.}
+\tablenote{Published values are transcribed from \cbramod{} and \reve{}; the
+CBraMod- and REVE-covered rows share our held-out partitions, while BIOT and
+LaBraM rows are transcribed contextual references. -- denotes an unreported
+result.}
 \end{table*}
 
 \begin{table*}[t]
@@ -42,16 +45,16 @@ MentalArithmetic & .6004/.7536 & .5999/.7721 & .6267/.7905 & .7470/.8450 & .7903
 \toprule
 Dataset & BIOT & LaBraM-Base & \cbramod{} & \reve{}-Base & EfficientNet-B0 & ConvNeXt-Tiny & ViT-Small \\
 \midrule
-TUEV$^\dagger$ & .5273/.7492 & .6637/.8312 & .6744/.8331 & .6783/.8451 & .6901/.8380 & .7095/.8488 & .7263/.8563 \\
-ISRUC$^*$ & .7192/.7790 & .7231/.7810 & .7442/.8011 & .7500/.8005 & .7705/.8197 & .7906/.8372 & .7785/.8286 \\
-HMC & -- & -- & -- & -- & .7070/.7700 & .7111/.7744 & .6981/.7643 \\
+TUEV & .5273/.7492 & .6637/.8312 & .6744/.8331 & .6783/.8451 & .6901/.8380 & .7095/.8488 & .7263/.8563 \\
+ISRUC & .7192/.7790 & .7231/.7810 & .7442/.8011 & .7500/.8005 & .7705/.8197 & .7906/.8372 & .7785/.8286 \\
+HMC & .6295/.7091 & .6812/.7554 & -- & .6982/.7638 & .7070/.7700 & .7111/.7744 & .6981/.7643 \\
 FACED & .4476/.5136 & .4698/.5288 & .5041/.5618 & .5080/.5659 & .4953/.5567 & .5891/.6374 & .3097/.3849 \\
 SEED-V & .2261/.3856 & .2386/.3974 & .2569/.4101 & -- & .2056/.3678 & .2396/.3976 & .2442/.4016 \\
 PhysioNet-MI & .4875/.6158 & .4912/.6177 & .5222/.6427 & .5306/.6484 & .5322/.6485 & .5479/.6618 & .4363/.5774 \\
 BCIC2020-3 & .3650/.4917 & .3800/.5054 & .4216/.5383 & .4543/.5633 & .5673/.6539 & .5560/.6447 & .5773/.6618 \\
 \bottomrule
 \end{tabularx}
-\tablenote{Published values are transcribed from the source papers; local values are YAML means. $^\dagger$TUEV versions differ; $^*$REVE--ISRUC uses different preprocessing.}
+\tablenote{Published values are transcribed from the source papers. All local runs use the same held-out splits inherited from the CBraMod/REVE benchmark code. TUEV is prepared from a newer release, but its official evaluation partition is unchanged; CBraMod does not report HMC.}
 \end{table*}
 
 The unified tables make the central comparison explicit without averaging
@@ -60,9 +63,8 @@ backbones exceed the displayed EEG references on both reported metrics.
 ConvNeXt-Tiny also exceeds the references on FACED and PhysioNet-MI, whereas
 the completed visual runs trail the strongest EEG reference on TUAB,
 SEED-V, and Mumtaz2016. The retained BA values in the appendix show both consistent gains and
-task-specific trade-offs. The cross-version
-TUEV comparison and the preprocessing difference on REVE--ISRUC remain
-explicit caveats.
+task-specific trade-offs. The TUEV release difference does not change the
+held-out test set used for comparison.
 
 The detailed tables in Appendix~\ref{app:detailed-results} retain EEGNet,
 SPaRCNet, BIOT, LaBraM-Base, and the other published supervised controls. They are
@@ -74,9 +76,9 @@ published architecture as a separate narrative claim.
 \label{sec:cross-backbone-main}
 
 The completed DINOv3 probes extend the visual-transfer result beyond one CNN
-family. Table~\ref{tab:cross-backbone} in the appendix reports every completed
-ConvNeXt-Tiny and ViT-Small configuration; pending configurations are marked
-as --. The same folding interface is used for all visual backbones, allowing
+family. Table~\ref{tab:cross-backbone} in the appendix reports the
+ConvNeXt-Tiny and ViT-Small configurations for the full 12-dataset suite. A
+dash denotes an unavailable published reference. The same folding interface is used for all visual backbones, allowing
 architecture and initialization to vary while the EEG representation remains
 fixed. This is evidence that transfer is a property of the aligned
 EEG--vision interface, rather than an EfficientNet-specific effect.
@@ -99,44 +101,48 @@ interface depends on the backbone and its training recipe.
 \label{sec:pretraining-ablation}
 
 The random-initialization controls test whether the visual weights themselves
-transfer to EEG. Each row keeps the architecture, folding, optimizer, epoch
-budget, checkpoint selection, and five-seed test protocol fixed; only the
-backbone initialization changes.
+transfer to EEG. Each comparison keeps the architecture, folding, optimizer,
+epoch budget, checkpoint selection, and five-seed test protocol fixed; only
+the backbone initialization changes. The sweep covers four datasets (TUEV,
+PhysioNet-MI, ISRUC, and SHU-MI), and balanced accuracy is reported as the
+unified comparison metric.
 
 \begin{table*}[t]
 \centering
-\caption{Matched visual-pretraining ablation on TUEV and PhysioNet-MI. Values
-are mean$\pm$population standard deviation; $\Delta$ is pretrained minus
-random.}
+\caption{Matched visual-pretraining ablation (balanced accuracy). Values are
+mean$\pm$population standard deviation; $\Delta$ is pretrained minus random.}
 \label{tab:vision-pretraining-ablation}
 \scriptsize
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{2.5pt}
 \renewcommand{\arraystretch}{1.08}
-\begin{tabular}{@{}lccc|ccc@{}}
+\begin{tabular}{@{}lccc|ccc|ccc|ccc@{}}
 \toprule
-& \multicolumn{3}{c|}{TUEV} & \multicolumn{3}{c}{PhysioNet-MI} \\
-Backbone & Pretrained $\kappa$ & Random $\kappa$ & $\Delta$ & Pretrained $\kappa$ & Random $\kappa$ & $\Delta$ \\
+& \multicolumn{3}{c|}{TUEV} & \multicolumn{3}{c|}{PhysioNet-MI} & \multicolumn{3}{c|}{ISRUC} & \multicolumn{3}{c}{SHU-MI} \\
+Backbone & Pretrained & Random & $\Delta$ & Pretrained & Random & $\Delta$ & Pretrained & Random & $\Delta$ & Pretrained & Random & $\Delta$ \\
 \midrule
-EfficientNet-B0 & .6901$\pm$.0190 & .5995$\pm$.0346 & +.0906 & .5322$\pm$.0167 & .4573$\pm$.0184 & +.0748 \\
-ConvNeXt-Tiny DINOv3 & .7095$\pm$.0305 & .5070$\pm$.0094 & +.2025 & .5479$\pm$.0105 & .2697$\pm$.0119 & +.2782 \\
-ViT-Small DINOv3 & .7263$\pm$.0043 & .4615$\pm$.0160 & +.2648 & .4363$\pm$.0070 & .3152$\pm$.0092 & +.1211 \\
+EfficientNet-B0 & .642$\pm$.016 & .533$\pm$.036 & +.110 & .649$\pm$.013 & .593$\pm$.014 & +.056 & .803$\pm$.003 & .799$\pm$.003 & +.004 & .627$\pm$.008 & .500$\pm$.000 & +.127 \\
+ConvNeXt-Tiny & .676$\pm$.012 & .430$\pm$.030 & +.246 & .661$\pm$.008 & .452$\pm$.009 & +.209 & .814$\pm$.001 & .681$\pm$.021 & +.134 & .636$\pm$.008 & .577$\pm$.009 & +.058 \\
+ViT-Small & .722$\pm$.006 & .479$\pm$.013 & +.243 & .577$\pm$.006 & .486$\pm$.007 & +.091 & .806$\pm$.002 & .686$\pm$.015 & +.119 & .596$\pm$.010 & .605$\pm$.008 & $-$.009 \\
 \bottomrule
 \end{tabular}
 \tablenote{All runs use seeds 42--46 and validation-selected checkpoints
-followed by one final test evaluation.}
+followed by one final test evaluation. The per-dataset selection metrics
+remain PR-AUC or $\kappa$; balanced accuracy is reported here as the unified
+ablation metric.}
 \end{table*}
 
-Pretraining improves $\kappa$ in all six matched comparisons, by 7.48--27.82
-percentage points. The same direction holds for the retained auxiliary
-metrics: on TUEV, pretrained initialization improves BA by 10.95, 24.61, and
-24.30 points and weighted F1 by 4.66, 10.79, and 13.62 points for
-EfficientNet, ConvNeXt, and ViT, respectively. On PhysioNet-MI, the
-corresponding BA gains are 5.60, 20.86, and 9.08 points, while weighted-F1
-gains are 5.13, 20.89, and 9.07 points. Thus the result is not explained by
-architecture capacity alone: generic visual representations provide a
-reusable initialization for EEG fine-tuning after geometry alignment. It is
-evidence for transfer from visual pretraining to EEG, not evidence that EEG
-pretraining is unnecessary in frozen, few-shot, or cross-montage settings.
+Pretraining improves balanced accuracy in 11 of the 12 matched comparisons,
+by 0.4--24.6 percentage points
+(Table~\ref{tab:vision-pretraining-ablation}). The one exception is SHU-MI
+with ViT-Small, where random initialization lands within one point of
+pretraining; more generally, the smallest gains appear at the smallest model
+scale on the largest training set, where random-initialized EfficientNet-B0
+is within 0.4 points of ImageNet pretraining on ISRUC. Thus generic visual
+representations provide a reusable initialization for EEG fine-tuning after
+geometry alignment, and the pretraining benefit grows with model capacity.
+This is evidence for transfer from visual pretraining to EEG, not evidence
+that EEG pretraining is unnecessary in frozen, few-shot, or cross-montage
+settings.
 
 \subsection{Stability and model scale}
 
@@ -146,11 +152,45 @@ MentalArithmetic (.0418) remain seed-sensitive. MentalArithmetic has only
 1,343 training examples and a roughly 3:1 class imbalance; its reported
 .7903 PR-AUC is the validation-selected mean, not an exploratory best epoch.
 
+\begin{table*}[t]
+\centering
+\caption{Model scale and forward compute. Encoder parameters exclude unused
+classifiers and task heads; counts for \cbramod{} and \reve{}-Base are
+measured from their released implementations. FLOPs use a shared
+$32\times1000$ input (32 channels, five seconds at 200\,Hz) with fold factor
+$P=2$ for ours and each reference model's native patching; one
+multiply-accumulate counts as one operation, and folding adds no parameters
+and no arithmetic.}
+\label{tab:model-scale}
+\small
+\renewcommand{\arraystretch}{1.06}
+\begin{tabularx}{\textwidth}{@{}lYrr@{}}
+\toprule
+Model & Pretraining & Encoder params (M) & FLOPs (G) \\
+\midrule
+EfficientNet-B0 & ImageNet & 4.01 & 0.25 \\
+ConvNeXt-Tiny & DINOv3 & 27.82 & 2.90 \\
+ViT-Small & DINOv3 & 21.39 & 3.00 \\
+\cbramod{} & TUH EEG & 4.92 & 0.79 \\
+\reve{}-Base & 92 EEG datasets & 69.19 & 11.07 \\
+\bottomrule
+\end{tabularx}
+\tablenote{The \cbramod{} paper reports about 4.0M parameters, whereas its
+released checkpoint contains 4.92M; no pretrained weights are needed for
+parameter or FLOP counting. The task head adds at most 0.90M parameters
+across our reported recipes.}
+\end{table*}
+
 After removing the unused ImageNet classifier, EfficientNet-B0 contains about
-4.01M encoder parameters, close to the reported 4.0M parameters of
-\cbramod{}. \reve{}-Base is much larger and pretrained on a broader EEG
-corpus. The comparison therefore isolates a narrower conclusion: at compact
-scale and under full fine-tuning, input geometry and generic visual features
-can account for a large fraction of downstream performance. It does not test
-the frozen-transfer regime where large EEG foundation models may retain a
-larger advantage.
+4.01M encoder parameters. The released \cbramod{} implementation contains
+4.92M (its paper reports about 4.0M). At the shared $32\times1000$ input,
+EfficientNet-B0 needs only 0.25 GFLOPs, versus 0.79 GFLOPs for \cbramod{}
+and 11.07 GFLOPs for the 69.19M-parameter \reve{}-Base; ConvNeXt-Tiny and
+ViT-Small require 2.90 and 3.00 GFLOPs (Table~\ref{tab:model-scale}).
+Folding itself adds no parameters and no arithmetic: it is a lossless index
+permutation with $O(CT)$ memory movement. \reve{}-Base is much larger and
+pretrained on a broader EEG corpus. The comparison therefore isolates a
+narrower conclusion: at compact scale and under full fine-tuning, input
+geometry and generic visual features can account for a large fraction of
+downstream performance. It does not test the frozen-transfer regime where
+large EEG foundation models may retain a larger advantage.

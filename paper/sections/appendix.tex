@@ -13,13 +13,17 @@
 Input & phase-folded raw waveform & raw patches + FFT magnitude & raw waveform patches \\
 Encoder & EfficientNet-B0 & criss-cross transformer & coordinate-aware transformer \\
 EEG pretraining & none & TUH EEG & 92 EEG datasets \\
-Encoder parameters & 4.01M & about 4.0M & about 69M \\
+Encoder parameters & 4.01M & 4.92M & 69.19M \\
+Forward compute @$32\times1000$ & 0.25 GFLOPs & 0.79 GFLOPs & 11.07 GFLOPs \\
 Spatial identity & row order & learned fixed-order encoding & physical coordinates \\
 Main target & full fine-tuning & compact EEG transfer & montage-flexible transfer \\
 \bottomrule
 \end{tabularx}
 \tablenote{The B0 encoder count excludes its unused ImageNet classifier and
-the task-specific head. Sizes for published models follow their papers.}
+the task-specific head. Parameter and compute counts for \cbramod{} and
+\reve{}-Base are measured from their released implementations at the shared
+$32\times1000$ input; the \cbramod{} paper reports about 4.0M parameters,
+whereas its released checkpoint contains 4.92M.}
 \end{table*}
 
 \section{Dataset-Specific Training Recipes}
@@ -92,27 +96,39 @@ preprocessing.
 
 \begin{table}[tbp]
 \centering
-\caption{Backbone input shapes after zero padding to multiples of 32.}
+\caption{Architecture-aligned fold factors and backbone input shapes. The
+fold factor follows Eq.~\ref{eq:p-geometry-rule}; zero padding is appended
+only at the bottom and right.}
+\label{tab:backbone-shapes}
 \small
 \renewcommand{\arraystretch}{1.04}
-\begin{tabularx}{\linewidth}{@{}lYY@{}}
+\begin{tabularx}{\linewidth}{@{}lrrrrr@{}}
 \toprule
-Dataset & Before padding & After padding \\
+Dataset & $C$ & $T$ & $P$ & Folded & Padded \\
 \midrule
-CHB-MIT / TUAB & $64\times500$ & $64\times512$ \\
-TUEV & $64\times250$ & $64\times256$ \\
-ISRUC & $72\times500$ & $96\times512$ \\
-FACED & $64\times1000$ & $64\times1024$ \\
-SEED-V & $62\times200$ & $64\times224$ \\
-PhysioNet-MI & $64\times800$ & $64\times800$ \\
-SHU-MI & $64\times400$ & $64\times416$ \\
-BCIC2020-3 & $64\times600$ & $64\times608$ \\
-Mumtaz2016 & $76\times250$ & $96\times256$ \\
-MentalArithmetic & $80\times250$ & $96\times256$ \\
-HMC & $4\times6000$ & $64\times384$ \\
+CHB-MIT / TUAB & 16 & 2000 & 4 & $64\times500$ & $64\times512$ \\
+TUEV & 16 & 1000 & 4 & $64\times250$ & $64\times256$ \\
+ISRUC & 6 & 6000 & 12 & $72\times500$ & $96\times512$ \\
+FACED & 32 & 2000 & 2 & $64\times1000$ & $64\times1024$ \\
+SEED-V & 62 & 200 & 1 & $62\times200$ & $64\times224$ \\
+PhysioNet-MI & 64 & 800 & 1 & $64\times800$ & $64\times800$ \\
+SHU-MI & 32 & 800 & 2 & $64\times400$ & $64\times416$ \\
+BCIC2020-3 & 64 & 600 & 1 & $64\times600$ & $64\times608$ \\
+Mumtaz2016 & 19 & 1000 & 4 & $76\times250$ & $96\times256$ \\
+MentalArithmetic & 20 & 1000 & 4 & $80\times250$ & $96\times256$ \\
+HMC & 4 & 6000 & 16 & $64\times375$ & $64\times384$ \\
 \bottomrule
 \end{tabularx}
+\tablenote{``Folded'' is the tensor shape after phase-interleaved folding;
+``Padded'' is the backbone input after zero padding to multiples of 32.}
 \end{table}
+
+Parameters and FLOPs are counted with PyTorch's FLOP counter at the shared
+$32\times1000$ input (folded with $P=2$ for our backbones). Reference-model
+counts are taken from the officially released implementations in their native
+patch formats, so no pretrained weights are required. For \cbramod{} we
+disable PyTorch's fused multi-head-attention fast path so that every matrix
+product is counted. The counting scripts are included in the code release.
 
 \section{Formal Evaluation Protocol}
 \label{app:protocol}
@@ -211,11 +227,14 @@ textures; they are illustrations rather than diagnostic templates.}
 The codebase records exact dataset paths, input shapes, preprocessing, seeds,
 training arguments, logs, and validation-selected checkpoints.  Public data
 licenses and access conditions differ by benchmark; no dataset is redistributed
-with the paper.  The CHB-MIT manifest follows the subject split reported by
-\cbramod{} (CHB01--20/CHB21--22/CHB23--24 for train/validation/test)
-\citep{wang2024cbramod}; the other manifests follow the subject- or trial-level
-benchmark partitions documented by \cbramod{} and \reve{}
-\citep{wang2024cbramod,elouahidi2025reve}.  Reproduction still requires the
-documented dataset versions and local split manifests; TUAB and TUEV version
-numbers are especially important because sample counts differ across releases
-and historical pipelines.
+with the paper.  The CHB-MIT manifest follows the subject split of the
+\cbramod{} benchmark code (CHB01--20/CHB21--22/CHB23--24 for
+train/validation/test) \citep{wang2024cbramod}; the remaining manifests follow
+the fixed subject- or trial-level partitions of the \cbramod{} and \reve{}
+benchmark code \citep{wang2024cbramod,elouahidi2025reve}, with HMC using the
+\reve{} partition \citep{elouahidi2025reve,alvarez2022hmc}.  Reproduction still
+requires the documented dataset versions and local split manifests. We use
+TUAB v3.0.1 and TUEV v2.0.1; for TUEV, the held-out test partition is the
+official evaluation set and contains 29,421 segments in both v2.0.0 and
+v2.0.1, while the newer release changes only the training and validation
+counts (68,445/15,487 rather than 67,436/15,634).

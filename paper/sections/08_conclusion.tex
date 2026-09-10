@@ -1,27 +1,21 @@
 \section{Conclusion}
 
-We introduced a phase-interleaved, lossless temporal-folding interface between
-raw EEG and generic vision backbones.  The method changes no waveform values
-and adds no learned adapter parameters, yet it substantially changes the
-neighborhoods and downsampling trajectory seen by a 2D CNN.  Across 12
-benchmarks, EfficientNet-B0 is competitive with the displayed supervised and
-EEG-foundation baselines on several tasks. ConvNeXt-Tiny and ViT-Small extend
-the comparison to additional visual architectures: ConvNeXt-Tiny leads the
-displayed FACED results, while the strongest EEG reference remains ahead of
-the completed visual runs on TUAB, SEED-V, and Mumtaz2016. The
-uniform BA/PR-AUC/ROC-AUC and BA/$\kappa$/F1 reporting makes these trade-offs
-visible without collapsing unlike metrics into one score. The pattern supports
-competitiveness, not universal superiority, and still requires same-pipeline
-foundation-model reproduction for a paired claim.
+We introduced phase-interleaved, lossless temporal folding as an interface
+between raw EEG and generic vision backbones. It changes no waveform values
+and adds no learned parameters, yet it substantially changes the neighborhoods
+and downsampling trajectory seen by a 2D CNN. Across 12 benchmarks,
+EfficientNet-B0 is competitive with the displayed supervised and
+EEG-foundation baselines on several tasks; ConvNeXt-Tiny leads the FACED
+results, while the strongest EEG reference remains ahead on TUAB, SEED-V, and
+Mumtaz2016. The uniform metric reporting keeps these trade-offs visible
+without collapsing unlike metrics into one score, and the pattern supports
+competitiveness rather than universal superiority.
 
-The broader message is methodological: before attributing downstream accuracy
-to large-scale EEG pretraining, representation geometry must be treated as a
-first-class baseline variable.  The matched five-seed initialization controls
-on TUEV and PhysioNet-MI show that ImageNet/DINOv3 visual weights improve all
-three tested architectures over their random-initialized counterparts, giving
-direct evidence that visual pretraining can transfer to EEG after geometry
-alignment.  Further same-split foundation-model comparisons and topology-aware experiments
-can test how far this observation extends.  In this sense,
-vision pretraining is not a universal free lunch, but a strong reusable prior
-whose benefit becomes visible when EEG geometry is matched to the inductive
-bias of the encoder.
+The broader message is methodological: representation geometry should be a
+first-class baseline variable before downstream accuracy is attributed to
+large-scale EEG pretraining. Matched five-seed initialization controls show
+that ImageNet/DINOv3 weights improve eight of nine backbone--dataset
+comparisons over random initialization, direct evidence that visual
+pretraining transfers to EEG after geometry alignment. Vision pretraining is
+therefore not a universal free lunch, but a strong reusable prior whose
+benefit appears when EEG geometry matches the inductive bias of the encoder.

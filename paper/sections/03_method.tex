@@ -3,13 +3,11 @@
 
 \subsection{Overview and problem setting}
 
-For a regular dataset, an EEG segment is
+Each EEG segment is represented as a channel--time tensor
 $\mathbf{X}\in\mathbb{R}^{C\times T}$, where $C$ is the number of channels
-and $T$ the number of time samples.  A minibatch has shape
-$B\times C\times T$.  ISRUC is the sole sequence exception: every record
-contains $S=20$ consecutive sleep epochs and has shape
-$B\times S\times C\times T$.  We temporarily merge $B$ and $S$ during visual
-encoding and restore the sequence dimension before computing the loss.
+and $T$ is the number of time samples. A minibatch is passed through the same
+folding adapter and visual encoder before task-specific prediction. Dataset-specific
+sequence handling is described in Appendix~\ref{app:protocol}.
 
 The objective is deliberately conventional.  Binary tasks use one logit and
 binary cross entropy.  Multiclass tasks use cross entropy with label smoothing.
@@ -44,31 +42,13 @@ x_3&x_7&x_{11}&x_{15}
 \end{bmatrix}$.
 \end{center}
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{lossless_temporal_folding.pdf}
-\caption{Phase-interleaved lossless temporal folding.  Panels A--C illustrate
-the index mapping for one channel with $T=16$ and $P=4$: reshaping to $(W,P)$
-and transposing to $(P,W)$ groups samples by $t\bmod P$.  Panel D applies the
-same operation to a real five-second, 16-channel TUEV segment sampled at
-200\,Hz.  The pipeline tensor changes from $16\times1000$ to
-$64\times250$.  The tensor map marks each four-row electrode group, and the
-lower inset enlarges the four colored temporal-phase rows of one real electrode.
-All 16,000 values are retained exactly.  Folding changes only
-their two-dimensional adjacency, without interpolation or learnable
-parameters. The architecture rule in Eq.~\ref{eq:p-geometry-rule} also selects
-$P=4$ for the formal TUEV runs.}
-\label{fig:temporal-folding}
-\end{figure*}
-\FloatBarrier
-
-The resulting raster is a computational view, not a claim that EEG becomes a
-physical image. Humans follow amplitude along time; the CNN instead responds
-to neighborhoods induced by the raster indices. Folding places short
-within-channel temporal segments into contiguous vertical neighborhoods before
-strided stages reduce spatial resolution. A side-view/top-view illustration,
-a real seizure example, and controlled waveform examples are provided in
-Appendix Figs.~\ref{fig:side-top-view}, \ref{fig:seizure-folding}, and
+Figure~\ref{fig:folding-overview} illustrates the reindexing on a controlled
+example and on a real 16-channel TUEV segment. The raster is a computational
+representation, not a physical image of the scalp. It gives the visual encoder
+a taller signal-bearing input and places short within-channel temporal
+patterns in local 2D neighborhoods before strided stages reduce resolution.
+Additional geometric, seizure, and controlled-waveform visualizations appear
+in Appendix Figs.~\ref{fig:side-top-view}, \ref{fig:seizure-folding}, and
 \ref{fig:synthetic-folding-patterns}.
 
 \begin{proposition}[Information preservation]
@@ -112,26 +92,32 @@ while their temporal separation in the original waveform is
 A vertical one-pixel step within an electrode therefore connects consecutive
 samples, whereas a horizontal one-pixel step connects samples $P$ time points
 apart.  A $k\times k$ convolution combines offsets of the form
-$\Delta t=P\Delta w+\Delta p$ within one local receptive field.  For example,
-a $3\times3$ kernel at $P=4$ can directly combine offsets
+$\Delta t=P\Delta w+\Delta p$ within one local receptive field.  The local
+patch is flattened and multiplied by the kernel weights, so this is an
+ordinary dot product followed by bias and nonlinearity.  For $P=4$, a
+$3\times3$ kernel directly mixes offsets
 $\{-5,-4,-3,-1,0,1,3,4,5\}$.  This is a polyphase view of the waveform: each
 column holds a group of $P$ consecutive samples, and each row follows one
 temporal phase across groups.
 
-Figure~\ref{fig:receptive-field-mechanism} summarizes this mechanism and its
+Figure~\ref{fig:folding-overview} summarizes this mechanism and its
 interaction with the hierarchical receptive fields of EfficientNet-B0.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{receptive_field_mechanism.pdf}
-\caption{Why phase-folded EEG is compatible with a 2D CNN. Folding is a
-lossless permutation that places temporal phase rows next to one another. A
-local 2D kernel therefore acts as a structured multi-lag temporal operator
-with offsets $\Delta t=P\Delta w+\Delta p$. Deeper receptive fields integrate
-progressively longer waveform, rhythm, and cross-electrode context; the
-backbone's aggregation head then produces a task representation. Time spans
-are illustrative for $P=4$ at 200\,Hz.}
-\label{fig:receptive-field-mechanism}
+\includegraphics[width=\textwidth]{folding_overview.pdf}
+\caption{Lossless phase-interleaved temporal folding and its interaction with
+hierarchical 2D receptive fields. (a) Raw EEG is a one-dimensional
+channel-by-time signal. (b) A real 16-channel TUEV segment is folded with
+$P=4$: row $cP+p$ contains samples $x[c,p::P]$, turning $16\times1000$ into
+$64\times250$ while retaining all 16{,}000 values. (c) A $3\times3$ kernel
+therefore mixes original-time offsets $\Delta t=P\Delta w+\Delta p$,
+combining adjacent phases with $P$-spaced context. (d) EfficientNet-B0 turns
+this layout into progressively longer and wider receptive fields, from local
+morphology to global segment context. Folding adds no parameters and changes
+only adjacency, with no interpolation, discarded samples, or learnable
+adapter.}
+\label{fig:folding-overview}
 \end{figure*}
 \FloatBarrier
 

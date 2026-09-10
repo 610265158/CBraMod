@@ -19,11 +19,11 @@ movement/imagery recordings distributed through BCI2000
 \citep{schalk2004bci2000}, SEED-V \citep{liu2021comparing}, SHU-MI
 \citep{ma2022large}, BCIC2020-3 \citep{jeong20222020}, Mumtaz2016
 \citep{mumtaz2016mdd}, MentalArithmetic \citep{zyma2019mental}, and the HMC
-sleep-staging corpus.
+sleep-staging corpus \citep{alvarez2022hmc}.
 
 \begin{table*}[t]
 \centering
-\caption{The 12-dataset evaluation suite and local split sizes.}
+\caption{The 12-dataset evaluation suite and inherited benchmark split sizes.}
 \label{tab:datasets}
 \small
 \renewcommand{\arraystretch}{1.04}
@@ -55,97 +55,65 @@ epochs per record; all other rows are channel $\times$ time. ``Classes''
 reports semantic classes, while binary heads use one output logit.}
 \end{table*}
 
-CHB-MIT segments are resampled to 2,000 samples in the dataloader.  Its
-subject partition is exactly the one reported by \cbramod{}---CHB01--20 for
-training, CHB21--22 for validation, and CHB23--24 for testing
-\citep{wang2024cbramod}.  For TUAB and TUEV, the repository's deterministic
-preprocessing materializes the same subject-level assignment while
-superseding the older hardware-dependent implementations inherited from BIOT
-and LaBraM.  Dataset versions and sample counts must therefore be reported
-with every comparison.
-
-\subsection{Reference methods and comparability}
-
-The result tables retain the complete published comparison context: EEGNet,
-EEGConformer, SPaRCNet, ContraWR, CNN-Transformer, FFCL, ST-Transformer,
-BIOT, LaBraM, \cbramod{}, and \reve{}-Base. The main interpretation emphasizes
-\cbramod{}, \reve{}-Base, and \method{} because they isolate the paper's
-central foundation-model question, while the remaining rows stay visible as
-architecture controls. Published values are transcribed from the source
-benchmark tables \citep{wang2024cbramod,elouahidi2025reve}; the local row is
-our validation-selected repeated-seed run. For TUAB and TUEV we use
-\cbramod{}'s target-corpus-excluded controls, avoiding overlap between those
-downstream corpora and its TUEG pretraining set.
-
-Our manifests follow the subject- or trial-level partitions reported by
-\cbramod{} and, on overlapping tasks, by \reve{}
-\citep{wang2024cbramod,elouahidi2025reve}. Eight tasks are shared by both
-reference papers and our study: TUAB, TUEV, ISRUC, FACED, PhysioNet-MI,
-BCIC2020-3, Mumtaz2016, and MentalArithmetic. CHB-MIT, SEED-V, and SHU-MI are
-covered by \cbramod{} but not \reve{}. ``Shared split'' does not mean a paired
-rerun: preprocessing, optimization, seeds, and checkpoint selection remain
-method-specific. Two exceptions require stronger caveats. Our TUEV uses
-v2.0.1 (113,353 segments), whereas the references use v2.0.0 (112,491); and
-\reve{} reports corrected ISRUC channel selection under the same subject split
-but a different input pipeline. We therefore call the remaining published
-rows direct benchmark comparisons, TUEV a cross-version comparison, and
-REVE--ISRUC a shared-split comparison with preprocessing differences.
+CHB-MIT segments are resampled to 2,000 samples in the dataloader. Across the
+full suite, we inherit the public split definitions of \cbramod{} and \reve{}
+and retain the same train, validation, and test partitions used in their
+benchmark evaluations \citep{wang2024cbramod,elouahidi2025reve}. For example,
+CHB-MIT uses CHB01--20 for training, CHB21--22 for validation, and CHB23--24
+for testing, following the \cbramod{} segmentation code. Eight tasks are
+shared by both reference papers and our study (TUAB, TUEV, ISRUC, FACED,
+PhysioNet-MI, BCIC2020-3, Mumtaz2016, and MentalArithmetic); CHB-MIT, SEED-V,
+and SHU-MI are covered by \cbramod{} but not \reve{}, whereas HMC is covered
+by \reve{} but not \cbramod{}. Every dataset therefore inherits a fixed
+partition from at least one of the two benchmark codebases, and the
+\cbramod{} and \reve{} rows share the held-out partitions of our runs. Our
+TUEV files are prepared from v2.0.1 rather than the v2.0.0 release used by the
+two reference benchmarks: the held-out partition is the official TUEV
+evaluation set and is identical in both releases (29,421 segments), while
+v2.0.1 changes only the training and validation segments (68,445/15,487
+rather than 67,436/15,634).
 
 \subsection{Training and implementation}
 
-We use AdamW \citep{loshchilov2019decoupled}, cosine learning-rate decay,
-batch size 32 except ISRUC (16) and MentalArithmetic (64), dropout 0.1, and no
-backbone/head learning-rate split. All formal runs use bfloat16 mixed
-precision. The ImageNet/DINOv3 backbone and newly initialized linear head are
-fine-tuned jointly. Bias and normalization parameters receive zero weight
-decay. Dataset-specific learning rates, weight decay, epochs, EMA settings,
-and augmentations are reported in Appendix~\ref{app:recipes}.
-Unless a recipe explicitly states otherwise, we select checkpoints on the
-validation split and evaluate the selected checkpoint once on the test split;
-the seed set and aggregation rule are recorded in the YAML configuration.
-
-Unless stated otherwise, samples are converted to float32, clipped to
-$[-1024,1024]$, and divided by 32, bounding the visual input to $[-32,32]$.
-The finalized SHU-MI recipe follows this same clip-to-1024/divide-by-32
-scaling, replacing its earlier no-divisor preprocessing. The formal
-Mumtaz2016 recipe additionally enables log-uniform amplitude scaling in
-$[0.5,2.0]$; all other formal recipes leave amplitude scaling disabled.
-
-The fold factor is fixed before training using
-Eq.~\ref{eq:p-geometry-rule}: we choose the smallest valid $P$ that reaches at
-least 64 folded rows, while treating SEED-V's native 62 rows as sufficiently
-close and leaving it at $P=1$. All 12 datasets use the same EfficientNet-B0
-architecture and have completed five-seed evaluation. The YAML files are the
-source of truth for the formal means, standard deviations, and seed sets.
+All models use AdamW \citep{loshchilov2019decoupled} with cosine decay,
+bfloat16 mixed precision, dropout 0.1, and batch size 32 except ISRUC (16) and
+MentalArithmetic (64). The ImageNet/DINOv3 backbone is fine-tuned jointly with
+a newly initialized linear head, and bias and normalization parameters receive
+zero weight decay. Samples are converted to float32, clipped, and scaled
+before folding (default $x\mapsto x/32$ after clipping to $[-1024,1024]$), and
+the fold factor is fixed before training using Eq.~\ref{eq:p-geometry-rule}.
+Dataset-specific learning rates, weight decay, epochs, EMA settings, and
+augmentations are recorded in Appendix~\ref{app:recipes}; seeds, checkpoint
+selection, and the final-test protocol follow Appendix~\ref{app:protocol}.
 
 \paragraph{Initialization ablation.}
-To separate the benefit of visual pretraining from the benefit of the encoder
-architecture itself, we run matched five-seed controls on TUEV and
-PhysioNet-MI. Each control keeps the dataset recipe, temporal folding,
-optimizer, epoch budget, validation checkpoint selection, and one-final-test
-protocol fixed, changing only the backbone initialization from the available
-ImageNet/DINOv3 visual weights to random initialization
-(``\texttt{use\_pretrained\_weights=false}''). The comparison covers
-EfficientNet-B0, ConvNeXt-Tiny DINOv3, and ViT-Small DINOv3. Thus the control
-tests whether the generic visual prior contributes beyond the capacity and
-inductive bias of the same architecture.
+To separate visual pretraining from the encoder architecture itself, we run
+matched five-seed controls on TUEV, PhysioNet-MI, ISRUC, and SHU-MI for
+EfficientNet-B0, ConvNeXt-Tiny DINOv3, and ViT-Small DINOv3. Each control
+keeps the dataset recipe, folding, optimizer, epoch budget, validation
+checkpoint selection, and one-final-test protocol fixed, changing only the
+initialization from the available ImageNet/DINOv3 weights to random
+initialization (``\texttt{use\_pretrained\_weights=false}''), so the
+comparison tests whether the generic visual prior contributes beyond the
+capacity and inductive bias of the same architecture.
 
 \subsection{Evaluation protocol}
 
-All tasks use the same metric vocabulary in the tables. Binary tasks report
-balanced accuracy (BA), PR-AUC, and ROC-AUC; multiclass tasks report BA,
-Cohen's $\kappa$, and weighted F1. BA is thresholded balanced accuracy, while
-the two AUC metrics use the continuous score. We transcribe BA from the
-original CBraMod and REVE benchmark tables and retain it in local YAML result
-artifacts when it belongs to the same finalized recipe; we do not mix a BA
-from a different run with the formal PR-AUC/ROC-AUC row. Checkpoint selection remains based
-only on validation PR-AUC for binary tasks or validation $\kappa$ for
-multiclass tasks; the other metrics are strictly test-time reporting metrics.
+The result tables retain the published comparison context (EEGNet,
+EEGConformer, SPaRCNet, ContraWR, CNN-Transformer, FFCL, ST-Transformer, BIOT,
+LaBraM, \cbramod{}, and \reve{}-Base). Published values, including the
+\cbramod{} TUAB and TUEV target-corpus-excluded controls, are transcribed from
+the source benchmark tables \citep{wang2024cbramod,elouahidi2025reve}; our
+local rows are validation-selected repeated-seed runs. The main interpretation
+emphasizes \cbramod{}, \reve{}-Base, and \method{} because they isolate the
+paper's central foundation-model question, while the remaining rows stay
+visible as architecture controls.
 
-For each frozen recipe, we train the seed set recorded in its YAML
-configuration (42--46 for the current formal EfficientNet-B0 recipes). We report
-the arithmetic mean and population standard deviation. The checkpoint is
-selected only by validation PR-AUC or validation $\kappa$ and is then evaluated
-once on the test set. The executable protocol is provided in
-Appendix~\ref{app:protocol}; per-seed values are stored in the corresponding
-YAML configuration files.
+Binary tasks report balanced accuracy (BA), PR-AUC, and ROC-AUC; multiclass
+tasks report BA, Cohen's $\kappa$, and weighted F1. Checkpoint selection uses
+only validation PR-AUC or validation $\kappa$, while the remaining metrics are
+test-time reporting metrics; published BAs are transcribed from the same
+benchmark tables and are never mixed across runs. Each recipe is trained with
+five seeds (42--46), and we report the arithmetic mean and population standard
+deviation after selecting one checkpoint on validation and evaluating it once
+on test. The executable protocol is provided in Appendix~\ref{app:protocol}.

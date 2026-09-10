@@ -2,37 +2,33 @@
 
 Electroencephalography (EEG) datasets vary simultaneously in montage, channel
 count, sampling rate, recording length, subject population, and label space.
-Recent EEG foundation models address this heterogeneity with large-scale
+EEG foundation models address this heterogeneity with large-scale
 self-supervised pretraining and specialized tokenization or attention
-mechanisms \citep{yang2024biot,jiang2024labram,wang2024cbramod,elouahidi2025reve}.
-Their success has made ``more EEG pretraining'' a natural explanation for
-improved transfer.  Yet the downstream architecture and the geometry presented
-to that architecture are often changed at the same time.  This makes it hard to
-separate the benefit of domain pretraining from the benefit of a better
+mechanisms \citep{yang2024biot,jiang2024labram,wang2024cbramod,elouahidi2025reve}, often borrowing
+masked-reconstruction and contrastive objectives from vision. Their success
+has made ``more EEG pretraining'' a natural explanation for improved transfer,
+yet the downstream architecture and the input geometry are usually changed at
+the same time, making it hard to separate domain pretraining from a better
 representation interface.
 
 This motivates our central question: \emph{is vision pretraining a free lunch
-for EEG decoding?}  We use ``free lunch'' in a deliberately restricted sense:
-reusing publicly available visual weights without collecting EEG pretraining
-data or running an EEG self-supervised pretraining stage.  It does not mean
-zero computation, universal improvement, or deployment without task-specific
-fine-tuning.
+for EEG decoding?}  We use ``free lunch'' in a restricted sense: reusing
+publicly available visual weights without collecting EEG pretraining data or
+running an EEG self-supervised stage. It does not mean zero computation,
+universal improvement, or deployment without task-specific fine-tuning.
 
-We study this confound by comparing EEG-pretrained foundation models with a
-generic ImageNet encoder that has no EEG pretraining. The visual baseline uses
-a deliberately ordinary backbone. A raw
-EEG segment is naturally a matrix with electrodes as rows and time samples as
-columns.  Directly passing this matrix to a two-dimensional CNN is unattractive:
-the input is extremely wide, often only 6--64 rows high, and standard vision
-networks reduce both spatial axes by a factor near 32.  The electrode dimension
-can therefore collapse after only a few stages, while a large fraction of the
-spatial computation is spent traversing a long time axis.  Resizing the matrix
-would change values; a spectrogram would discard phase and introduce analysis
-choices. The problem is especially severe for spatially sparse EEG: clinical
-recordings may have 4--16 channels, while some motor-imagery and imagined-speech
-benchmarks have 64. Dense montages provide finer scalp sampling and can remain unfolded; sparse
-montages need a geometry adapter both to preserve signal-bearing height and to
-expose structured temporal patterns to local 2D operators.
+We study this confound by comparing EEG-pretrained foundation models with
+vision-pretrained convolutional and Transformer backbones that use no
+EEG-specific pretraining. A raw EEG segment is naturally a matrix with
+electrodes as rows and time samples as columns. Passing it directly to a 2D
+CNN is unattractive: the input is extremely wide, often only 6--64 rows high,
+and standard vision networks reduce both spatial axes by a factor near 32, so
+the electrode dimension can collapse after a few stages while most spatial
+computation traverses a long time axis. Resizing would change values, and a
+spectrogram would discard phase and introduce analysis choices. The problem is
+most severe for sparse montages (4--16 channels), which need a geometry
+adapter to preserve signal-bearing height and expose structured temporal
+patterns to local 2D operators; dense 64-channel montages can remain unfolded.
 
 Our alternative is a lossless index transformation.  For fold factor $P$, we
 reshape each channel into groups of $P$ consecutive samples and transpose the
@@ -48,8 +44,8 @@ hierarchy.
 This viewpoint leads to three questions:
 
 \begin{enumerate}
-    \item When can a lossless geometry adapter make generic ImageNet
-    pretraining competitive across heterogeneous EEG tasks?
+    \item When can a lossless geometry adapter make vision pretraining
+    competitive across heterogeneous EEG tasks?
     \item How do fold factor and induced adjacency change the receptive field
     presented to a hierarchical 2D CNN?
     \item On which tasks does an artificial row geometry fail, revealing the
@@ -57,32 +53,31 @@ This viewpoint leads to three questions:
 \end{enumerate}
 
 We study these questions with EfficientNet-B0, ConvNeXt-Tiny, and ViT-Small
-across 12 downstream benchmarks. The comparison reports the full metric set
-used by the source
-benchmarks and keeps conventional supervised models, BIOT, LaBraM, CBraMod,
-and REVE as contextual baselines.
+across 12 downstream benchmarks, keeping conventional supervised models and
+the BIOT, LaBraM, CBraMod, and REVE foundation models as contextual baselines.
 
 Our contributions are:
 
 \begin{itemize}
-    \item \textbf{A lossless EEG--vision interface.}  We formulate temporal
-    folding as a bijective channel--time reindexing requiring no interpolation,
-    filtering, or learned adapter.  The operation compensates for the spatial
-    sparsity of low-channel EEG while leaving already-dense 64-channel inputs
-    unfolded.
-    \item \textbf{Evidence that visual representations transfer to EEG.}  Across
-    heterogeneous EEG tasks, ImageNet-initialized EfficientNet-B0 and
-    DINOv3-initialized ConvNeXt-Tiny and ViT-Small learn from the same folded
-    waveform interface, despite the lack of semantic correspondence between
+    \item \textbf{A lossless EEG--vision interface.} Temporal folding is a
+    bijective channel--time reindexing with no interpolation, filtering, or
+    learned parameters; it compensates for sparse montages while leaving dense
+    64-channel inputs unfolded.
+    \item \textbf{Evidence that visual representations transfer to EEG.}
+    ImageNet-initialized EfficientNet-B0 and DINOv3-initialized ConvNeXt-Tiny
+    and ViT-Small all learn from the same folded waveform interface across
+    heterogeneous tasks, despite the lack of semantic correspondence between
     natural images and EEG.
-    \item \textbf{A broad benchmark comparison.}  We evaluate the visual
-    transfer approach across 12 datasets and compare it with published
-    supervised EEG architectures and EEG
-    foundation models, including CBraMod and REVE, using the shared benchmark
+    \item \textbf{A broad benchmark comparison.} We compare the visual
+    transfer approach with published supervised architectures and foundation
+    models, including CBraMod and REVE, on 12 datasets using shared benchmark
     splits.
 \end{itemize}
 
 Our claim is that visual pretraining is a transferable cross-domain prior for
-EEG when the representation geometry is aligned.  The transfer is conditional:
-EEG-specific foundation models retain advantages on some tasks, but their
-advantage is not universal under full supervised fine-tuning.
+EEG when the representation geometry is aligned. The transfer is conditional:
+EEG-specific foundation models retain advantages on some tasks, but not
+universally under full supervised fine-tuning. This suggests a design
+principle for future EEG systems: before scaling EEG-specific pretraining,
+measure how much transfer follows from aligning signal geometry with mature
+representations from other modalities.

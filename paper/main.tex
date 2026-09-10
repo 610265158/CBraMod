@@ -18,6 +18,7 @@
 \usepackage{multirow}
 \usepackage{natbib}
 \usepackage{placeins}
+\usepackage{float}
 \usepackage{tabularx}
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
@@ -42,9 +43,9 @@
   \vspace{3pt}\parbox{\linewidth}{\footnotesize\textit{Note.}~#1}}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newenvironment{detailresults}{%
-  \footnotesize
-  \setlength{\tabcolsep}{5pt}%
-  \renewcommand{\arraystretch}{1.05}%
+  \small
+  \setlength{\tabcolsep}{6pt}%
+  \renewcommand{\arraystretch}{1.12}%
   \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lccc@{}}%
 }{\end{tabular*}}
 

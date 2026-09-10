@@ -48,18 +48,19 @@ and REVE references, plus finalized local B0, ConvNeXt-Tiny, and ViT-Small rows
 where available. Binary tasks use BA,
 PR-AUC, and ROC-AUC; multiclass tasks use BA, Cohen's $\kappa$, and weighted
 F1. The
-CBraMod TUAB and TUEV cells use the target-corpus-excluded controls; TUEV and
-REVE--ISRUC are marked with comparability caveats. PhysioNet-MI uses `P=1`, so its
-input mapping is unaffected. The ConvNeXt TUAB configuration remains pending
-and is shown as `--`; other completed DINOv3 results are reported in the
-cross-backbone appendix table.
+CBraMod TUAB and TUEV cells use the target-corpus-excluded controls; TUEV
+uses a newer release but retains the same held-out test set as the
+published benchmark. PhysioNet-MI uses `P=1`, so its
+input mapping is unaffected. All three TUAB visual configurations are now completed; other
+DINOv3 results are reported in the cross-backbone appendix table.
 
 Appendix C mirrors REVE's detailed-results organization: all 12 datasets have
 individual three-metric tables containing the shared supervised architecture
 suite, EEG foundation models, REVE where available, and the finalized local B0
 result.
 
-The local subject/trial split definitions reproduce the partitions reported by
+The local subject/trial split definitions are inherited from the public
+CBraMod/REVE benchmark code and match the partitions reported by
 CBraMod; the overlapping REVE benchmark values are included as an additional
 published comparison. The current headline table is the completed unified
 all-BF16 min-64 reproduction. Fold-factor selection chooses the smallest valid `P`

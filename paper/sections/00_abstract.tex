@@ -1,18 +1,15 @@
 \begin{abstract}
-EEG foundation models combine domain-specific architectures with large-scale
-self-supervised pretraining. We ask whether visual representations learned
-from natural images can transfer to EEG, and whether EEG-specific pretraining
-provides a consistent advantage under full supervised fine-tuning. We introduce
-\method{}, a parameter-free bijective temporal-folding interface that maps an
-EEG matrix from $C\times T$ to $(CP)\times(T/P)$. Folding preserves every sample
-while compensating for the spatial sparsity of low-channel EEG and exposing
-phase-aware local neighborhoods to a 2D visual backbone. We evaluate
-ImageNet-initialized EfficientNet-B0 and DINOv3-initialized ConvNeXt-Tiny and
-ViT-Small across a 12-dataset suite. The completed results show that visual
-pretraining transfers across architectures and can match or exceed published
-supervised EEG models and EEG foundation models on several tasks, while
-foundation models retain advantages on others. These findings establish
-representation geometry as a necessary control when assessing EEG-specific
-pretraining and show that cross-domain transfer does not require semantic
-similarity between the source and target modalities.
+EEG foundation models are widely used for general-purpose decoding, but their
+reported gains are difficult to separate from backbone capacity and input
+geometry. We ask whether visual representations learned without EEG data can
+transfer to EEG through a suitable interface. We introduce lossless phase-interleaved temporal folding, which rearranges a
+channel--time EEG segment into a two-dimensional tensor without discarding
+samples. This representation allows standard convolutional and Transformer
+vision backbones to process EEG directly. Across 12 downstream benchmarks,
+ImageNet- and DINOv3-initialized EfficientNet-B0, ConvNeXt-Tiny, and ViT-Small
+models are competitive with published EEG foundation baselines and surpass
+them on several tasks. Matched random-initialization controls further show
+that pretrained visual weights contribute substantially to these gains. Our results establish lossless folding with visual pretraining as a strong and
+reproducible EEG baseline, while leaving open the advantages of EEG-specific
+pretraining for frozen, few-shot, and cross-montage transfer.
 \end{abstract}

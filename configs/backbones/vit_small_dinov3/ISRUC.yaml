@@ -2,10 +2,10 @@ dataset: ISRUC
 backbone_name: vit_small_patch16_dinov3.lvd1689m
 vision:
   adapter: {fold_factor: 12}
-  feature_aggregation: flatten
+  feature_aggregation: cls_token
   head_init_std: 0.02
 training:
-  lr: 0.0001
+  lr: 0.0005
   backbone_lr_scale: 0.1
   batch_size: 16
   epochs: 15
@@ -13,7 +13,7 @@ training:
   min_lr: 0.000001
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
   num_workers: 4
   optimizer: AdamW
@@ -39,20 +39,34 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   protocol: validation_selected_checkpoint_once_on_test
-  feature_aggregation: flatten
+  feature_aggregation: cls_token
+  lr: 0.0005
+  clip_value: 1.0
   seeds: [42, 43, 44, 45, 46]
-  mean: {ba: 0.80575, kappa: 0.77854, f1: 0.82864}
-  std_population: {ba: 0.00168, kappa: 0.00277, f1: 0.00207}
+  mean: {ba: 0.81300, kappa: 0.78754, f1: 0.83492}
+  std_population: {ba: 0.00273, kappa: 0.00259, f1: 0.00232}
 head_comparison:
-  cls_token:
+  flatten:
     status: complete
+    feature_aggregation: flatten
+    lr: 0.0001
+    seeds: [42, 43, 44, 45, 46]
+    mean: {ba: 0.80575, kappa: 0.77854, f1: 0.82864}
+    std_population: {ba: 0.00168, kappa: 0.00277, f1: 0.00207}
+  patch_mean:
+    status: complete
+    feature_aggregation: gap
+    note: >-
+      Previously recorded as "cls_token"; verified to be patch-token mean
+      pooling (timm Eva, global_pool='avg'), not the CLS token.
     seeds: [42, 43, 44, 45, 46]
     mean: {ba: 0.80896, kappa: 0.78255, f1: 0.83176}
     std_population: {ba: 0.00317, kappa: 0.00352, f1: 0.00261}
   recommendation: cls_token
 notes: >-
-  Initial five-seed ViT-Small DINOv3 ISRUC probe. The [B,20,C,T] loader
-  contract is retained; P=12 and the ConvNeXt ISRUC schedule are retained.
+  True CLS-token head at lr 5e-4 with clip 1, replacing the flatten head
+  (+0.90pp kappa). The [B,20,C,T] loader contract and P=12 are retained. Five seeds,
+  validation-selected checkpoint, one final test per seed.
 output:
-  model_root: experiments/checkpoints/vit_small_dinov3_isruc_p12_flatten_wd1e2_5seed_v1/seed{seed}
-  log_root: experiments/logs/vit_small_dinov3_isruc_p12_flatten_wd1e2_5seed_v1/seed{seed}
+  model_root: experiments/checkpoints/vit_small_dinov3_isruc_p12_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_isruc_p12_clstoken_lr5e4_clip1_5seed_v1/seed{seed}

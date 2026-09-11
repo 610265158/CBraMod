@@ -3,10 +3,10 @@ backbone_name: vit_small_patch16_dinov3.lvd1689m
 vision:
   adapter: {fold_factor: 4}
   squeeze_binary: true
-  feature_aggregation: flatten
+  feature_aggregation: cls_token
   head_init_std: 0.02
 training:
-  lr: 0.0001
+  lr: 0.0005
   backbone_lr_scale: 1.0
   batch_size: 32
   epochs: 30
@@ -14,7 +14,7 @@ training:
   min_lr: 0.000001
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
   num_workers: 4
   optimizer: AdamW
@@ -41,20 +41,34 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   protocol: validation_selected_checkpoint_once_on_test
-  feature_aggregation: flatten
+  feature_aggregation: cls_token
+  lr: 0.0005
+  clip_value: 1.0
   seeds: [42, 43, 44, 45, 46]
-  mean: {ba: 0.72782, pr_auc: 0.45657, roc_auc: 0.90536}
-  std_population: {ba: 0.01053, pr_auc: 0.01308, roc_auc: 0.01143}
+  mean: {ba: 0.72044, pr_auc: 0.47587, roc_auc: 0.91161}
+  std_population: {ba: 0.01751, pr_auc: 0.01180, roc_auc: 0.00710}
 head_comparison:
-  cls_token:
+  flatten:
     status: complete
+    feature_aggregation: flatten
+    lr: 0.0001
+    seeds: [42, 43, 44, 45, 46]
+    mean: {ba: 0.72782, pr_auc: 0.45657, roc_auc: 0.90536}
+    std_population: {ba: 0.01053, pr_auc: 0.01308, roc_auc: 0.01143}
+  patch_mean:
+    status: complete
+    feature_aggregation: gap
+    note: >-
+      Previously recorded as "cls_token"; verified to be patch-token mean
+      pooling (timm Eva, global_pool='avg'), not the CLS token.
     seeds: [42, 43, 44, 45, 46]
     mean: {ba: 0.73342, pr_auc: 0.46393, roc_auc: 0.91384}
     std_population: {ba: 0.01613, pr_auc: 0.03429, roc_auc: 0.00936}
   recommendation: cls_token
 notes: >-
-  Initial five-seed ViT-Small DINOv3 probe. ConvNeXt CHB-MIT geometry and
-  sampling recipe are retained; only the backbone and token head are changed.
+  True CLS-token head at lr 5e-4 with clip 1, replacing the flatten head
+  (+1.93pp pr_auc; BA -0.74pp). Balanced sampling and P=4 retained. Five seeds,
+  validation-selected checkpoint, one final test per seed.
 output:
-  model_root: experiments/checkpoints/vit_small_dinov3_chb_mit_p4_flatten_wd1e2_5seed_v1/seed{seed}
-  log_root: experiments/logs/vit_small_dinov3_chb_mit_p4_flatten_wd1e2_5seed_v1/seed{seed}
+  model_root: experiments/checkpoints/vit_small_dinov3_chb_mit_p4_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_chb_mit_p4_clstoken_lr5e4_clip1_5seed_v1/seed{seed}

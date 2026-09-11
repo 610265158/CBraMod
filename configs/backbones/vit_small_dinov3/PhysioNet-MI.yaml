@@ -2,10 +2,10 @@ dataset: PhysioNet-MI
 backbone_name: vit_small_patch16_dinov3.lvd1689m
 vision:
   adapter: {fold_factor: 1}
-  feature_aggregation: flatten
+  feature_aggregation: cls_token
   head_init_std: 0.02
 training:
-  lr: 0.0001
+  lr: 0.0005
   backbone_lr_scale: 0.1
   batch_size: 32
   epochs: 30
@@ -13,7 +13,7 @@ training:
   min_lr: 0.000001
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
   num_workers: 0
   optimizer: AdamW
@@ -35,20 +35,34 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   protocol: validation_selected_checkpoint_once_on_test
-  feature_aggregation: flatten
+  feature_aggregation: cls_token
+  lr: 0.0005
+  clip_value: 1.0
   seeds: [42, 43, 44, 45, 46]
-  mean: {ba: 0.57728, kappa: 0.43634, f1: 0.57740}
-  std_population: {ba: 0.00524, kappa: 0.00698, f1: 0.00604}
+  mean: {ba: 0.63773, kappa: 0.51694, f1: 0.63864}
+  std_population: {ba: 0.00423, kappa: 0.00564, f1: 0.00411}
 head_comparison:
-  cls_token:
+  flatten:
     status: complete
+    feature_aggregation: flatten
+    lr: 0.0001
+    seeds: [42, 43, 44, 45, 46]
+    mean: {ba: 0.57728, kappa: 0.43634, f1: 0.57740}
+    std_population: {ba: 0.00524, kappa: 0.00698, f1: 0.00604}
+  patch_mean:
+    status: complete
+    feature_aggregation: gap
+    note: >-
+      Previously recorded as "cls_token"; verified to be patch-token mean
+      pooling (timm Eva, global_pool='avg'), not the CLS token.
     seeds: [42, 43, 44, 45, 46]
     mean: {ba: 0.60335, kappa: 0.47110, f1: 0.60467}
     std_population: {ba: 0.00981, kappa: 0.01308, f1: 0.01048}
   recommendation: cls_token
 notes: >-
-  Initial five-seed ViT-Small DINOv3 PhysioNet-MI probe. Native P=1 geometry
-  and the ConvNeXt single-LR schedule are retained.
+  True CLS-token head at lr 5e-4 with clip 1, replacing the flatten head
+  (+8.06pp kappa; all five seeds above the old mean). Native P=1 geometry retained.
+  Five seeds, validation-selected checkpoint, one final test per seed.
 output:
-  model_root: experiments/checkpoints/vit_small_dinov3_physionet_mi_p1_flatten_wd1e2_5seed_v1/seed{seed}
-  log_root: experiments/logs/vit_small_dinov3_physionet_mi_p1_flatten_wd1e2_5seed_v1/seed{seed}
+  model_root: experiments/checkpoints/vit_small_dinov3_physionet_mi_p1_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_physionet_mi_p1_clstoken_lr5e4_clip1_5seed_v1/seed{seed}

@@ -3,7 +3,7 @@ backbone_name: vit_small_patch16_dinov3.lvd1689m
 vision:
   adapter: {fold_factor: 4}
   squeeze_binary: true
-  feature_aggregation: gap
+  feature_aggregation: cls_token
   head_init_std: 0.02
 training:
   lr: 0.0005
@@ -46,29 +46,39 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   protocol: validation_selected_checkpoint_once_on_test
-  feature_aggregation: gap
+  feature_aggregation: cls_token
   lr: 0.0005
+  clip_value: 1.0
   augmentation: [mirror, time_roll, amplitude_scale]
   seeds: [42, 43, 44, 45, 46]
-  mean: {ba: 0.82262, pr_auc: 0.91141, roc_auc: 0.90658}
-  std_population: {ba: 0.00073, pr_auc: 0.00188, roc_auc: 0.00138}
+  mean: {ba: 0.82019, pr_auc: 0.90907, roc_auc: 0.90424}
+  std_population: {ba: 0.00306, pr_auc: 0.00336, roc_auc: 0.00245}
 head_comparison:
   flatten:
     status: complete
     feature_aggregation: flatten
+    lr: 0.0001
     seeds: [42, 43, 44, 45, 46]
     mean: {ba: 0.80491, pr_auc: 0.88428, roc_auc: 0.87591}
     std_population: {ba: 0.00409, pr_auc: 0.00397, roc_auc: 0.00522}
     note: >-
-      flatten head (51072-dim FC) overfits; val peaks at epoch 1 then
-      declines. Superseded by the gap head.
-  recommendation: gap
+      flatten head (51072-dim FC) overfits; val peaks at epoch 1 then declines.
+      Superseded by the compact heads (patch-mean then true CLS token).
+  patch_mean:
+    status: complete
+    feature_aggregation: gap
+    note: >-
+      Previously recorded as "cls_token"; verified to be patch-token mean
+      pooling (timm Eva, global_pool='avg'), not the CLS token.
+    seeds: [42, 43, 44, 45, 46]
+    mean: {ba: 0.82262, pr_auc: 0.91141, roc_auc: 0.90658}
+    std_population: {ba: 0.00073, pr_auc: 0.00188, roc_auc: 0.00138}
+  recommendation: cls_token
 notes: >-
-  ViT-Small DINOv3 TUAB with cls_token (gap) head, lr 5e-4, and train-time
-  augmentation (channel mirror, time roll, amplitude scale). The gap head plus
-  higher lr fix the flatten-head overfitting (val-test gap shrinks from ~0.024
-  to ~0.007); augmentation further shrinks it to ~0.002. Final pr_auc 0.91141
-  is on par with ConvNeXt-Tiny and above EfficientNet-B0.
+  True CLS-token head at lr 5e-4 with clip 1; mirror/time-roll/amplitude-scale
+  augmentation retained. At parity with the mislabeled patch-mean 'gap' recipe
+  and above the earlier flatten head (+2.48pp pr_auc). Five seeds, validation-selected
+  checkpoint, one final test per seed.
 output:
-  model_root: experiments/checkpoints/vit_small_dinov3_tuab_p4_gap_lr5e4_aug_5seed_v1/seed{seed}
-  log_root: experiments/logs/vit_small_dinov3_tuab_p4_gap_lr5e4_aug_5seed_v1/seed{seed}
+  model_root: experiments/checkpoints/vit_small_dinov3_tuab_p4_clstoken_lr5e4_aug_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_tuab_p4_clstoken_lr5e4_aug_5seed_v1/seed{seed}

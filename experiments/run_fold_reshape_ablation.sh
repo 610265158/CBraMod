@@ -27,15 +27,5 @@ run_one configs/ablation_fold_geometry/convnext_tiny_dinov3/SHU-MI_chunk.yaml
 run_one configs/ablation_fold_geometry/convnext_tiny_dinov3/Mumtaz2016_chunk.yaml
 run_one configs/ablation_fold_geometry/convnext_tiny_dinov3/MentalArithmetic_chunk.yaml
 run_one configs/ablation_fold_geometry/convnext_tiny_dinov3/HMC_chunk.yaml
-# ---- vit_small_dinov3 ----
-run_one configs/ablation_fold_geometry/vit_small_dinov3/CHB-MIT_chunk.yaml
-run_one configs/ablation_fold_geometry/vit_small_dinov3/TUAB_chunk.yaml
-run_one configs/ablation_fold_geometry/vit_small_dinov3/TUEV_chunk.yaml
-run_one configs/ablation_fold_geometry/vit_small_dinov3/ISRUC_chunk.yaml
-run_one configs/ablation_fold_geometry/vit_small_dinov3/FACED_chunk.yaml
-run_one configs/ablation_fold_geometry/vit_small_dinov3/SHU-MI_chunk.yaml
-run_one configs/ablation_fold_geometry/vit_small_dinov3/Mumtaz2016_chunk.yaml
-run_one configs/ablation_fold_geometry/vit_small_dinov3/MentalArithmetic_chunk.yaml
-run_one configs/ablation_fold_geometry/vit_small_dinov3/HMC_chunk.yaml
 
 echo "===== ALL DONE $(date +%H:%M:%S) ====="

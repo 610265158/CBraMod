@@ -57,8 +57,8 @@ def main():
     parser.add_argument('--vision_squeeze_binary', type=str, default=None,
                         help='return a scalar logit for single-class binary tasks')
     parser.add_argument('--vision_feature_aggregation', type=str, default=None,
-                        choices=['gap', 'flatten'],
-                        help='feature aggregation used before the vision head')
+                        choices=['gap', 'cls_token', 'flatten'],
+                        help='feature aggregation used before the vision head: gap (pooled), cls_token (ViT class token), flatten')
     parser.add_argument('--cuda', type=int, default=0, help='CUDA index passed to finetune_main.py')
     parser.add_argument('--device', choices=['cuda', 'cpu', 'auto'], default=None,
                         help='device policy passed to finetune_main.py')

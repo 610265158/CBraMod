@@ -44,6 +44,8 @@ class Model(nn.Module):
         if self.feature_aggregation == 'gap':
             classifier = self.backbone.get_classifier() if hasattr(self.backbone, 'get_classifier') else None
             feature_dim = getattr(classifier, 'in_features', None) or self.backbone.num_features
+        elif self.feature_aggregation == 'cls_token':
+            feature_dim = self.backbone.num_features
         elif self.feature_aggregation == 'flatten':
             feature_dim = _flat_feature_dim(self.backbone, self.adapter, dataset['input_shape'])
         else:

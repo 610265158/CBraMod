@@ -73,8 +73,8 @@ def main():
     parser.add_argument('--vision_squeeze_binary', type=str2bool, default=None,
                         help='return a scalar logit for single-class binary tasks')
     parser.add_argument('--vision_feature_aggregation', type=str, default=None,
-                        choices=['gap', 'flatten'],
-                        help='feature aggregation used before the vision head')
+                        choices=['gap', 'cls_token', 'flatten'],
+                        help='feature aggregation used before the vision head: gap (pooled), cls_token (ViT class token), flatten')
     parser.add_argument('--shu_clip_limit', type=float, default=512.0,
                         help='SHU-MI raw-value clip limit before the vision adapter')
     parser.add_argument('--shu_scale', type=float, default=64.0,

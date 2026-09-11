@@ -19,6 +19,8 @@ def encode_vision(eeg, adapter, backbone, feature_aggregation='gap'):
     features = backbone.forward_features(image)
     if feature_aggregation == 'gap':
         features = _pool_features(features, backbone)
+    elif feature_aggregation == 'cls_token':
+        features = _cls_token_features(features)
     elif feature_aggregation == 'flatten':
         features = features.flatten(1)
     else:
@@ -39,3 +41,20 @@ def _pool_features(features, backbone):
     if features.ndim == 2:
         return features
     raise ValueError('Unsupported feature shape: {}'.format(tuple(features.shape)))
+
+
+def _cls_token_features(features):
+    """Select the ViT classification token (index 0) from [B, N, C] tokens.
+
+    timm DINOv3 ViTs (e.g. ``vit_small_patch16_dinov3``, instantiated as
+    ``Eva``) default to ``global_pool='avg'``, so the ``gap`` branch averages
+    only the patch tokens.  This branch exposes the final-normalized CLS token
+    explicitly.
+    """
+    if features.ndim != 3:
+        raise ValueError(
+            'cls_token aggregation requires a 3D token tensor [B, N, C]; got {}'.format(
+                tuple(features.shape)
+            )
+        )
+    return features[:, 0]

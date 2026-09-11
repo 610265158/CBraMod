@@ -1,3 +1,119 @@
+\section{Phase Folding and Geometry}
+\label{app:folding}
+
+\subsection{Phase-folding definition and geometry}
+\label{app:folding-definition}
+
+For an input $X\in\mathbb{R}^{C\times T}$ and a divisor $P$ of $T$, the
+phase-interleaved adapter produces $F_P(X)\in\mathbb{R}^{CP\times T/P}$
+according to
+\[
+F_P(X)_{cP+p,w}=X_{c,wP+p},\qquad 0\le p<P.
+\]
+This is a bijective permutation of the $CT$ samples, so folding changes only
+the representation geometry. In contrast, a contiguous reshape assigns each
+row a consecutive time chunk; both layouts have identical dimensions but
+different local neighborhoods. The adapter pads only the bottom and right
+edges to satisfy the backbone stride. For stride $s$, the padded dimensions
+and non-padding height occupancy are
+\[
+H_{\rm pad}=s\left\lceil\frac{CP}{s}\right\rceil,\qquad
+W_{\rm pad}=s\left\lceil\frac{T/P}{s}\right\rceil,\qquad
+\rho_H=\frac{CP}{H_{\rm pad}}.
+\]
+Increasing $P$ raises vertical occupancy but reduces horizontal temporal
+resolution and increases phase-wrap distance. The geometry rule therefore
+selects the smallest valid $P$ reaching the target folded height; the complete
+fold-factor sweeps are reported in Appendix~\ref{app:p-ablation}.
+
+\paragraph{Exact invertibility.}
+The mapping is bijective: for every original sample index
+$t=wP+p$, the inverse is
+$X_{c,t}=F_P(X)_{cP+(t\bmod P),\lfloor t/P\rfloor}$. Consequently,
+$\|F_P(X)\|_0=\|X\|_0$ and no interpolation, averaging, or frequency-domain
+operation is introduced. Any difference between phase folding and contiguous
+reshape therefore comes solely from the neighborhoods presented to the
+backbone. The examples below visualize this change of coordinates; they are
+not claims that the highlighted patterns are uniquely physiological or
+causal.
+
+\subsection{Visual interpretation and examples}
+\label{app:folding-visuals}
+
+The visualizations provide three complementary checks. First, the waveform
+panels establish the original channel--time coordinates. Second, the folding
+panels show that phase $p$ becomes a vertical coordinate while $w$ advances
+by $P$ samples horizontally. Third, the real and synthetic examples verify
+that localized transients, oscillations, and repeated motifs remain present
+after the permutation. Pixel values should therefore be compared through the
+index relation above, rather than by interpreting the folded image as a new
+measurement.
+
+We use the figures in a controlled-to-real progression. The simulated signals
+in Fig.~\ref{fig:synthetic-folding-patterns} are shown from side and top views
+before their phase--time rendering; this makes the two-dimensional motifs a
+coordinate change rather than a new signal. Figure~\ref{fig:seizure-folding}
+then shows the same correspondence for a real ictal CHB-MIT segment.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.94\textwidth]{side_top_view_folding.pdf}
+\caption{The same EEG can be read from two complementary viewpoints. In the
+side view (left), a human follows amplitude as a continuous function of time.
+After lossless $P=4$ folding (right), the identical samples form a
+two-dimensional phase--time texture: samples with phases $p=0,1,2,3$ become
+adjacent vertical rows, while each column advances by four original samples.
+The upper row is a controlled spike--slow-wave example and the lower row is a
+real five-second F7--T7 segment from a CHB-MIT seizure recording. The arrows
+indicate a change of representation and local adjacency, not a change in the
+signal itself.}
+\label{fig:side-top-view}
+\end{figure*}
+\FloatBarrier
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.94\textwidth]{synthetic_folding_patterns.pdf}
+\caption{Controlled simulated morphologies under lossless $P=4$ folding.
+Each row presents the same waveform as a side view, a top view, and a
+phase--time map. Spike--slow-wave complexes, recruited rhythmic oscillations,
+and periodic discharges become localized two-dimensional motifs while every
+sample is retained. These simulations explain the geometry; they are not
+diagnostic templates.}
+\label{fig:synthetic-folding-patterns}
+\end{figure*}
+\FloatBarrier
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.94\textwidth]{seizure_lossless_folding.pdf}
+\caption{A real seizure example processed by the visual interface. The
+10-second CHB-MIT segment is labeled ictal and is resampled from 2560 to 2000
+samples before clipping and scaling. Panel A shows all 16 bipolar channels;
+panel B enlarges F7--T7 in the rhythmic interval; panel C shows the exact
+$64\times500$ tensor after $P=4$ folding; and panel D expands its four phase
+rows. All 32,000 values are retained.}
+\label{fig:seizure-folding}
+\end{figure*}
+\FloatBarrier
+
+\paragraph{What a convolution sees.}
+Within one electrode's phase block, a vertical step changes the phase index,
+while a horizontal step advances by $P$ original samples. A $k\times k$
+convolution therefore mixes offsets
+\[
+\Delta t=P\Delta w+\Delta p,
+\]
+where $(\Delta w,\Delta p)$ is a kernel offset in folded coordinates. The
+local patch is flattened and multiplied by the kernel weights, followed by
+bias and nonlinearity; no special EEG operation is introduced. For $P=4$ and
+$k=3$, the direct temporal offsets are
+$\{-5,-4,-3,-1,0,1,3,4,5\}$. At phase-block boundaries a vertical neighborhood
+can also cross electrodes, so the interpretation depends on channel ordering.
+
+
+
+\input{sections/appendix_detailed_results}
+
 \section{Model-Family Comparison}
 \label{app:model-families}
 
@@ -90,8 +206,6 @@ SHU-MI uses the finalized clip-to-1024 and divide-by-32 scaling; all other
 datasets use the same default
 preprocessing.
 
-\input{sections/appendix_detailed_results}
-
 \section{Backbone Input Shapes}
 
 \begin{table}[tbp]
@@ -160,68 +274,6 @@ entrypoint can silently change path resolution.
 
 \FloatBarrier
 \clearpage
-\section{Additional Visualizations}
-
-Figure~\ref{fig:waveforms} shows representative raw EEG traces rendered in an
-MNE-like layout.  The figure is diagnostic rather than a training input.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.98\linewidth]{downstream_waveforms_mne/all_datasets_mne_overview.png}
-\caption{Representative validation waveforms from the 12 downstream datasets.
-Each panel shows up to ten channels after dataset preprocessing and uses an
-independent display scale. The variation in channel count, duration, and
-amplitude distribution motivates an adapter that does not assume a fixed EEG
-image size.}
-\label{fig:waveforms}
-\end{figure}
-\FloatBarrier
-
-Figure~\ref{fig:side-top-view} gives an intuitive side-view/top-view reading of
-the same samples. Figure~\ref{fig:seizure-folding} then applies the interface
-to an ictal CHB-MIT segment, while Fig.~\ref{fig:synthetic-folding-patterns}
-isolates canonical temporal motifs under controlled conditions.
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{side_top_view_folding.pdf}
-\caption{The same EEG can be read from two complementary viewpoints. In the
-side view (left), a human follows amplitude as a continuous function of time.
-After lossless $P=4$ folding (right), the identical samples form a
-two-dimensional phase--time texture: samples with phases $p=0,1,2,3$ become
-adjacent vertical rows, while each column advances by four original samples.
-The upper row is a controlled spike--slow-wave example and the lower row is a
-real five-second F7--T7 segment from a CHB-MIT seizure recording. The arrows
-indicate a change of representation and local adjacency, not a change in the
-signal itself.}
-\label{fig:side-top-view}
-\end{figure*}
-\FloatBarrier
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{seizure_lossless_folding.pdf}
-\caption{A real seizure example processed by the visual interface. The
-10-second CHB-MIT segment is labeled ictal and is resampled from 2560 to 2000
-samples before clipping and scaling. Panel A shows all 16 bipolar channels;
-panel B enlarges F7--T7 in the rhythmic interval; panel C shows the exact
-$64\times500$ tensor after $P=4$ folding; and panel D expands its four phase
-rows. All 32,000 values are retained.}
-\label{fig:seizure-folding}
-\end{figure*}
-\FloatBarrier
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{synthetic_folding_patterns.pdf}
-\caption{Controlled morphologies under lossless $P=4$ folding: spike--slow-wave
-complexes, recruited rhythmic ictal oscillation, and periodic discharges. The
-folded maps preserve the samples and expose motif-specific phase--time
-textures; they are illustrations rather than diagnostic templates.}
-\label{fig:synthetic-folding-patterns}
-\end{figure*}
-\FloatBarrier
-
 \section{Data and Code Reproducibility Statement}
 
 The codebase records exact dataset paths, input shapes, preprocessing, seeds,

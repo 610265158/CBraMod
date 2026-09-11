@@ -3,23 +3,14 @@
 
 \subsection{Benchmarks and split provenance}
 
-The suite covers 12 datasets and six broad application categories: clinical
-detection (CHB-MIT, TUAB, and TUEV), sleep staging (ISRUC and HMC), emotion recognition
-(FACED and SEED-V), motor imagery (PhysioNet-MI and SHU-MI), imagined speech
-(BCIC2020-3), depression detection (Mumtaz2016), and mental workload
-(MentalArithmetic).  Table~\ref{tab:datasets} reports the exact shapes and split
-sizes used by the local pipeline.  All regular datasets satisfy the
-$[B,C,T]$ contract.  ISRUC retains 20 consecutive epochs so that training and
-evaluation operate on all labels in the record.
-
-The source collections include CHB-MIT \citep{shoeb2009application}, the TUH
-corpora underlying TUAB and TUEV \citep{obeid2016temple}, ISRUC-Sleep
-\citep{khalighi2016isruc}, FACED \citep{chen2023large}, the PhysioNet motor
-movement/imagery recordings distributed through BCI2000
-\citep{schalk2004bci2000}, SEED-V \citep{liu2021comparing}, SHU-MI
-\citep{ma2022large}, BCIC2020-3 \citep{jeong20222020}, Mumtaz2016
-\citep{mumtaz2016mdd}, MentalArithmetic \citep{zyma2019mental}, and the HMC
-sleep-staging corpus \citep{alvarez2022hmc}.
+Our suite contains 12 datasets spanning clinical detection (CHB-MIT, TUAB,
+TUEV), sleep staging (ISRUC, HMC), emotion recognition (FACED, SEED-V), motor
+imagery (PhysioNet-MI, SHU-MI), imagined speech (BCIC2020-3), depression
+detection (Mumtaz2016), and mental workload (MentalArithmetic). Table~
+\ref{tab:datasets} gives the input shapes and split sizes. All recordings are
+represented at 200\,Hz in the common preprocessing pipeline. Regular loaders
+use the $[B,C,T]$ convention; ISRUC preserves its sequence of 20 labelled
+epochs.
 
 \begin{table*}[t]
 \centering
@@ -55,23 +46,13 @@ epochs per record; all other rows are channel $\times$ time. ``Classes''
 reports semantic classes, while binary heads use one output logit.}
 \end{table*}
 
-CHB-MIT segments are resampled to 2,000 samples in the dataloader. Across the
-full suite, we inherit the public split definitions of \cbramod{} and \reve{}
-and retain the same train, validation, and test partitions used in their
-benchmark evaluations \citep{wang2024cbramod,elouahidi2025reve}. For example,
-CHB-MIT uses CHB01--20 for training, CHB21--22 for validation, and CHB23--24
-for testing, following the \cbramod{} segmentation code. Eight tasks are
-shared by both reference papers and our study (TUAB, TUEV, ISRUC, FACED,
-PhysioNet-MI, BCIC2020-3, Mumtaz2016, and MentalArithmetic); CHB-MIT, SEED-V,
-and SHU-MI are covered by \cbramod{} but not \reve{}, whereas HMC is covered
-by \reve{} but not \cbramod{}. Every dataset therefore inherits a fixed
-partition from at least one of the two benchmark codebases, and the
-\cbramod{} and \reve{} rows share the held-out partitions of our runs. Our
-TUEV files are prepared from v2.0.1 rather than the v2.0.0 release used by the
-two reference benchmarks: the held-out partition is the official TUEV
-evaluation set and is identical in both releases (29,421 segments), while
-v2.0.1 changes only the training and validation segments (68,445/15,487
-rather than 67,436/15,634).
+We inherit the public split definitions from the CBraMod and REVE benchmark
+code and retain the same
+train, validation, and test partitions used by the corresponding references
+\citep{wang2024cbramod,elouahidi2025reve}. For example, CHB-MIT uses
+CHB01--20/CHB21--22/CHB23--24 for train/validation/test. TUEV is prepared from
+v2.0.1 rather than v2.0.0, but both releases use the same official 29,421-sample
+test set; only the training and validation counts differ.
 
 \subsection{Training and implementation}
 
@@ -86,28 +67,35 @@ Dataset-specific learning rates, weight decay, epochs, EMA settings, and
 augmentations are recorded in Appendix~\ref{app:recipes}; seeds, checkpoint
 selection, and the final-test protocol follow Appendix~\ref{app:protocol}.
 
-\paragraph{Initialization ablation.}
-To separate visual pretraining from the encoder architecture itself, we run
-matched five-seed controls on TUEV, PhysioNet-MI, ISRUC, and SHU-MI for
-EfficientNet-B0, ConvNeXt-Tiny DINOv3, and ViT-Small DINOv3. Each control
-keeps the dataset recipe, folding, optimizer, epoch budget, validation
-checkpoint selection, and one-final-test protocol fixed, changing only the
-initialization from the available ImageNet/DINOv3 weights to random
-initialization (``\texttt{use\_pretrained\_weights=false}''), so the
-comparison tests whether the generic visual prior contributes beyond the
-capacity and inductive bias of the same architecture.
+\paragraph{Ablation studies.}
+We conduct four complementary studies:
+\textbf{(1) Cross-backbone consistency.} We repeat the EEG--vision interface
+with ImageNet-initialized EfficientNet-B0 and DINOv3-initialized ConvNeXt-Tiny
+and ViT-Small, testing robustness across backbone families and visual
+pretraining sources. The aggregate comparison is shown in Table~\ref{tab:unified-results};
+per-dataset results are provided in Appendix~\ref{app:detailed-results}.
+\textbf{(2) Pretraining contribution.} We compare pretrained and randomly
+initialized versions of all three visual backbones on TUEV, PhysioNet-MI,
+ISRUC, and SHU-MI. Dataset recipes, folding, optimization, checkpoint
+selection, and the five-seed test protocol remain fixed within each comparison
+(Section~\ref{sec:pretraining-ablation}; Table~\ref{tab:vision-pretraining-ablation}).
+\textbf{(3) Folding layout.} We compare phase-interleaved folding with a
+contiguous reshape having identical output dimensions, holding all other
+settings fixed to isolate temporal layout from height expansion
+(Section~\ref{sec:fold-reshape}; Appendix~\ref{app:fold-reshape}).
+\textbf{(4) Fold-factor sensitivity.} We sweep $P\in\{1,2,4,8\}$ on CHB-MIT,
+TUEV, and MentalArithmetic while keeping the remaining recipe fixed within
+each backbone (Appendix~\ref{app:p-ablation}). The geometry rule supplies a
+reproducible default; when $P$ is tuned, it is selected using validation data
+only.
 
 \subsection{Evaluation protocol}
 
-The result tables retain the published comparison context (EEGNet,
-EEGConformer, SPaRCNet, ContraWR, CNN-Transformer, FFCL, ST-Transformer, BIOT,
-LaBraM, \cbramod{}, and \reve{}-Base). Published values, including the
-\cbramod{} TUAB and TUEV target-corpus-excluded controls, are transcribed from
-the source benchmark tables \citep{wang2024cbramod,elouahidi2025reve}; our
-local rows are validation-selected repeated-seed runs. The main interpretation
-emphasizes \cbramod{}, \reve{}-Base, and \method{} because they isolate the
-paper's central foundation-model question, while the remaining rows stay
-visible as architecture controls.
+We compare \method{} with task-specific EEG models and EEG foundation models,
+using published baseline results from \cbramod{} and \reve{} under the same
+downstream data splits \citep{wang2024cbramod,elouahidi2025reve}. For \cbramod{}
+on TUAB and TUEV, we report the variants whose pretraining excludes the target
+corpus.
 
 Binary tasks report balanced accuracy (BA), PR-AUC, and ROC-AUC; multiclass
 tasks report BA, Cohen's $\kappa$, and weighted F1. Checkpoint selection uses

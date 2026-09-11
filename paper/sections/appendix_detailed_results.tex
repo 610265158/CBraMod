@@ -369,43 +369,6 @@ ST-Transformer& $0.2559\pm0.0141$ & $0.0503\pm0.0183$ & $0.1428\pm0.0122$  \\
 \detailend\end{table}
 \FloatBarrier
 
-\subsection{Completed cross-backbone visual results}
-\label{app:cross-backbone}
-
-Table~\ref{tab:cross-backbone} collects the completed ConvNeXt-Tiny and
-ViT-Small configurations in one place. Both use DINOv3 visual pretraining and
-the same lossless folding interface as EfficientNet-B0. A dash denotes an unreported configuration.
-
-\begin{table*}[t]
-\centering
-\caption{Completed DINOv3 visual-backbone results. Values are the primary metric (mean $\pm$ population standard deviation); -- denotes a unreported or unavailable configuration.}
-\label{tab:cross-backbone}
-\scriptsize
-\begin{tabularx}{\textwidth}{@{}lYY@{}}
-\toprule
-Dataset & ConvNeXt-Tiny & ViT-Small \\
-\midrule
-CHB-MIT & \bestcell{0.4734\pm0.0345}~\text{PR-AUC} & \secondcell{0.4566\pm0.0131}~\text{PR-AUC} \\
-TUAB & \secondcell{0.9059\pm0.0045}~\text{PR-AUC} & \bestcell{0.9114\pm0.0019}~\text{PR-AUC} \\
-TUEV & \secondcell{0.7095\pm0.0305}~$\kappa$ & \bestcell{0.7263\pm0.0043}~$\kappa$ \\
-ISRUC & \bestcell{0.7906\pm0.0018}~$\kappa$ & \secondcell{0.7785\pm0.0028}~$\kappa$ \\
-FACED & \bestcell{0.5891\pm0.0032}~$\kappa$ & \secondcell{0.3097\pm0.0072}~$\kappa$ \\
-SEED-V & \secondcell{0.2396\pm0.0095}~$\kappa$ & \bestcell{0.2442\pm0.0045}~$\kappa$ \\
-PhysioNet-MI & \bestcell{0.5479\pm0.0105}~$\kappa$ & \secondcell{0.4363\pm0.0070}~$\kappa$ \\
-SHU-MI & \bestcell{0.6910\pm0.0129}~\text{PR-AUC} & \secondcell{0.6619\pm0.0161}~\text{PR-AUC} \\
-BCIC2020-3 & \secondcell{0.5560\pm0.0114}~$\kappa$ & \bestcell{0.5773\pm0.0113}~$\kappa$ \\
-Mumtaz2016 & \bestcell{0.9842\pm0.0020}~\text{PR-AUC} & \secondcell{0.9807\pm0.0016}~\text{PR-AUC} \\
-MentalArithmetic & \bestcell{0.7598\pm0.0436}~\text{PR-AUC} & \secondcell{0.5739\pm0.0617}~\text{PR-AUC} \\
-HMC & \bestcell{0.7111\pm0.0063}~$\kappa$ & \secondcell{0.6981\pm0.0016}~$\kappa$ \\
-\bottomrule
-\end{tabularx}
-\end{table*}
-
-The detailed tables keep the supervised suite, BIOT, and LaBraM as contextual baselines while
-the main interpretation focuses on CBraMod, REVE, and the vision-transfer
-model. Future paired reruns should retain confusion matrices so every metric
-can be recomputed from the same validation-selected checkpoint.
-
 \subsection{Fold-factor sensitivity}
 \label{app:p-ablation}
 
@@ -526,3 +489,36 @@ $P=8$ for ConvNeXt-Tiny and at $P=2$ for ViT-Small, while EfficientNet-B0 is
 nearly tied between $P=2$ and $P=4$ ($\kappa=.6907$ vs $.6901$). The geometry
 rule therefore serves as a reproducible default; validation-based tuning can
 improve the result when additional compute is available.
+
+\subsection{Phase folding versus contiguous reshape}
+\label{app:fold-reshape}
+
+This control compares the proposed phase-interleaved permutation with a
+contiguous-chunk reshape of identical output dimensions. The EfficientNet-B0
+results below use five seeds and the same recipes; negative $\Delta$ means that
+phase folding is better.
+
+\begin{table*}[t]
+\centering
+\caption{Phase-interleaved folding versus contiguous reshape.}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lccc r@{} }
+\toprule
+Dataset & Metric & Phase fold & Contiguous reshape & $\Delta$ \\
+\midrule
+ISRUC & $\kappa$ & $0.7705\pm0.0032$ & $0.7397\pm0.0044$ & $-0.0308$ \\
+TUAB & PR-AUC & $0.9178\pm0.0025$ & $0.9031\pm0.0016$ & $-0.0147$ \\
+FACED & $\kappa$ & $0.4953\pm0.0197$ & $0.3198\pm0.0649$ & $-0.1755$ \\
+MentalArithmetic & PR-AUC & $0.7903\pm0.0536$ & $0.5849\pm0.0734$ & $-0.2054$ \\
+TUEV & $\kappa$ & $0.6901\pm0.0190$ & $0.6509\pm0.0231$ & $-0.0392$ \\
+Mumtaz2016 & PR-AUC & $0.9864\pm0.0045$ & $0.9761\pm0.0092$ & $-0.0103$ \\
+HMC & $\kappa$ & $0.7070\pm0.0023$ & $0.6379\pm0.0050$ & $-0.0691$ \\
+CHB-MIT & PR-AUC & $0.4092\pm0.0536$ & $0.3815\pm0.0604$ & $-0.0276$ \\
+SHU-MI & PR-AUC & $0.6982\pm0.0178$ & $0.7009\pm0.0138$ & $+0.0028$ \\
+\bottomrule
+\end{tabular}
+\tablenote{Both mappings are lossless and produce identical dimensions. The
+contiguous-reshape controls are available for EfficientNet-B0; additional
+backbone-specific controls are reported as they are finalized.}
+\end{table*}

@@ -1,0 +1,113 @@
+dataset: MentalArithmetic
+backbone_name: efficientnet_b0
+vision:
+  adapter:
+    fold_factor: 4
+    fold_mode: chunk
+  squeeze_binary: true
+  head_init_std: 0.002
+training:
+  lr: 0.001
+  backbone_lr_scale: 0.1
+  batch_size: 64
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 3.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 0.5
+  time_roll_max_fraction: 0.25
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) instead
+  of phase-interleaved folding. Identical to configs/backbones/efficientnet_b0/MentalArithmetic.yaml
+  otherwise. Compare against the phase-interleaved fold baseline PR-AUC 0.79029 +/-
+  0.05364 recorded there.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/efficientnet_b0/mentalarithmetic/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/efficientnet_b0/mentalarithmetic/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.59028
+      pr_auc: 0.58793
+      roc_auc: 0.73553
+    43:
+      ba: 0.62847
+      pr_auc: 0.55113
+      roc_auc: 0.69589
+    44:
+      ba: 0.61111
+      pr_auc: 0.54503
+      roc_auc: 0.70023
+    45:
+      ba: 0.60764
+      pr_auc: 0.51614
+      roc_auc: 0.67535
+    46:
+      ba: 0.61458
+      pr_auc: 0.72437
+      roc_auc: 0.8261
+  mean:
+    ba: 0.61042
+    pr_auc: 0.58492
+    roc_auc: 0.72662
+  std_population:
+    ba: 0.0123
+    pr_auc: 0.07337
+    roc_auc: 0.05338
+  fold_baseline:
+    ba:
+      mean: 0.69097
+      std: 0.04184
+    pr_auc:
+      mean: 0.79029
+      std: 0.05364
+    roc_auc:
+      mean: 0.87789
+      std: 0.02513

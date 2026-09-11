@@ -1,0 +1,111 @@
+dataset: ISRUC
+backbone_name: efficientnet_b0
+training:
+  lr: 0.001
+  batch_size: 16
+  epochs: 15
+  weight_decay: 0.005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 15
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 0.5
+  time_roll_max_fraction: 0.25
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: kappa
+vision:
+  adapter:
+    fold_factor: 12
+    fold_mode: chunk
+  head_init_std: 0.002
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) instead
+  of phase-interleaved folding. Identical to configs/backbones/efficientnet_b0/ISRUC.yaml
+  otherwise. Compare against the phase-interleaved fold baseline kappa 0.77045 +/-
+  0.00316 recorded there.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/efficientnet_b0/isruc/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/efficientnet_b0/isruc/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.7765
+      kappa: 0.74631
+      f1: 0.80004
+    43:
+      ba: 0.77355
+      kappa: 0.74159
+      f1: 0.79552
+    44:
+      ba: 0.76929
+      kappa: 0.74061
+      f1: 0.79439
+    45:
+      ba: 0.76414
+      kappa: 0.73625
+      f1: 0.79085
+    46:
+      ba: 0.76182
+      kappa: 0.73348
+      f1: 0.78839
+  mean:
+    ba: 0.76906
+    kappa: 0.73965
+    f1: 0.79384
+  std_population:
+    ba: 0.00552
+    kappa: 0.00444
+    f1: 0.00401
+  fold_baseline:
+    ba:
+      mean: 0.80253
+      std: 0.00272
+    kappa:
+      mean: 0.77045
+      std: 0.00316
+    f1:
+      mean: 0.8197
+      std: 0.00287

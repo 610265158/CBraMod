@@ -47,6 +47,9 @@ def main():
                         help='backbone profile name or YAML path (e.g. convnextv2_tiny)')
     parser.add_argument('--vision_fold_factor', type=int, default=None,
                         help='override phase-interleaved temporal fold factor P (minimum: 1)')
+    parser.add_argument('--vision_fold_mode', type=str, default=None,
+                        choices=['phase', 'chunk', 'phase_shuffle', 'channel_shuffle'],
+                        help='temporal-to-image geometry: phase (interleaved fold), chunk (contiguous reshape), or shuffled controls')
     parser.add_argument('--vision_no_pad', action='store_true',
                         help='disable zero-padding after EEG phase folding')
     parser.add_argument('--vision_head_init_std', type=float, default=None,
@@ -246,6 +249,8 @@ def build_command(name, args, extra_args=None, seed=None):
         command.extend(['--backbone_config', str(args.backbone_config)])
     if args.vision_fold_factor is not None:
         command.extend(['--vision_fold_factor', str(args.vision_fold_factor)])
+    if args.vision_fold_mode is not None:
+        command.extend(['--vision_fold_mode', str(args.vision_fold_mode)])
     if args.vision_no_pad:
         command.extend(['--vision_no_pad', 'true'])
     if args.vision_head_init_std is not None:
@@ -332,6 +337,7 @@ def apply_experiment_config(args, config):
     adapter = vision.get('adapter', {})
     if isinstance(adapter, dict):
         set_if_absent('vision_fold_factor', adapter.get('fold_factor'), 'vision_fold_factor')
+        set_if_absent('vision_fold_mode', adapter.get('fold_mode'), 'vision_fold_mode')
     for key, value in config.get('training', {}).items():
         if hasattr(args, key):
             set_if_absent(key, value, key)

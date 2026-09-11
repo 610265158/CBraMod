@@ -1,0 +1,114 @@
+dataset: SHU-MI
+backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
+vision:
+  adapter:
+    fold_factor: 2
+    fold_mode: chunk
+  squeeze_binary: true
+training:
+  lr: 0.001
+  backbone_lr_scale: 1.0
+  batch_size: 32
+  epochs: 10
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 20
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  shu_clip_limit: 1024.0
+  shu_scale: 32.0
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) instead
+  of phase-interleaved folding. Identical to configs/backbones/efficientnet_b0/SHU-MI.yaml
+  otherwise. Compare against the phase-interleaved fold baseline PR-AUC 0.69819 +/-
+  0.01780 recorded there.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/efficientnet_b0/shu_mi/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/efficientnet_b0/shu_mi/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.63102
+      pr_auc: 0.71243
+      roc_auc: 0.70895
+    43:
+      ba: 0.63776
+      pr_auc: 0.71258
+      roc_auc: 0.69882
+    44:
+      ba: 0.63336
+      pr_auc: 0.67753
+      roc_auc: 0.68795
+    45:
+      ba: 0.63092
+      pr_auc: 0.70942
+      roc_auc: 0.70729
+    46:
+      ba: 0.62364
+      pr_auc: 0.69273
+      roc_auc: 0.66996
+  mean:
+    ba: 0.63134
+    pr_auc: 0.70094
+    roc_auc: 0.69459
+  std_population:
+    ba: 0.00458
+    pr_auc: 0.01382
+    roc_auc: 0.0144
+  fold_baseline:
+    pr_auc:
+      mean: 0.69819
+      std: 0.0178
+    roc_auc:
+      mean: 0.69622
+      std: 0.01387
+    ba:
+      mean: 0.62734
+      std: 0.00848

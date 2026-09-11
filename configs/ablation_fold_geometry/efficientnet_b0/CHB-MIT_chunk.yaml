@@ -1,0 +1,106 @@
+dataset: CHB-MIT
+backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
+vision:
+  adapter:
+    fold_factor: 4
+    fold_mode: chunk
+  squeeze_binary: true
+  init_head: false
+  head_init_std: 0.002
+training:
+  lr: 0.001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 10
+  weight_decay: 0.005
+  min_lr: 1.0e-06
+  warmup_epochs: 0
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.0
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: true
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 10.0
+  mirror_augmentation: false
+  time_roll_augmentation: false
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) instead
+  of phase-interleaved folding. Identical to configs/backbones/efficientnet_b0/CHB-MIT.yaml
+  otherwise. Compare against the phase-interleaved fold baseline PR-AUC 0.40916 +/-
+  0.05359 recorded there.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/efficientnet_b0/chb_mit/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/efficientnet_b0/chb_mit/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.85169
+      pr_auc: 0.41176
+      roc_auc: 0.91121
+    43:
+      ba: 0.70215
+      pr_auc: 0.37515
+      roc_auc: 0.85722
+    44:
+      ba: 0.72359
+      pr_auc: 0.41991
+      roc_auc: 0.91334
+    45:
+      ba: 0.7373
+      pr_auc: 0.43377
+      roc_auc: 0.90743
+    46:
+      ba: 0.65906
+      pr_auc: 0.26703
+      roc_auc: 0.8792
+  mean:
+    ba: 0.73476
+    pr_auc: 0.38152
+    roc_auc: 0.89368
+  std_population:
+    ba: 0.06418
+    pr_auc: 0.06044
+    roc_auc: 0.02201
+  fold_baseline:
+    pr_auc:
+      mean: 0.40916
+      std: 0.05359
+    roc_auc:
+      mean: 0.89741
+      std: 0.01944
+    ba:
+      mean: 0.75519
+      std: 0.05985

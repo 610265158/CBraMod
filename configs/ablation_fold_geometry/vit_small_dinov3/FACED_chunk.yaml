@@ -1,0 +1,68 @@
+dataset: FACED
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter:
+    fold_factor: 2
+    fold_mode: chunk
+  feature_aggregation: flatten
+  head_init_std: 0.02
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 50
+  weight_decay: 0.01
+  min_lr: 1.0e-06
+  warmup_epochs: 5
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  mirror_augmentation: false
+  time_roll_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+head_comparison:
+  cls_token:
+    status: complete
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.29197
+      kappa: 0.20305
+      f1: 0.29206
+    std_population:
+      ba: 0.00627
+      kappa: 0.0072
+      f1: 0.00705
+  recommendation: flatten
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) instead
+  of phase-interleaved folding. Identical to configs/backbones/vit_small_dinov3/FACED.yaml
+  otherwise. Compare against the phase-interleaved fold baseline kappa 0.30969 recorded
+  there.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/vit_small_dinov3/faced/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/vit_small_dinov3/faced/seed{seed}

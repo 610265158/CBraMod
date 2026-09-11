@@ -63,6 +63,9 @@ def main():
                         help='backbone profile name or YAML path')
     parser.add_argument('--vision_fold_factor', type=int, default=None,
                         help='override phase-interleaved temporal fold factor P (minimum: 1)')
+    parser.add_argument('--vision_fold_mode', type=str, default=None,
+                        choices=['phase', 'chunk', 'phase_shuffle', 'channel_shuffle'],
+                        help='temporal-to-image geometry: phase (interleaved fold), chunk (contiguous reshape), or shuffled controls')
     parser.add_argument('--vision_no_pad', type=str2bool, default=False,
                         help='disable zero-padding after EEG phase folding')
     parser.add_argument('--vision_head_init_std', type=float, default=None,

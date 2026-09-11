@@ -1,0 +1,111 @@
+dataset: TUEV
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter:
+    fold_factor: 4
+    fold_mode: chunk
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 5
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 0
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.0
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) instead
+  of phase-interleaved folding. Identical to configs/backbones/convnext_tiny_dinov3/TUEV.yaml
+  otherwise. Compare against the phase-interleaved fold baseline kappa 0.70946 +/-
+  0.03046 recorded there.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/convnext_tiny_dinov3/tuev/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/convnext_tiny_dinov3/tuev/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.60519
+      kappa: 0.65444
+      f1: 0.81097
+    43:
+      ba: 0.65897
+      kappa: 0.68845
+      f1: 0.83547
+    44:
+      ba: 0.68762
+      kappa: 0.69434
+      f1: 0.83983
+    45:
+      ba: 0.54114
+      kappa: 0.65441
+      f1: 0.81207
+    46:
+      ba: 0.66287
+      kappa: 0.66891
+      f1: 0.83116
+  mean:
+    ba: 0.63116
+    kappa: 0.67211
+    f1: 0.8259
+  std_population:
+    ba: 0.05243
+    kappa: 0.01671
+    f1: 0.01206
+  fold_baseline:
+    ba:
+      mean: 0.67629
+      std: 0.0122
+    kappa:
+      mean: 0.70946
+      std: 0.03046
+    f1:
+      mean: 0.8488
+      std: 0.01349

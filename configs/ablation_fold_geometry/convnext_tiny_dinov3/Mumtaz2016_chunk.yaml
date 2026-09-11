@@ -1,0 +1,142 @@
+dataset: Mumtaz2016
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter:
+    fold_factor: 4
+    fold_mode: chunk
+  squeeze_binary: true
+  feature_aggregation: flatten
+  head_init_std: 0.002
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.0
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.0
+  binary_pos_weight: 1.0
+  dropout: 0.0
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: true
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) instead
+  of phase-interleaved folding. Identical to configs/backbones/convnext_tiny_dinov3/Mumtaz2016.yaml
+  otherwise. Compare against the phase-interleaved fold baseline PR-AUC 0.98417 recorded
+  there.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/convnext_tiny_dinov3/mumtaz2016/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/convnext_tiny_dinov3/mumtaz2016/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.88545
+      pr_auc: 0.96859
+      roc_auc: 0.96956
+    43:
+      ba: 0.93164
+      pr_auc: 0.98751
+      roc_auc: 0.98639
+    44:
+      ba: 0.88475
+      pr_auc: 0.97639
+      roc_auc: 0.9766
+    45:
+      ba: 0.92153
+      pr_auc: 0.97932
+      roc_auc: 0.97759
+    46:
+      ba: 0.9346
+      pr_auc: 0.98763
+      roc_auc: 0.98693
+  mean:
+    ba: 0.91159
+    pr_auc: 0.97989
+    roc_auc: 0.97941
+  std_population:
+    ba: 0.02206
+    pr_auc: 0.00719
+    roc_auc: 0.00653
+  fold_baseline:
+    protocol: validation_selected_checkpoint_once_on_test
+    feature_aggregation: flatten
+    per_seed:
+      42:
+        epoch: 1
+        ba: 0.93786
+        pr_auc: 0.98565
+        roc_auc: 0.98521
+      43:
+        epoch: 1
+        ba: 0.9097
+        pr_auc: 0.98359
+        roc_auc: 0.97985
+      44:
+        epoch: 2
+        ba: 0.93024
+        pr_auc: 0.98638
+        roc_auc: 0.98681
+      45:
+        epoch: 3
+        ba: 0.90635
+        pr_auc: 0.98451
+        roc_auc: 0.98294
+      46:
+        epoch: 2
+        ba: 0.90385
+        pr_auc: 0.98071
+        roc_auc: 0.97746
+    mean:
+      ba: 0.9176
+      pr_auc: 0.98417
+      roc_auc: 0.98245
+    std_population:
+      ba: 0.01377
+      pr_auc: 0.00197
+      roc_auc: 0.00342

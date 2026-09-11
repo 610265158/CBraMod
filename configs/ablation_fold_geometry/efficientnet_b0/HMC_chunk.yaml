@@ -1,0 +1,98 @@
+dataset: HMC
+backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
+training:
+  lr: 0.001
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  mirror_augmentation: false
+  time_roll_augmentation: false
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: kappa
+vision:
+  adapter:
+    fold_factor: 16
+    fold_mode: chunk
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) instead
+  of phase-interleaved folding. Identical to configs/backbones/efficientnet_b0/HMC.yaml
+  otherwise. Compare against the phase-interleaved fold baseline kappa 0.70701 +/-
+  0.00231 recorded there.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/efficientnet_b0/hmc/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/efficientnet_b0/hmc/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.70194
+      kappa: 0.63778
+      f1: 0.7114
+    43:
+      ba: 0.70984
+      kappa: 0.6445
+      f1: 0.72332
+    44:
+      ba: 0.70401
+      kappa: 0.63371
+      f1: 0.71534
+    45:
+      ba: 0.71073
+      kappa: 0.64118
+      f1: 0.71908
+    46:
+      ba: 0.70143
+      kappa: 0.63229
+      f1: 0.71496
+  mean:
+    ba: 0.70559
+    kappa: 0.63789
+    f1: 0.71682
+  std_population:
+    ba: 0.00394
+    kappa: 0.00455
+    f1: 0.00406
+  fold_baseline:
+    ba:
+      mean: 0.75565
+      std: 0.00189
+    kappa:
+      mean: 0.70701
+      std: 0.00231
+    f1:
+      mean: 0.77002
+      std: 0.00173

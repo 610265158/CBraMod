@@ -20,9 +20,12 @@ class Model(nn.Module):
 
         fold_factor = getattr(param, 'vision_fold_factor', None)
         fold_factor = config['adapter']['fold_factor'] if fold_factor is None else fold_factor
+        fold_mode = getattr(param, 'vision_fold_mode', None)
+        fold_mode = config['adapter'].get('fold_mode', 'phase') if fold_mode is None else fold_mode
         self.adapter = PhaseFoldAdapter(
             fold_factor=fold_factor,
             pad_multiple=None if getattr(param, 'vision_no_pad', False) else (32, 32),
+            mode=fold_mode,
         )
 
         backbone_name = getattr(param, 'backbone_name', None) or backbone_name_for(

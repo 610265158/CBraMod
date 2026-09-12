@@ -6,7 +6,7 @@ training:
   batch_size: 32
   epochs: 10
   weight_decay: 0.0005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 0
   warmup_start_factor: 0.1
   clip_value: 1.0
@@ -43,15 +43,46 @@ training:
   run_final_test: true
   selection_metric: kappa
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.64233, std: 0.01636}
-  kappa: {mean: 0.69009, std: 0.01896}
-  f1: {mean: 0.83797, std: 0.00760}
-notes: >-
-  Finalized five-seed recipe. Population standard deviation; one final test
-  evaluation per seed.
+  ba:
+    mean: 0.64233
+    std: 0.01636
+  kappa:
+    mean: 0.69009
+    std: 0.01896
+  f1:
+    mean: 0.83797
+    std: 0.0076
+notes: Finalized five-seed recipe. Population standard deviation; one final test evaluation
+  per seed.
 output:
   model_root: experiments/checkpoints/efficientnet_b0/TUEV/{seed}
   log_root: experiments/logs/efficientnet_b0/TUEV/{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/efficientnet_b0/tuev_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.58259
+    kappa: 0.6509
+    f1: 0.81761
+  std_population:
+    ba: 0.03148
+    kappa: 0.02313
+    f1: 0.00853
+  delta_vs_fold:
+    ba: -0.05974
+    kappa: -0.03919
+    f1: -0.02036

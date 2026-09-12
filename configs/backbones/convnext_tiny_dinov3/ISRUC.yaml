@@ -1,7 +1,8 @@
 dataset: ISRUC
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
-  adapter: {fold_factor: 12}
+  adapter:
+    fold_factor: 12
   head_init_std: 0.002
 training:
   lr: 0.0001
@@ -9,7 +10,7 @@ training:
   batch_size: 16
   epochs: 15
   weight_decay: 0.005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: -1.0
@@ -46,20 +47,50 @@ training:
   test_each_epoch: false
   run_final_test: true
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.81415, std: 0.00087}
-  kappa: {mean: 0.79055, std: 0.00176}
-  f1: {mean: 0.83715, std: 0.00124}
-notes: >-
-  Five-seed (42--46) ISRUC run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M
-  self-supervised weights. ISRUC canonical geometry (P=12, 20x6x6000 ->
-  [B*20,1,72,500] -> [B*20,1,96,512]), 5-way sleep staging kappa selection, one
-  final test evaluation per seed. lr=1e-4 because the ConvNeXt family is
-  unstable at the EfficientNet ISRUC lr=1e-3; the rest of the schedule
-  (warmup 3, ema 0.995, mirror/time-roll augmentation, head_init_std 0.002)
-  follows the locked ISRUC recipe. Population standard deviations.
+  ba:
+    mean: 0.81415
+    std: 0.00087
+  kappa:
+    mean: 0.79055
+    std: 0.00176
+  f1:
+    mean: 0.83715
+    std: 0.00124
+notes: Five-seed (42--46) ISRUC run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M self-supervised
+  weights. ISRUC canonical geometry (P=12, 20x6x6000 -> [B*20,1,72,500] -> [B*20,1,96,512]),
+  5-way sleep staging kappa selection, one final test evaluation per seed. lr=1e-4
+  because the ConvNeXt family is unstable at the EfficientNet ISRUC lr=1e-3; the rest
+  of the schedule (warmup 3, ema 0.995, mirror/time-roll augmentation, head_init_std
+  0.002) follows the locked ISRUC recipe. Population standard deviations.
 output:
   model_root: experiments/checkpoints/isruc_convnext_tiny_dinov3_p12_5seed_v1/seed{seed}
   log_root: experiments/logs/isruc_convnext_tiny_dinov3_p12_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/convnext_tiny_dinov3/isruc_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.78937
+    kappa: 0.76495
+    f1: 0.81617
+  std_population:
+    ba: 0.00159
+    kappa: 0.00135
+    f1: 0.00116
+  delta_vs_fold:
+    ba: -0.02478
+    kappa: -0.0256
+    f1: -0.02098

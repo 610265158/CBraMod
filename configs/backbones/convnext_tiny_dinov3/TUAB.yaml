@@ -1,7 +1,8 @@
 dataset: TUAB
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
-  adapter: {fold_factor: 4}
+  adapter:
+    fold_factor: 4
   squeeze_binary: true
   head_init_std: 0.002
   feature_aggregation: flatten
@@ -11,7 +12,7 @@ training:
   batch_size: 32
   epochs: 10
   weight_decay: 0.0005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 0
   warmup_start_factor: 0.1
   clip_value: 1.0
@@ -49,36 +50,69 @@ training:
   test_each_epoch: false
   run_final_test: true
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
   no_augmentation:
-    ba: {mean: 0.82158, std: 0.00495}
-    pr_auc: {mean: 0.90587, std: 0.00449}
-    roc_auc: {mean: 0.90197, std: 0.00452}
+    ba:
+      mean: 0.82158
+      std: 0.00495
+    pr_auc:
+      mean: 0.90587
+      std: 0.00449
+    roc_auc:
+      mean: 0.90197
+      std: 0.00452
   with_augmentation:
-    ba: {mean: 0.81649, std: 0.00533}
-    pr_auc: {mean: 0.90570, std: 0.00315}
-    roc_auc: {mean: 0.90109, std: 0.00465}
-    note: >-
-      Four of five seeds completed (seed 46 collapsed to chance: training loss
-      stuck at ln(2), test pr_auc 0.23). Augmentation gives no gain over the
-      no-aug baseline and destabilizes seed 46, so this recipe keeps
-      augmentation off.
-notes: >-
-  Five-seed (42--46) TUAB run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M
-  self-supervised weights. TUAB canonical geometry (P=4, 16x2000 -> [B,1,64,500]
-  -> 64x512), binary PR-AUC selection, flatten+FC head, one final test
-  evaluation per seed. lr=1e-4 because the ConvNeXt family is unstable at the
-  EfficientNet TUAB lr=1e-3; the rest of the schedule (ema 0.995, wd 5e-4,
-  clip 1.0, head_init_std 0.002, no augmentation) mirrors the finalized
-  EfficientNet-B0 TUAB recipe. drop_path_rate=0.1 (ConvNeXt-Tiny default) is
-  added as stochastic-depth regularization against the epoch-3 overfitting
-  seen in the initial drop_path=0 seed-42 run. flatten head mirrors the
-  SHU-MI/Mumtaz fix, where gap (768-dim) stuck at chance but flatten (large
-  FC) learned.
-  num_workers=4 is safe here because TUAB is pkl_split storage (no LMDB
-  fork-worker segfault). Population standard deviations.
+    ba:
+      mean: 0.81649
+      std: 0.00533
+    pr_auc:
+      mean: 0.9057
+      std: 0.00315
+    roc_auc:
+      mean: 0.90109
+      std: 0.00465
+    note: 'Four of five seeds completed (seed 46 collapsed to chance: training loss
+      stuck at ln(2), test pr_auc 0.23). Augmentation gives no gain over the no-aug
+      baseline and destabilizes seed 46, so this recipe keeps augmentation off.'
+notes: Five-seed (42--46) TUAB run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M self-supervised
+  weights. TUAB canonical geometry (P=4, 16x2000 -> [B,1,64,500] -> 64x512), binary
+  PR-AUC selection, flatten+FC head, one final test evaluation per seed. lr=1e-4 because
+  the ConvNeXt family is unstable at the EfficientNet TUAB lr=1e-3; the rest of the
+  schedule (ema 0.995, wd 5e-4, clip 1.0, head_init_std 0.002, no augmentation) mirrors
+  the finalized EfficientNet-B0 TUAB recipe. drop_path_rate=0.1 (ConvNeXt-Tiny default)
+  is added as stochastic-depth regularization against the epoch-3 overfitting seen
+  in the initial drop_path=0 seed-42 run. flatten head mirrors the SHU-MI/Mumtaz fix,
+  where gap (768-dim) stuck at chance but flatten (large FC) learned. num_workers=4
+  is safe here because TUAB is pkl_split storage (no LMDB fork-worker segfault). Population
+  standard deviations.
 output:
   model_root: experiments/checkpoints/tuab_convnext_tiny_dinov3_p4_flatten_5seed_v1/seed{seed}
   log_root: experiments/logs/tuab_convnext_tiny_dinov3_p4_flatten_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/convnext_tiny_dinov3/tuab_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.74689
+    pr_auc: 0.8603
+    roc_auc: 0.80897
+  std_population:
+    ba: 0.1235
+    pr_auc: 0.06495
+    roc_auc: 0.15454
+  delta_vs_fold:
+    ba: -0.07469
+    pr_auc: -0.04557
+    roc_auc: -0.093

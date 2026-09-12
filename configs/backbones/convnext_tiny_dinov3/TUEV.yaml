@@ -1,14 +1,15 @@
 dataset: TUEV
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
-  adapter: {fold_factor: 4}
+  adapter:
+    fold_factor: 4
 training:
   lr: 0.0001
   backbone_lr_scale: 0.1
   batch_size: 32
   epochs: 5
   weight_decay: 0.0005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 0
   warmup_start_factor: 0.1
   clip_value: 1.0
@@ -45,18 +46,48 @@ training:
   test_each_epoch: false
   run_final_test: true
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.67629, std: 0.01220}
-  kappa: {mean: 0.70946, std: 0.03046}
-  f1: {mean: 0.84880, std: 0.01349}
-notes: >-
-  Five-seed (42--46) TUEV run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M
-  self-supervised weights. TUEV canonical geometry (P=4, 16x1000 -> 64x250 ->
-  64x256), 6-way multiclass kappa selection, one final test evaluation per
-  seed. lr=1e-4 because the ConvNeXt family is unstable at the EfficientNet
-  TUEV lr=1e-3. Population standard deviations.
+  ba:
+    mean: 0.67629
+    std: 0.0122
+  kappa:
+    mean: 0.70946
+    std: 0.03046
+  f1:
+    mean: 0.8488
+    std: 0.01349
+notes: Five-seed (42--46) TUEV run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M self-supervised
+  weights. TUEV canonical geometry (P=4, 16x1000 -> 64x250 -> 64x256), 6-way multiclass
+  kappa selection, one final test evaluation per seed. lr=1e-4 because the ConvNeXt
+  family is unstable at the EfficientNet TUEV lr=1e-3. Population standard deviations.
 output:
   model_root: experiments/checkpoints/tuev_convnext_tiny_dinov3_p4_5seed_v1/seed{seed}
   log_root: experiments/logs/tuev_convnext_tiny_dinov3_p4_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/convnext_tiny_dinov3/tuev_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.63116
+    kappa: 0.67211
+    f1: 0.8259
+  std_population:
+    ba: 0.05243
+    kappa: 0.01671
+    f1: 0.01206
+  delta_vs_fold:
+    ba: -0.04513
+    kappa: -0.03735
+    f1: -0.0229

@@ -1,7 +1,8 @@
 dataset: SHU-MI
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
-  adapter: {fold_factor: 2}
+  adapter:
+    fold_factor: 2
   squeeze_binary: true
   feature_aggregation: flatten
 training:
@@ -10,7 +11,7 @@ training:
   batch_size: 32
   epochs: 10
   weight_decay: 0.0005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: -1.0
@@ -50,20 +51,50 @@ training:
   test_each_epoch: false
   run_final_test: true
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.63579, std: 0.00752}
-  pr_auc: {mean: 0.69096, std: 0.01290}
-  roc_auc: {mean: 0.70055, std: 0.01123}
-notes: >-
-  Five-seed (42--46) SHU-MI run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M
-  self-supervised weights. SHU-MI canonical geometry (P=2, 32x800 -> 64x416),
-  clip=1024/scale=32, flatten feature aggregation, binary PR-AUC selection,
-  one final test evaluation per seed. lr=1e-4 because the ConvNeXt family is
-  unstable at the EfficientNet SHU-MI lr=1e-3. num_workers=0 avoids the LMDB
-  fork-worker segfault (does not affect sampling or model numerics).
-  Population standard deviations.
+  ba:
+    mean: 0.63579
+    std: 0.00752
+  pr_auc:
+    mean: 0.69096
+    std: 0.0129
+  roc_auc:
+    mean: 0.70055
+    std: 0.01123
+notes: Five-seed (42--46) SHU-MI run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M self-supervised
+  weights. SHU-MI canonical geometry (P=2, 32x800 -> 64x416), clip=1024/scale=32,
+  flatten feature aggregation, binary PR-AUC selection, one final test evaluation
+  per seed. lr=1e-4 because the ConvNeXt family is unstable at the EfficientNet SHU-MI
+  lr=1e-3. num_workers=0 avoids the LMDB fork-worker segfault (does not affect sampling
+  or model numerics). Population standard deviations.
 output:
   model_root: experiments/checkpoints/shumi_convnext_tiny_dinov3_p2_flatten_5seed_v1/seed{seed}
   log_root: experiments/logs/shumi_convnext_tiny_dinov3_p2_flatten_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/convnext_tiny_dinov3/shu_mi_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.60041
+    pr_auc: 0.68219
+    roc_auc: 0.68647
+  std_population:
+    ba: 0.05227
+    pr_auc: 0.03329
+    roc_auc: 0.03633
+  delta_vs_fold:
+    ba: -0.03538
+    pr_auc: -0.00877
+    roc_auc: -0.01408

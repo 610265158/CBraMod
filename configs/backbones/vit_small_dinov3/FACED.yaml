@@ -1,7 +1,8 @@
 dataset: FACED
 backbone_name: vit_small_patch16_dinov3.lvd1689m
 vision:
-  adapter: {fold_factor: 2}
+  adapter:
+    fold_factor: 2
   feature_aggregation: cls_token
   head_init_std: 0.02
 training:
@@ -10,7 +11,7 @@ training:
   batch_size: 32
   epochs: 50
   weight_decay: 0.01
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 5
   warmup_start_factor: 0.1
   clip_value: 1.0
@@ -32,38 +33,95 @@ training:
   test_each_epoch: false
   run_final_test: true
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
   protocol: validation_selected_checkpoint_once_on_test
   feature_aggregation: cls_token
   lr: 0.0005
   clip_value: 1.0
-  seeds: [42, 43, 44, 45, 46]
-  mean: {ba: 0.44643, kappa: 0.37444, f1: 0.44454}
-  std_population: {ba: 0.01023, kappa: 0.01090, f1: 0.00983}
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.44643
+    kappa: 0.37444
+    f1: 0.44454
+  std_population:
+    ba: 0.01023
+    kappa: 0.0109
+    f1: 0.00983
 head_comparison:
   flatten:
     status: complete
     feature_aggregation: flatten
     lr: 0.0001
-    seeds: [42, 43, 44, 45, 46]
-    mean: {ba: 0.38672, kappa: 0.30969, f1: 0.38489}
-    std_population: {ba: 0.00711, kappa: 0.00717, f1: 0.00711}
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.38672
+      kappa: 0.30969
+      f1: 0.38489
+    std_population:
+      ba: 0.00711
+      kappa: 0.00717
+      f1: 0.00711
   patch_mean:
     status: complete
     feature_aggregation: gap
-    note: >-
-      Previously recorded as "cls_token"; verified to be patch-token mean
-      pooling (timm Eva, global_pool='avg'), not the CLS token.
-    seeds: [42, 43, 44, 45, 46]
-    mean: {ba: 0.29197, kappa: 0.20305, f1: 0.29206}
-    std_population: {ba: 0.00627, kappa: 0.00720, f1: 0.00705}
+    note: Previously recorded as "cls_token"; verified to be patch-token mean pooling
+      (timm Eva, global_pool='avg'), not the CLS token.
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.29197
+      kappa: 0.20305
+      f1: 0.29206
+    std_population:
+      ba: 0.00627
+      kappa: 0.0072
+      f1: 0.00705
   recommendation: cls_token
-notes: >-
-  True CLS-token head at lr 5e-4 with clip 1, replacing the flatten head
-  (+6.47pp kappa) and reversing the earlier mislabeled patch-mean comparison.
-  Five seeds, validation-selected checkpoint, one final test per seed.
+notes: True CLS-token head at lr 5e-4 with clip 1, replacing the flatten head (+6.47pp
+  kappa) and reversing the earlier mislabeled patch-mean comparison. Five seeds, validation-selected
+  checkpoint, one final test per seed.
 output:
   model_root: experiments/checkpoints/vit_small_dinov3_faced_p2_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
   log_root: experiments/logs/vit_small_dinov3_faced_p2_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/vit_small_dinov3/faced_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.44377
+    kappa: 0.3716
+    f1: 0.44362
+  std_population:
+    ba: 0.01464
+    kappa: 0.01641
+    f1: 0.01423
+  delta_vs_fold:
+    ba: -0.00266
+    kappa: -0.00284
+    f1: -0.00092

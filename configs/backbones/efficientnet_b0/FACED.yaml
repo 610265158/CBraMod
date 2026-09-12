@@ -1,7 +1,8 @@
 dataset: FACED
 backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
 vision:
-  adapter: {fold_factor: 2}
+  adapter:
+    fold_factor: 2
   feature_aggregation: flatten
   head_init_std: 0.002
 training:
@@ -10,7 +11,7 @@ training:
   batch_size: 32
   epochs: 50
   weight_decay: 0.0005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 5
   warmup_start_factor: 0.1
   clip_value: -1.0
@@ -48,19 +49,49 @@ training:
   run_final_test: true
   selection_metric: kappa
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.55164, std: 0.01790}
-  kappa: {mean: 0.49533, std: 0.01970}
-  f1: {mean: 0.55672, std: 0.01626}
-notes: >-
-  Five-seed FACED flatten+FC recipe with EfficientNet-B0 RA4 weights,
-  phase-interleaved fold factor P=2, head initialization std=0.002,
-  weight decay 5e-4, five-epoch linear warmup, and EMA decay 0.995. No
-  train-time data augmentation. Standard deviations are population statistics;
-  each seed uses one validation-selected checkpoint followed by one final test
-  evaluation.
+  ba:
+    mean: 0.55164
+    std: 0.0179
+  kappa:
+    mean: 0.49533
+    std: 0.0197
+  f1:
+    mean: 0.55672
+    std: 0.01626
+notes: Five-seed FACED flatten+FC recipe with EfficientNet-B0 RA4 weights, phase-interleaved
+  fold factor P=2, head initialization std=0.002, weight decay 5e-4, five-epoch linear
+  warmup, and EMA decay 0.995. No train-time data augmentation. Standard deviations
+  are population statistics; each seed uses one validation-selected checkpoint followed
+  by one final test evaluation.
 output:
   model_root: experiments/checkpoints/faced_ra4_p2_flattenfc_wd5e4_warmup5_ema995_5seed/seed{seed}
   log_root: experiments/logs/vision/faced_ra4_p2_flattenfc_wd5e4_warmup5_ema995_5seed/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/efficientnet_b0/faced_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.39584
+    kappa: 0.31981
+    f1: 0.39994
+  std_population:
+    ba: 0.05789
+    kappa: 0.06492
+    f1: 0.06035
+  delta_vs_fold:
+    ba: -0.1558
+    kappa: -0.17552
+    f1: -0.15678

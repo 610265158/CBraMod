@@ -1,7 +1,8 @@
 dataset: Mumtaz2016
 backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
 vision:
-  adapter: {fold_factor: 4}
+  adapter:
+    fold_factor: 4
   squeeze_binary: true
   feature_aggregation: gap
   head_init_std: 0.002
@@ -11,7 +12,7 @@ training:
   batch_size: 32
   epochs: 30
   weight_decay: 0.0005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: -1.0
@@ -49,24 +50,75 @@ training:
   test_each_epoch: false
   run_final_test: true
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
   protocol: validation_selected_checkpoint_once_on_test
   feature_aggregation: gap
   per_seed:
-    42: {epoch: 21, ba: 0.91308, pr_auc: 0.98778, roc_auc: 0.98597}
-    43: {epoch: 22, ba: 0.90472, pr_auc: 0.97781, roc_auc: 0.97451}
-    44: {epoch: 28, ba: 0.91983, pr_auc: 0.99013, roc_auc: 0.98967}
-    45: {epoch: 23, ba: 0.91641, pr_auc: 0.98954, roc_auc: 0.98792}
-    46: {epoch: 20, ba: 0.92232, pr_auc: 0.98660, roc_auc: 0.98487}
-  mean: {ba: 0.91527, pr_auc: 0.98637, roc_auc: 0.98459}
-  std_population: {ba: 0.00613, pr_auc: 0.00446, roc_auc: 0.00530}
-notes: >-
-  Formal five-seed Mumtaz2016 amplitude-scale run. EfficientNet-B0 with P=4,
-  no EMA, no time-roll/mirror/mixup augmentation, no label smoothing, and no
-  dropout. Only log-uniform amplitude scaling in [0.5, 2.0] is enabled.
-  Each seed selects one checkpoint on validation and evaluates test once.
+    42:
+      epoch: 21
+      ba: 0.91308
+      pr_auc: 0.98778
+      roc_auc: 0.98597
+    43:
+      epoch: 22
+      ba: 0.90472
+      pr_auc: 0.97781
+      roc_auc: 0.97451
+    44:
+      epoch: 28
+      ba: 0.91983
+      pr_auc: 0.99013
+      roc_auc: 0.98967
+    45:
+      epoch: 23
+      ba: 0.91641
+      pr_auc: 0.98954
+      roc_auc: 0.98792
+    46:
+      epoch: 20
+      ba: 0.92232
+      pr_auc: 0.9866
+      roc_auc: 0.98487
+  mean:
+    ba: 0.91527
+    pr_auc: 0.98637
+    roc_auc: 0.98459
+  std_population:
+    ba: 0.00613
+    pr_auc: 0.00446
+    roc_auc: 0.0053
+notes: Formal five-seed Mumtaz2016 amplitude-scale run. EfficientNet-B0 with P=4,
+  no EMA, no time-roll/mirror/mixup augmentation, no label smoothing, and no dropout.
+  Only log-uniform amplitude scaling in [0.5, 2.0] is enabled. Each seed selects one
+  checkpoint on validation and evaluates test once.
 output:
   model_root: experiments/checkpoints/mumtaz2016_efficientnet_b0_p4_simple_amp_scale_5seed/seed{seed}
   log_root: experiments/logs/mumtaz2016_efficientnet_b0_p4_simple_amp_scale_5seed/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/efficientnet_b0/mumtaz2016_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.91392
+    pr_auc: 0.9761
+    roc_auc: 0.97058
+  std_population:
+    ba: 0.01255
+    pr_auc: 0.00918
+    roc_auc: 0.0114
+  delta_vs_fold:
+    ba: -0.00135
+    pr_auc: -0.01027
+    roc_auc: -0.01401

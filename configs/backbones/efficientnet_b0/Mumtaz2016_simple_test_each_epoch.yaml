@@ -1,0 +1,61 @@
+dataset: Mumtaz2016
+backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
+vision:
+  adapter: {fold_factor: 4}
+  squeeze_binary: true
+  feature_aggregation: gap
+  head_init_std: 0.002
+training:
+  lr: 0.001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 0.000001
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.0
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.0
+  binary_pos_weight: 1.0
+  dropout: 0.0
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: true
+  run_final_test: true
+protocol:
+  seeds: [42]
+  selection: exploratory_test_each_epoch
+notes: >-
+  Exploratory test-vs-epoch run for Mumtaz2016. Same simple baseline as
+  Mumtaz2016_simple.yaml, with test_each_epoch enabled only to inspect the
+  test trajectory. Do not use these repeated test evaluations for formal
+  reporting.
+output:
+  model_root: experiments/checkpoints/mumtaz2016_efficientnet_b0_p4_simple_test_each_epoch/seed{seed}
+  log_root: experiments/logs/mumtaz2016_efficientnet_b0_p4_simple_test_each_epoch/seed{seed}

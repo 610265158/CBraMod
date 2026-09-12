@@ -1,7 +1,8 @@
 dataset: SHU-MI
 backbone_name: efficientnet_b0.ra4_e3600_r224_in1k
 vision:
-  adapter: {fold_factor: 2}
+  adapter:
+    fold_factor: 2
   squeeze_binary: true
 training:
   lr: 0.001
@@ -9,7 +10,7 @@ training:
   batch_size: 32
   epochs: 10
   weight_decay: 0.0005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: -1.0
@@ -48,15 +49,46 @@ training:
   test_each_epoch: false
   run_final_test: true
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  pr_auc: {mean: 0.69819, std: 0.01780}
-  roc_auc: {mean: 0.69622, std: 0.01387}
-  ba: {mean: 0.62734, std: 0.00848}
-notes: >-
-  Finalized five-seed recipe using RA4 EfficientNet-B0 weights, clip=1024,
-  scale=32, no train-time augmentation, and population standard deviation.
+  pr_auc:
+    mean: 0.69819
+    std: 0.0178
+  roc_auc:
+    mean: 0.69622
+    std: 0.01387
+  ba:
+    mean: 0.62734
+    std: 0.00848
+notes: Finalized five-seed recipe using RA4 EfficientNet-B0 weights, clip=1024, scale=32,
+  no train-time augmentation, and population standard deviation.
 output:
   model_root: experiments/checkpoints/shumi_ra4_clip1024_scale32_noaug_10ep_5seed_v1/seed{seed}
   log_root: experiments/logs/vision/shu_mi/shumi_ra4_clip1024_scale32_noaug_10ep_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/efficientnet_b0/shu_mi_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.63134
+    pr_auc: 0.70094
+    roc_auc: 0.69459
+  std_population:
+    ba: 0.00458
+    pr_auc: 0.01382
+    roc_auc: 0.0144
+  delta_vs_fold:
+    ba: 0.004
+    pr_auc: 0.00275
+    roc_auc: -0.00163

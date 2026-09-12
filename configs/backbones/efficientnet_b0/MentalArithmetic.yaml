@@ -1,7 +1,8 @@
 dataset: MentalArithmetic
 backbone_name: efficientnet_b0
 vision:
-  adapter: {fold_factor: 4}
+  adapter:
+    fold_factor: 4
   squeeze_binary: true
   head_init_std: 0.002
 training:
@@ -10,7 +11,7 @@ training:
   batch_size: 64
   epochs: 30
   weight_decay: 0.0005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: -1.0
@@ -46,12 +47,47 @@ training:
   selection_metric: pr_auc
   test_each_epoch: false
   run_final_test: true
-protocol: {seeds: [42, 43, 44, 45, 46], selection: validation_selected_checkpoint_once_on_test}
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.69097, std: 0.04184}
-  pr_auc: {mean: 0.79029, std: 0.05364}
-  roc_auc: {mean: 0.87789, std: 0.02513}
-notes: Finalized five-seed recipe; population standard deviation and one final test evaluation per seed.
+  ba:
+    mean: 0.69097
+    std: 0.04184
+  pr_auc:
+    mean: 0.79029
+    std: 0.05364
+  roc_auc:
+    mean: 0.87789
+    std: 0.02513
+notes: Finalized five-seed recipe; population standard deviation and one final test
+  evaluation per seed.
 output:
   model_root: experiments/checkpoints/mentalarithmetic_p4_headstd002_ema995_5seed_v1/seed{seed}
   log_root: experiments/logs/mentalarithmetic_p4_headstd002_ema995_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/efficientnet_b0/mentalarithmetic_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.61042
+    pr_auc: 0.58492
+    roc_auc: 0.72662
+  std_population:
+    ba: 0.0123
+    pr_auc: 0.07337
+    roc_auc: 0.05338
+  delta_vs_fold:
+    ba: -0.08055
+    pr_auc: -0.20537
+    roc_auc: -0.15127

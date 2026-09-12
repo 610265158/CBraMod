@@ -1,7 +1,8 @@
 dataset: HMC
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
-  adapter: {fold_factor: 16}
+  adapter:
+    fold_factor: 16
   feature_aggregation: gap
   head_init_std: 0.002
 training:
@@ -10,7 +11,7 @@ training:
   batch_size: 32
   epochs: 30
   weight_decay: 0.005
-  min_lr: 0.000001
+  min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: -1.0
@@ -35,17 +36,48 @@ training:
   run_final_test: true
   selection_metric: kappa
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.75810, std: 0.00552}
-  kappa: {mean: 0.71113, std: 0.00627}
-  f1: {mean: 0.77440, std: 0.00433}
-notes: >-
-  HMC ConvNeXt-Tiny DINOv3 five-seed experiment. Four-channel 30-second
-  epochs use P=16 phase-interleaved folding and GAP aggregation; no channel
-  mirror or time-roll augmentation. Validation-selected checkpoint results
-  are recorded after all five seeds, with one final test evaluation per seed.
+  ba:
+    mean: 0.7581
+    std: 0.00552
+  kappa:
+    mean: 0.71113
+    std: 0.00627
+  f1:
+    mean: 0.7744
+    std: 0.00433
+notes: HMC ConvNeXt-Tiny DINOv3 five-seed experiment. Four-channel 30-second epochs
+  use P=16 phase-interleaved folding and GAP aggregation; no channel mirror or time-roll
+  augmentation. Validation-selected checkpoint results are recorded after all five
+  seeds, with one final test evaluation per seed.
 output:
   model_root: experiments/checkpoints/hmc_convnext_tiny_dinov3_p16_gap_lr1e4_wd5e3_ema995_5seed_v1/seed{seed}
   log_root: experiments/logs/hmc_convnext_tiny_dinov3_p16_gap_lr1e4_wd5e3_ema995_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/convnext_tiny_dinov3/hmc_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.72443
+    kappa: 0.66999
+    f1: 0.74056
+  std_population:
+    ba: 0.00386
+    kappa: 0.00498
+    f1: 0.0036
+  delta_vs_fold:
+    ba: -0.03367
+    kappa: -0.04114
+    f1: -0.03384

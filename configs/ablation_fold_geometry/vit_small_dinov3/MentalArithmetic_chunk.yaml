@@ -1,0 +1,113 @@
+dataset: MentalArithmetic
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter:
+    fold_factor: 4
+    fold_mode: chunk
+  squeeze_binary: true
+  feature_aggregation: cls_token
+  head_init_std: 0.02
+training:
+  lr: 0.0005
+  backbone_lr_scale: 1.0
+  batch_size: 64
+  epochs: 50
+  weight_decay: 0.01
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.999
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 3.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 0.5
+  time_roll_max_fraction: 0.25
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) on the
+  updated CLS-token ViT recipe. Identical to configs/backbones/vit_small_dinov3/MentalArithmetic.yaml
+  otherwise (cls_token aggregation, lr 5e-4, clip 1). Compare against the phase-interleaved
+  fold baseline recorded there: {''ba'': 0.75069, ''pr_auc'': 0.72491, ''roc_auc'':
+  0.8498}.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/vit_small_dinov3/mentalarithmetic/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/vit_small_dinov3/mentalarithmetic/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.6875
+      pr_auc: 0.76865
+      roc_auc: 0.87804
+    43:
+      ba: 0.73958
+      pr_auc: 0.74834
+      roc_auc: 0.85952
+    44:
+      ba: 0.82639
+      pr_auc: 0.82383
+      roc_auc: 0.8831
+    45:
+      ba: 0.65625
+      pr_auc: 0.63276
+      roc_auc: 0.80773
+    46:
+      ba: 0.64931
+      pr_auc: 0.64619
+      roc_auc: 0.78921
+  mean:
+    ba: 0.71181
+    pr_auc: 0.72395
+    roc_auc: 0.84352
+  std_population:
+    ba: 0.06555
+    pr_auc: 0.07339
+    roc_auc: 0.03806
+  fold_baseline:
+    protocol: validation_selected_checkpoint_once_on_test
+    feature_aggregation: cls_token
+    lr: 0.0005
+    clip_value: 1.0
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.75069
+      pr_auc: 0.72491
+      roc_auc: 0.8498
+    std_population:
+      ba: 0.0464
+      pr_auc: 0.06253
+      roc_auc: 0.04332

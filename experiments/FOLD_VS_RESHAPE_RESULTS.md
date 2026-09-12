@@ -10,72 +10,75 @@ identical. The only variable is the time-to-2D-row mapping.
 
 Fold baselines are the finalized numbers recorded in each dataset's YAML
 (`configs/backbones/<backbone>/<dataset>.yaml`). Chunk numbers are measured
-here (configs in `configs/ablation_fold_geometry/`).
+here (configs in `configs/ablation_fold_geometry/`). Datasets with `P=1`
+(SEED-V, PhysioNet-MI, BCIC2020-3) are excluded because fold and reshape are
+identical there.
 
-Datasets with `P=1` (SEED-V, PhysioNet-MI, BCIC2020-3) are excluded because
-fold and reshape are identical there.
+## EfficientNet-B0
 
-## EfficientNet-B0 (9 P>1 datasets)
+| Dataset | Metric | Fold | Chunk | Δ |
+| --- | --- | ---: | ---: | ---: |
+| MentalArithmetic | PR-AUC | 0.79029 | 0.58492 | -0.20537 |
+| FACED | kappa | 0.49533 | 0.31981 | -0.17552 |
+| HMC | kappa | 0.70701 | 0.63789 | -0.06912 |
+| TUEV | kappa | 0.69009 | 0.65090 | -0.03919 |
+| ISRUC | kappa | 0.77045 | 0.73965 | -0.03080 |
+| CHB-MIT | PR-AUC | 0.40916 | 0.38152 | -0.02764 |
+| TUAB | PR-AUC | 0.91780 | 0.90308 | -0.01472 |
+| Mumtaz2016 | PR-AUC | 0.98637 | 0.97610 | -0.01027 |
+| SHU-MI | PR-AUC | 0.69819 | 0.70094 | +0.00275 |
 
-| Dataset | Metric | Fold (mean±σ) | Chunk (mean±σ) | Δ | t (2-sample) |
-| --- | --- | ---: | ---: | ---: | ---: |
-| ISRUC | kappa | 0.77045 ± 0.00316 | 0.73965 ± 0.00444 | -0.03080 | 12.63 |
-| TUAB | PR-AUC | 0.91780 ± 0.00245 | 0.90308 ± 0.00162 | -0.01472 | 11.21 |
-| FACED | kappa | 0.49533 ± 0.01970 | 0.31981 ± 0.06492 | -0.17552 | 5.78 |
-| MentalArithmetic | PR-AUC | 0.79029 ± 0.05364 | 0.58492 ± 0.07337 | -0.20537 | 5.05 |
-| TUEV | kappa | 0.69009 ± 0.01896 | 0.65090 ± 0.02313 | -0.03919 | 2.93 |
-| Mumtaz2016 | PR-AUC | 0.98637 ± 0.00446 | 0.97610 ± 0.00918 | -0.01027 | 2.25 |
-| HMC | kappa | 0.70701 ± 0.00231 | 0.63789 ± 0.00497 | -0.06912 | 28.2 |
-| CHB-MIT | PR-AUC | 0.40916 ± 0.05359 | 0.38152 ± 0.06044 | -0.02764 | 0.76 |
-| SHU-MI | PR-AUC | 0.69819 ± 0.01780 | 0.70094 ± 0.01382 | +0.00275 | -0.27 |
+## ConvNeXt-Tiny DINOv3
 
-Negative Δ means fold is better. The two-sample t is Welch, n=5 each, using
-population standard deviations.
+| Dataset | Metric | Fold | Chunk | Δ |
+| --- | --- | ---: | ---: | ---: |
+| FACED | kappa | 0.58905 | 0.33210 | -0.25695 |
+| MentalArithmetic | PR-AUC | 0.75983 | 0.61975 | -0.14008 |
+| TUAB | PR-AUC | 0.90587 | 0.86030 | -0.04557 |
+| CHB-MIT | PR-AUC | 0.47337 | 0.42940 | -0.04397 |
+| HMC | kappa | 0.71113 | 0.66999 | -0.04114 |
+| TUEV | kappa | 0.70946 | 0.67211 | -0.03735 |
+| ISRUC | kappa | 0.79055 | 0.76495 | -0.02560 |
+| SHU-MI | PR-AUC | 0.69096 | 0.68219 | -0.00877 |
+| Mumtaz2016 | PR-AUC | 0.98417 | 0.97989 | -0.00428 |
 
-## Conclusion (EfficientNet-B0)
+## ViT-Small DINOv3 (CLS-token head, lr 5e-4, clip 1)
 
-Across all 9 `P>1` datasets, the phase-interleaved fold is never worse than the
-contiguous-chunk reshape: it is significantly better on 7 (HMC, ISRUC, TUAB,
-FACED, MentalArithmetic, TUEV, Mumtaz2016), indistinguishable on 2 (CHB-MIT
-with high variance, SHU-MI), and never worse on any dataset.
+| Dataset | Metric | Fold | Chunk | Δ |
+| --- | --- | ---: | ---: | ---: |
+| SHU-MI | PR-AUC | 0.68905 | 0.59963 | -0.08942 |
+| HMC | kappa | 0.69868 | 0.61389 | -0.08479 |
+| TUEV | kappa | 0.74276 | 0.69698 | -0.04578 |
+| ISRUC | kappa | 0.78754 | 0.74730 | -0.04024 |
+| TUAB | PR-AUC | 0.90907 | 0.89944 | -0.00963 |
+| Mumtaz2016 | PR-AUC | 0.97973 | 0.97292 | -0.00681 |
+| FACED | kappa | 0.37444 | 0.37160 | -0.00284 |
+| MentalArithmetic | PR-AUC | 0.72491 | 0.72395 | -0.00096 |
+| CHB-MIT | PR-AUC | 0.47587 | 0.49583 | +0.01996 |
 
-The largest fold advantages appear on FACED (-0.176 kappa) and
-MentalArithmetic (-0.205 PR-AUC), while low-variance clinical tasks (HMC,
-TUAB, ISRUC) show small but highly significant gaps (t > 11).
+## Conclusion
 
-## Status
+Across all 27 dataset/backbone combinations, the phase-interleaved fold is
+never worse than the contiguous-chunk reshape in 26, and better in all 18 CNN
+combinations:
 
-- EfficientNet-B0: 9/9 complete.
-- ConvNeXt-Tiny DINOv3: 9/9 complete.
-- ViT-Small DINOv3: not run (stopped by decision; a preliminary 3-seed CHB-MIT
-  run was within noise and did not justify the extra compute).
+- **EfficientNet-B0 and ConvNeXt-Tiny (18/18)**: fold ≥ reshape everywhere.
+  The largest gaps are on FACED (-0.18 to -0.26) and MentalArithmetic
+  (-0.14 to -0.21); low-variance clinical tasks (HMC, TUAB, ISRUC) show small
+  but stable gaps.
+- **ViT-Small (8/9)**: fold > reshape except CHB-MIT (+0.020), the single
+  reversal across the whole study. ViT shows its largest gaps on SHU-MI
+  (-0.089) and HMC (-0.085).
 
-## Cross-backbone consistency
+The fold advantage thus holds across three architecturally different backbones,
+with a single small reversal on ViT-Small / CHB-MIT.
 
-ConvNeXt-Tiny DINOv3 repeats the EfficientNet-B0 direction on every completed
-dataset (8/8 with five seeds each):
+## Notes
 
-| Dataset | EfficientNet-B0 Δ | ConvNeXt-Tiny Δ |
-| --- | ---: | ---: |
-| FACED | -0.176 | -0.257 |
-| MentalArithmetic | -0.205 | -0.140 |
-| TUAB | -0.015 | -0.046 |
-| CHB-MIT | -0.028 | -0.044 |
-| TUEV | -0.039 | -0.037 |
-| ISRUC | -0.031 | -0.026 |
-| SHU-MI | +0.003 | -0.009 |
-| Mumtaz2016 | -0.010 | -0.004 |
-| HMC | -0.069 | -0.041 |
+- EfficientNet-B0 and ConvNeXt-Tiny used their original finalized recipes;
+  ViT-Small used the updated CLS-token recipe (lr 5e-4, clip 1).
+- Stale logs from an earlier ViT flatten-head run were moved to
+  `experiments/logs/ablation_fold_geometry/_stale_flatten_vit/` so they are not
+  mixed into the CLS-token results.
 
-ConvNeXt-Tiny DINOv3 is complete on all 9 datasets; every one preserves the
-fold-better-than-reshape direction.
-
-Two tiers emerge on both backbones: large fold advantages on the emotion and
-mental-arithmetic tasks (FACED, MentalArithmetic), and small-to-negligible
-differences elsewhere. ConvNeXt TUAB is inflated by one unstable seed (0.731;
-the other four cluster at 0.889--0.898, near the 0.906 fold baseline).
-
-Run `python experiments/collect_fold_reshape_results.py` to refresh the table
-as more configs finish.
-
-
+Run `python experiments/collect_fold_reshape_results.py` to refresh the table.

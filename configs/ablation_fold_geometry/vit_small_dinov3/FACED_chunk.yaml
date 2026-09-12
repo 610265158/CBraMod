@@ -1,0 +1,107 @@
+dataset: FACED
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter:
+    fold_factor: 2
+    fold_mode: chunk
+  feature_aggregation: cls_token
+  head_init_std: 0.02
+training:
+  lr: 0.0005
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 50
+  weight_decay: 0.01
+  min_lr: 1.0e-06
+  warmup_epochs: 5
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  mirror_augmentation: false
+  time_roll_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+notes: 'Fold-vs-reshape control: contiguous-chunk reshape (fold_mode=chunk) on the
+  updated CLS-token ViT recipe. Identical to configs/backbones/vit_small_dinov3/FACED.yaml
+  otherwise (cls_token aggregation, lr 5e-4, clip 1). Compare against the phase-interleaved
+  fold baseline recorded there: {''ba'': 0.44643, ''kappa'': 0.37444, ''f1'': 0.44454}.'
+output:
+  model_root: experiments/checkpoints/ablation_fold_geometry/vit_small_dinov3/faced/seed{seed}
+  log_root: experiments/logs/ablation_fold_geometry/vit_small_dinov3/faced/seed{seed}
+results:
+  fold_mode: chunk
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  per_seed:
+    42:
+      ba: 0.43612
+      kappa: 0.36272
+      f1: 0.43548
+    43:
+      ba: 0.43317
+      kappa: 0.35983
+      f1: 0.43358
+    44:
+      ba: 0.47021
+      kappa: 0.40172
+      f1: 0.46961
+    45:
+      ba: 0.43049
+      kappa: 0.35746
+      f1: 0.43138
+    46:
+      ba: 0.44887
+      kappa: 0.37625
+      f1: 0.44805
+  mean:
+    ba: 0.44377
+    kappa: 0.3716
+    f1: 0.44362
+  std_population:
+    ba: 0.01464
+    kappa: 0.01641
+    f1: 0.01423
+  fold_baseline:
+    protocol: validation_selected_checkpoint_once_on_test
+    feature_aggregation: cls_token
+    lr: 0.0005
+    clip_value: 1.0
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.44643
+      kappa: 0.37444
+      f1: 0.44454
+    std_population:
+      ba: 0.01023
+      kappa: 0.0109
+      f1: 0.00983

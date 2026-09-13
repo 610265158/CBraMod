@@ -1,4 +1,4 @@
-dataset: MentalArithmetic
+dataset: CHB-MIT
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
   adapter: {fold_factor: 4}
@@ -8,33 +8,33 @@ vision:
 training:
   lr: 0.0001
   backbone_lr_scale: 1.0
-  batch_size: 64
-  epochs: 50
+  batch_size: 32
+  epochs: 30
   weight_decay: 0.0005
   min_lr: 0.000001
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: -1.0
-  ema_decay: 0.999
-  num_workers: 0
+  ema_decay: 0.995
+  num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.1
-  binary_pos_weight: 3.0
+  binary_pos_weight: 1.0
   dropout: 0.1
   drop_path_rate: 0.0
-  early_stop: 30
+  early_stop: 10
   frozen: false
   multi_lr: false
   use_pretrained_weights: false
-  balanced_sampling: false
+  balanced_sampling: true
   balanced_sampling_power: 1.0
   balanced_sampling_min_share: 0.0
-  balanced_sampling_negative_ratio: 0.0
-  mirror_augmentation: true
+  balanced_sampling_negative_ratio: 10.0
+  mirror_augmentation: false
   mirror_prob: 0.5
-  time_roll_augmentation: true
-  time_roll_prob: 0.5
-  time_roll_max_fraction: 0.25
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
   amplitude_scale_augmentation: false
   amplitude_scale_prob: 1.0
   amplitude_scale_min: 0.5
@@ -52,13 +52,17 @@ protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.48750, std: 0.03164}
-  pr_auc: {mean: 0.25112, std: 0.02620}
-  roc_auc: {mean: 0.49711, std: 0.04477}
+  ba: {mean: 0.70175, std: 0.00828}
+  pr_auc: {mean: 0.42788, std: 0.00943}
+  roc_auc: {mean: 0.81495, std: 0.00452}
+results:
+  ba: {mean: 0.70175, std: 0.00828}
+  pr_auc: {mean: 0.42788, std: 0.00943}
+  roc_auc: {mean: 0.81495, std: 0.00452}
 notes: >-
-  Pretrain-vs-random ablation: ConvNeXt-Tiny DINOv3 architecture with random
-  initialization (use_pretrained_weights=false). Same recipe as the DINOv3
-  pretrained MentalArithmetic run.
+  Pretrain-vs-random ablation: convnext_tiny_dinov3 architecture with random initialization
+  (use_pretrained_weights=false). Matches the CHB-MIT pretrained recipe; only
+  the initialization differs.
 output:
-  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_MentalArithmetic_random_init/{seed}
-  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_MentalArithmetic_random_init/{seed}
+  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_CHB-MIT_random_init/{seed}
+  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_CHB-MIT_random_init/{seed}

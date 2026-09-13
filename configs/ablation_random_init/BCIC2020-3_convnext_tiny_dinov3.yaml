@@ -1,25 +1,23 @@
-dataset: MentalArithmetic
+dataset: BCIC2020-3
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
-  adapter: {fold_factor: 4}
-  squeeze_binary: true
+  adapter: {fold_factor: 1}
   feature_aggregation: flatten
-  head_init_std: 0.002
 training:
-  lr: 0.0001
+  lr: 0.00001
   backbone_lr_scale: 1.0
-  batch_size: 64
-  epochs: 50
-  weight_decay: 0.0005
+  batch_size: 32
+  epochs: 70
+  weight_decay: 0.005
   min_lr: 0.000001
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
-  ema_decay: 0.999
+  clip_value: 1.0
+  ema_decay: 0.995
   num_workers: 0
   optimizer: AdamW
   label_smoothing: 0.1
-  binary_pos_weight: 3.0
+  binary_pos_weight: 1.0
   dropout: 0.1
   drop_path_rate: 0.0
   early_stop: 30
@@ -30,11 +28,11 @@ training:
   balanced_sampling_power: 1.0
   balanced_sampling_min_share: 0.0
   balanced_sampling_negative_ratio: 0.0
-  mirror_augmentation: true
+  mirror_augmentation: false
   mirror_prob: 0.5
   time_roll_augmentation: true
-  time_roll_prob: 0.5
-  time_roll_max_fraction: 0.25
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
   amplitude_scale_augmentation: false
   amplitude_scale_prob: 1.0
   amplitude_scale_min: 0.5
@@ -45,20 +43,24 @@ training:
   mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
-  selection_metric: pr_auc
+  selection_metric: kappa
   test_each_epoch: false
   run_final_test: true
 protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.48750, std: 0.03164}
-  pr_auc: {mean: 0.25112, std: 0.02620}
-  roc_auc: {mean: 0.49711, std: 0.04477}
+  ba: {mean: 0.29467, std: 0.01869}
+  kappa: {mean: 0.11833, std: 0.02336}
+  f1: {mean: 0.29391, std: 0.01908}
+results:
+  ba: {mean: 0.29467, std: 0.01869}
+  kappa: {mean: 0.11833, std: 0.02336}
+  f1: {mean: 0.29391, std: 0.01908}
 notes: >-
-  Pretrain-vs-random ablation: ConvNeXt-Tiny DINOv3 architecture with random
-  initialization (use_pretrained_weights=false). Same recipe as the DINOv3
-  pretrained MentalArithmetic run.
+  Pretrain-vs-random ablation: convnext_tiny_dinov3 architecture with random initialization
+  (use_pretrained_weights=false). Matches the BCIC2020-3 pretrained recipe; only
+  the initialization differs.
 output:
-  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_MentalArithmetic_random_init/{seed}
-  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_MentalArithmetic_random_init/{seed}
+  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_BCIC2020-3_random_init/{seed}
+  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_BCIC2020-3_random_init/{seed}

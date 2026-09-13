@@ -47,6 +47,10 @@ training:
   test_each_epoch: false
   run_final_test: true
 protocol: {seeds: [42, 43, 44, 45, 46], selection: validation_selected_checkpoint_once_on_test}
+results:
+  ba: {mean: 0.50000, std: 0.00000}
+  pr_auc: {mean: 0.20535, std: 0.07019}
+  roc_auc: {mean: 0.46027, std: 0.03231}
 notes: >-
   Pretrain-vs-random ablation. Identical to the locked MentalArithmetic recipe
   except use_pretrained_weights=false (random backbone initialization). Fold

@@ -2,10 +2,10 @@ dataset: TUEV
 backbone_name: vit_small_patch16_dinov3.lvd1689m
 vision:
   adapter: {fold_factor: 1}
-  feature_aggregation: flatten
+  feature_aggregation: cls_token
   head_init_std: 0.02
 training:
-  lr: 0.0001
+  lr: 0.0005
   backbone_lr_scale: 0.1
   batch_size: 32
   epochs: 10
@@ -33,8 +33,22 @@ training:
 protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
-notes: TUEV P ablation; same recipe as the original vit_small_dinov3 TUEV config, with fold factor P=1.
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  feature_aggregation: cls_token
+  lr: 0.0005
+  clip_value: 1.0
+  seeds: [42, 43, 44, 45, 46]
+  per_seed:
+    42: {ba: 0.64507, kappa: 0.67960, f1: 0.82772}
+    43: {ba: 0.66352, kappa: 0.68395, f1: 0.83105}
+    44: {ba: 0.64445, kappa: 0.68751, f1: 0.83052}
+    45: {ba: 0.66476, kappa: 0.69538, f1: 0.83642}
+    46: {ba: 0.67052, kappa: 0.67748, f1: 0.82962}
+  mean: {ba: 0.65766, kappa: 0.68478, f1: 0.83107}
+  std_population: {ba: 0.01080, kappa: 0.00633, f1: 0.00291}
+notes: TUEV P ablation; corrected CLS-token ViT recipe (cls_token, lr 5e-4, clip 1), fold factor P=1. Five seeds, validation-selected checkpoint, one final test per seed; corrected-recipe rerun completed 2026-09-15.
 output:
-  model_root: experiments/checkpoints/ablation_p/vit_small_dinov3/tuev_p1/seed{seed}
-  log_root: experiments/logs/ablation_p/vit_small_dinov3/tuev_p1/seed{seed}
+  model_root: experiments/checkpoints/ablation_p/vit_small_dinov3/tuev_p1_clstoken_lr5e4_clip1/seed{seed}
+  log_root: experiments/logs/ablation_p/vit_small_dinov3/tuev_p1_clstoken_lr5e4_clip1/seed{seed}
 

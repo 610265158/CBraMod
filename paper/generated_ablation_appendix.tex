@@ -1,0 +1,233 @@
+\subsection{Complete ablation results}\label{app:complete-ablations}
+
+\subsection{Matched visual-pretraining initialization}\label{app:pretraining-full-generated}
+We report the two matched controls together. Panel~(a) changes only backbone
+initialization, comparing published visual weights with random initialization.
+Panel~(b) changes only the temporal-to-row mapping, comparing phase-interleaved
+folding with contiguous reshape. All values are final test means $\pm$
+population standard deviations over five seeds; each $\Delta$ is computed as
+the first condition minus the second.
+
+
+\begin{table}[tbp]\centering\scriptsize\caption{Matched initialization (efficientnet-b0).}\begin{tabular}{@{}l l c c c@{}}\toprule Dataset & Metric & Pretrained & Random & $\Delta$ \\ \midrule
+SEED-V & ba & 0.3660 $\pm$ 0.0062 & 0.3785 $\pm$ 0.0129 & -0.0125 \\
+SEED-V & kappa & 0.2056 $\pm$ 0.0078 & 0.2266 $\pm$ 0.0170 & -0.0210 \\
+SEED-V & f1 & 0.3678 $\pm$ 0.0057 & 0.3868 $\pm$ 0.0150 & -0.0190 \\
+PhysioNet-MI & ba & 0.6491 $\pm$ 0.0125 & 0.5931 $\pm$ 0.0138 & 0.0560 \\
+PhysioNet-MI & kappa & 0.5322 $\pm$ 0.0167 & 0.4573 $\pm$ 0.0184 & 0.0748 \\
+PhysioNet-MI & f1 & 0.6485 $\pm$ 0.0133 & 0.5972 $\pm$ 0.0126 & 0.0513 \\
+Mumtaz2016 & ba & 0.9153 $\pm$ 0.0061 & 0.9175 $\pm$ 0.0115 & -0.0023 \\
+Mumtaz2016 & pr-auc & 0.9864 $\pm$ 0.0045 & 0.9773 $\pm$ 0.0060 & 0.0091 \\
+Mumtaz2016 & roc-auc & 0.9846 $\pm$ 0.0053 & 0.9734 $\pm$ 0.0072 & 0.0112 \\
+ISRUC & ba & 0.8025 $\pm$ 0.0027 & 0.7989 $\pm$ 0.0030 & 0.0037 \\
+ISRUC & kappa & 0.7704 $\pm$ 0.0032 & 0.7733 $\pm$ 0.0038 & -0.0028 \\
+ISRUC & f1 & 0.8197 $\pm$ 0.0029 & 0.8243 $\pm$ 0.0029 & -0.0046 \\
+MentalArithmetic & ba & 0.6910 $\pm$ 0.0418 & 0.5000 $\pm$ 0.0000 & 0.1910 \\
+MentalArithmetic & pr-auc & 0.7903 $\pm$ 0.0536 & 0.2054 $\pm$ 0.0702 & 0.5849 \\
+MentalArithmetic & roc-auc & 0.8779 $\pm$ 0.0251 & 0.4603 $\pm$ 0.0323 & 0.4176 \\
+FACED & ba & 0.5516 $\pm$ 0.0179 & 0.2455 $\pm$ 0.0531 & 0.3062 \\
+FACED & kappa & 0.4953 $\pm$ 0.0197 & 0.1513 $\pm$ 0.0599 & 0.3440 \\
+FACED & f1 & 0.5567 $\pm$ 0.0163 & 0.2306 $\pm$ 0.0821 & 0.3261 \\
+SHU-MI & ba & 0.6273 $\pm$ 0.0085 & 0.5005 $\pm$ 0.0004 & 0.1268 \\
+SHU-MI & pr-auc & 0.6982 $\pm$ 0.0178 & 0.5157 $\pm$ 0.0175 & 0.1825 \\
+SHU-MI & roc-auc & 0.6962 $\pm$ 0.0139 & 0.5174 $\pm$ 0.0201 & 0.1788 \\
+HMC & ba & 0.7557 $\pm$ 0.0019 & 0.7355 $\pm$ 0.0044 & 0.0202 \\
+HMC & kappa & 0.7070 $\pm$ 0.0023 & 0.6877 $\pm$ 0.0050 & 0.0193 \\
+HMC & f1 & 0.7700 $\pm$ 0.0017 & 0.7565 $\pm$ 0.0043 & 0.0135 \\
+TUEV & ba & 0.6423 $\pm$ 0.0164 & 0.5328 $\pm$ 0.0357 & 0.1095 \\
+TUEV & kappa & 0.6901 $\pm$ 0.0190 & 0.5995 $\pm$ 0.0346 & 0.0906 \\
+TUEV & f1 & 0.8380 $\pm$ 0.0076 & 0.7914 $\pm$ 0.0196 & 0.0466 \\
+CHB-MIT & ba & 0.7552 $\pm$ 0.0599 & 0.7300 $\pm$ 0.0453 & 0.0252 \\
+CHB-MIT & pr-auc & 0.4092 $\pm$ 0.0536 & 0.4037 $\pm$ 0.0224 & 0.0055 \\
+CHB-MIT & roc-auc & 0.8974 $\pm$ 0.0194 & 0.8882 $\pm$ 0.0220 & 0.0092 \\
+BCIC2020-3 & ba & 0.6539 $\pm$ 0.0128 & 0.4416 $\pm$ 0.0470 & 0.2123 \\
+BCIC2020-3 & kappa & 0.5673 $\pm$ 0.0160 & 0.3020 $\pm$ 0.0588 & 0.2653 \\
+BCIC2020-3 & f1 & 0.6539 $\pm$ 0.0129 & 0.4425 $\pm$ 0.0472 & 0.2113 \\
+\bottomrule\end{tabular}\end{table}
+
+\begin{table}[tbp]\centering\scriptsize\caption{Matched initialization (convnext-tiny-dinov3).}\begin{tabular}{@{}l l c c c@{}}\toprule Dataset & Metric & Pretrained & Random & $\Delta$ \\ \midrule
+SEED-V & ba & 0.3884 $\pm$ 0.0071 & 0.2138 $\pm$ 0.0011 & 0.1746 \\
+SEED-V & kappa & 0.2396 $\pm$ 0.0095 & 0.0191 $\pm$ 0.0016 & 0.2205 \\
+SEED-V & f1 & 0.3976 $\pm$ 0.0080 & 0.2144 $\pm$ 0.0033 & 0.1832 \\
+HMC & ba & 0.7581 $\pm$ 0.0055 & 0.7035 $\pm$ 0.0045 & 0.0546 \\
+HMC & kappa & 0.7111 $\pm$ 0.0063 & 0.6461 $\pm$ 0.0048 & 0.0651 \\
+HMC & f1 & 0.7744 $\pm$ 0.0043 & 0.7232 $\pm$ 0.0042 & 0.0512 \\
+SHU-MI & ba & 0.6358 $\pm$ 0.0075 & 0.5775 $\pm$ 0.0093 & 0.0583 \\
+SHU-MI & pr-auc & 0.6910 $\pm$ 0.0129 & 0.5983 $\pm$ 0.0076 & 0.0926 \\
+SHU-MI & roc-auc & 0.7006 $\pm$ 0.0112 & 0.6144 $\pm$ 0.0061 & 0.0862 \\
+PhysioNet-MI & ba & 0.6609 $\pm$ 0.0079 & 0.4523 $\pm$ 0.0089 & 0.2086 \\
+PhysioNet-MI & kappa & 0.5478 $\pm$ 0.0105 & 0.2697 $\pm$ 0.0119 & 0.2782 \\
+PhysioNet-MI & f1 & 0.6618 $\pm$ 0.0079 & 0.4529 $\pm$ 0.0088 & 0.2089 \\
+ISRUC & ba & 0.8142 $\pm$ 0.0009 & 0.6807 $\pm$ 0.0207 & 0.1334 \\
+ISRUC & kappa & 0.7905 $\pm$ 0.0018 & 0.6378 $\pm$ 0.0216 & 0.1527 \\
+ISRUC & f1 & 0.8371 $\pm$ 0.0012 & 0.7111 $\pm$ 0.0203 & 0.1261 \\
+CHB-MIT & ba & 0.7681 $\pm$ 0.0294 & 0.7017 $\pm$ 0.0083 & 0.0664 \\
+CHB-MIT & pr-auc & 0.4734 $\pm$ 0.0345 & 0.4279 $\pm$ 0.0094 & 0.0455 \\
+MentalArithmetic & ba & 0.7667 $\pm$ 0.0234 & 0.4875 $\pm$ 0.0316 & 0.2792 \\
+MentalArithmetic & pr-auc & 0.7598 $\pm$ 0.0436 & 0.2511 $\pm$ 0.0262 & 0.5087 \\
+TUEV & ba & 0.6763 $\pm$ 0.0122 & 0.4302 $\pm$ 0.0300 & 0.2460 \\
+TUEV & kappa & 0.7095 $\pm$ 0.0305 & 0.5070 $\pm$ 0.0094 & 0.2025 \\
+TUEV & f1 & 0.8488 $\pm$ 0.0135 & 0.7409 $\pm$ 0.0044 & 0.1079 \\
+Mumtaz2016 & ba & 0.9176 $\pm$ 0.0138 & 0.8987 $\pm$ 0.0061 & 0.0189 \\
+Mumtaz2016 & pr-auc & 0.9842 $\pm$ 0.0020 & 0.9710 $\pm$ 0.0023 & 0.0132 \\
+Mumtaz2016 & roc-auc & 0.9825 $\pm$ 0.0034 & 0.9659 $\pm$ 0.0032 & 0.0165 \\
+BCIC2020-3 & ba & 0.6448 $\pm$ 0.0091 & 0.2947 $\pm$ 0.0187 & 0.3501 \\
+BCIC2020-3 & kappa & 0.5560 $\pm$ 0.0114 & 0.1183 $\pm$ 0.0234 & 0.4377 \\
+BCIC2020-3 & f1 & 0.6447 $\pm$ 0.0092 & 0.2939 $\pm$ 0.0191 & 0.3508 \\
+FACED & ba & 0.6363 $\pm$ 0.0027 & 0.3259 $\pm$ 0.0115 & 0.3105 \\
+FACED & kappa & 0.5890 $\pm$ 0.0032 & 0.2397 $\pm$ 0.0127 & 0.3494 \\
+FACED & f1 & 0.6374 $\pm$ 0.0030 & 0.3267 $\pm$ 0.0109 & 0.3106 \\
+\bottomrule\end{tabular}\end{table}
+
+\begin{table}[tbp]\centering\scriptsize\caption{Matched initialization (vit-small-dinov3).}\begin{tabular}{@{}l l c c c@{}}\toprule Dataset & Metric & Pretrained & Random & $\Delta$ \\ \midrule
+Mumtaz2016 & ba & 0.9112 $\pm$ 0.0099 & 0.9021 $\pm$ 0.0138 & 0.0091 \\
+Mumtaz2016 & pr-auc & 0.9797 $\pm$ 0.0037 & 0.9778 $\pm$ 0.0020 & 0.0019 \\
+Mumtaz2016 & roc-auc & 0.9767 $\pm$ 0.0047 & 0.9754 $\pm$ 0.0028 & 0.0013 \\
+PhysioNet-MI & ba & 0.6377 $\pm$ 0.0042 & 0.5774 $\pm$ 0.0060 & 0.0603 \\
+PhysioNet-MI & kappa & 0.5169 $\pm$ 0.0056 & 0.4365 $\pm$ 0.0081 & 0.0805 \\
+PhysioNet-MI & f1 & 0.6386 $\pm$ 0.0041 & 0.5795 $\pm$ 0.0066 & 0.0591 \\
+FACED & ba & 0.4464 $\pm$ 0.0102 & 0.2842 $\pm$ 0.0109 & 0.1622 \\
+FACED & kappa & 0.3744 $\pm$ 0.0109 & 0.1961 $\pm$ 0.0119 & 0.1783 \\
+FACED & f1 & 0.4445 $\pm$ 0.0098 & 0.2865 $\pm$ 0.0106 & 0.1580 \\
+TUAB & ba & 0.8202 $\pm$ 0.0031 & 0.7759 $\pm$ 0.0057 & 0.0443 \\
+TUAB & pr-auc & 0.9091 $\pm$ 0.0034 & 0.8465 $\pm$ 0.0056 & 0.0626 \\
+TUAB & roc-auc & 0.9042 $\pm$ 0.0024 & 0.8514 $\pm$ 0.0051 & 0.0529 \\
+HMC & ba & 0.7476 $\pm$ 0.0032 & 0.6727 $\pm$ 0.0034 & 0.0749 \\
+HMC & kappa & 0.6987 $\pm$ 0.0033 & 0.6169 $\pm$ 0.0026 & 0.0818 \\
+HMC & f1 & 0.7634 $\pm$ 0.0017 & 0.6997 $\pm$ 0.0027 & 0.0636 \\
+TUEV & ba & 0.7261 $\pm$ 0.0135 & 0.4902 $\pm$ 0.0154 & 0.2359 \\
+TUEV & kappa & 0.7428 $\pm$ 0.0127 & 0.5070 $\pm$ 0.0219 & 0.2358 \\
+TUEV & f1 & 0.8655 $\pm$ 0.0055 & 0.7435 $\pm$ 0.0104 & 0.1220 \\
+ISRUC & ba & 0.8130 $\pm$ 0.0027 & 0.7675 $\pm$ 0.0036 & 0.0455 \\
+ISRUC & kappa & 0.7875 $\pm$ 0.0026 & 0.7373 $\pm$ 0.0041 & 0.0503 \\
+ISRUC & f1 & 0.8349 $\pm$ 0.0023 & 0.7955 $\pm$ 0.0034 & 0.0394 \\
+SHU-MI & ba & 0.6302 $\pm$ 0.0331 & 0.5864 $\pm$ 0.0115 & 0.0438 \\
+SHU-MI & pr-auc & 0.6891 $\pm$ 0.0457 & 0.6437 $\pm$ 0.0152 & 0.0454 \\
+SHU-MI & roc-auc & 0.6908 $\pm$ 0.0452 & 0.6171 $\pm$ 0.0185 & 0.0737 \\
+SEED-V & ba & 0.3930 $\pm$ 0.0035 & 0.2565 $\pm$ 0.0029 & 0.1365 \\
+SEED-V & kappa & 0.2442 $\pm$ 0.0045 & 0.0720 $\pm$ 0.0039 & 0.1722 \\
+SEED-V & f1 & 0.4016 $\pm$ 0.0038 & 0.2643 $\pm$ 0.0029 & 0.1373 \\
+BCIC2020-3 & ba & 0.6619 $\pm$ 0.0090 & 0.4725 $\pm$ 0.0184 & 0.1893 \\
+BCIC2020-3 & kappa & 0.5773 $\pm$ 0.0113 & 0.3407 $\pm$ 0.0230 & 0.2367 \\
+BCIC2020-3 & f1 & 0.6618 $\pm$ 0.0089 & 0.4727 $\pm$ 0.0184 & 0.1891 \\
+CHB-MIT & ba & 0.7204 $\pm$ 0.0175 & 0.6402 $\pm$ 0.0666 & 0.0803 \\
+CHB-MIT & pr-auc & 0.4759 $\pm$ 0.0118 & 0.3647 $\pm$ 0.0305 & 0.1112 \\
+CHB-MIT & roc-auc & 0.9116 $\pm$ 0.0071 & 0.8817 $\pm$ 0.0104 & 0.0299 \\
+MentalArithmetic & ba & 0.7507 $\pm$ 0.0464 & 0.6271 $\pm$ 0.0680 & 0.1236 \\
+MentalArithmetic & pr-auc & 0.7249 $\pm$ 0.0625 & 0.4189 $\pm$ 0.0777 & 0.3060 \\
+MentalArithmetic & roc-auc & 0.8498 $\pm$ 0.0433 & 0.6848 $\pm$ 0.0471 & 0.1650 \\
+\bottomrule\end{tabular}\end{table}
+
+\paragraph{Discussion.}
+Across the matched initialization tables, visual pretraining is most beneficial
+for TUEV, FACED, MentalArithmetic, and BCIC2020-3, while gains are smaller on
+ISRUC and Mumtaz2016. The pattern also depends on the backbone: ConvNeXt-Tiny
+and ViT-Small often show larger improvements than EfficientNet-B0, whereas some
+tasks show little or negative change. These results support a transferable
+visual initialization, but not a uniform replacement for EEG pretraining.
+
+\subsection{Phase folding versus contiguous reshape}\label{app:fold-reshape-generated}
+This control keeps the backbone, initialization, output dimensions, optimization
+recipe, data split, checkpoint selection, and five-seed protocol fixed. Only the
+mapping of samples to rows and columns changes: phase folding uses
+$X[c,wP+p]$, whereas the contiguous control groups consecutive chunks. Thus
+both inputs contain exactly the same values, and $\Delta$ is phase-folding
+performance minus contiguous-reshape performance. The full results are grouped
+by backbone below.
+
+\begin{table}[tbp]\centering\scriptsize\caption{Phase folding versus contiguous reshape (efficientnet-b0).}\begin{tabular}{@{}l l c c c@{}}\toprule Dataset & Metric & Phase fold & Chunk reshape & $\Delta$ \\ \midrule
+ISRUC & ba & 0.8025 $\pm$ 0.0027 & 0.7691 $\pm$ 0.0055 & 0.0335 \\
+ISRUC & kappa & 0.7704 $\pm$ 0.0032 & 0.7397 $\pm$ 0.0044 & 0.0308 \\
+ISRUC & f1 & 0.8197 $\pm$ 0.0029 & 0.7938 $\pm$ 0.0040 & 0.0259 \\
+Mumtaz2016 & ba & 0.9153 $\pm$ 0.0061 & 0.9139 $\pm$ 0.0126 & 0.0014 \\
+Mumtaz2016 & pr-auc & 0.9864 $\pm$ 0.0045 & 0.9761 $\pm$ 0.0092 & 0.0103 \\
+Mumtaz2016 & roc-auc & 0.9846 $\pm$ 0.0053 & 0.9706 $\pm$ 0.0114 & 0.0140 \\
+FACED & ba & 0.5516 $\pm$ 0.0179 & 0.3958 $\pm$ 0.0579 & 0.1558 \\
+FACED & kappa & 0.4953 $\pm$ 0.0197 & 0.3198 $\pm$ 0.0649 & 0.1755 \\
+FACED & f1 & 0.5567 $\pm$ 0.0163 & 0.3999 $\pm$ 0.0604 & 0.1568 \\
+TUEV & ba & 0.6423 $\pm$ 0.0164 & 0.5826 $\pm$ 0.0315 & 0.0597 \\
+TUEV & kappa & 0.6901 $\pm$ 0.0190 & 0.6509 $\pm$ 0.0231 & 0.0392 \\
+TUEV & f1 & 0.8380 $\pm$ 0.0076 & 0.8176 $\pm$ 0.0085 & 0.0204 \\
+CHB-MIT & ba & 0.7552 $\pm$ 0.0599 & 0.7348 $\pm$ 0.0642 & 0.0204 \\
+CHB-MIT & pr-auc & 0.4092 $\pm$ 0.0536 & 0.3815 $\pm$ 0.0604 & 0.0276 \\
+CHB-MIT & roc-auc & 0.8974 $\pm$ 0.0194 & 0.8937 $\pm$ 0.0220 & 0.0037 \\
+MentalArithmetic & ba & 0.6910 $\pm$ 0.0418 & 0.6104 $\pm$ 0.0123 & 0.0806 \\
+MentalArithmetic & pr-auc & 0.7903 $\pm$ 0.0536 & 0.5849 $\pm$ 0.0734 & 0.2054 \\
+MentalArithmetic & roc-auc & 0.8779 $\pm$ 0.0251 & 0.7266 $\pm$ 0.0534 & 0.1513 \\
+TUAB & ba & 0.8317 $\pm$ 0.0032 & 0.8179 $\pm$ 0.0012 & 0.0138 \\
+TUAB & pr-auc & 0.9178 $\pm$ 0.0024 & 0.9031 $\pm$ 0.0016 & 0.0147 \\
+TUAB & roc-auc & 0.9126 $\pm$ 0.0024 & 0.8964 $\pm$ 0.0014 & 0.0162 \\
+SHU-MI & ba & 0.6273 $\pm$ 0.0085 & 0.6313 $\pm$ 0.0046 & -0.0040 \\
+SHU-MI & pr-auc & 0.6982 $\pm$ 0.0178 & 0.7009 $\pm$ 0.0138 & -0.0028 \\
+SHU-MI & roc-auc & 0.6962 $\pm$ 0.0139 & 0.6946 $\pm$ 0.0144 & 0.0016 \\
+HMC & ba & 0.7557 $\pm$ 0.0019 & 0.7056 $\pm$ 0.0039 & 0.0501 \\
+HMC & kappa & 0.7070 $\pm$ 0.0023 & 0.6379 $\pm$ 0.0046 & 0.0691 \\
+HMC & f1 & 0.7700 $\pm$ 0.0017 & 0.7168 $\pm$ 0.0041 & 0.0532 \\
+\bottomrule\end{tabular}\end{table}
+
+\begin{table}[tbp]\centering\scriptsize\caption{Phase folding versus contiguous reshape (convnext-tiny-dinov3).}\begin{tabular}{@{}l l c c c@{}}\toprule Dataset & Metric & Phase fold & Chunk reshape & $\Delta$ \\ \midrule
+ISRUC & ba & 0.8142 $\pm$ 0.0009 & 0.7894 $\pm$ 0.0016 & 0.0248 \\
+ISRUC & kappa & 0.7905 $\pm$ 0.0018 & 0.7650 $\pm$ 0.0014 & 0.0256 \\
+ISRUC & f1 & 0.8371 $\pm$ 0.0012 & 0.8162 $\pm$ 0.0012 & 0.0210 \\
+Mumtaz2016 & ba & 0.9176 $\pm$ 0.0138 & 0.9116 $\pm$ 0.0221 & 0.0060 \\
+Mumtaz2016 & pr-auc & 0.9842 $\pm$ 0.0020 & 0.9799 $\pm$ 0.0072 & 0.0043 \\
+Mumtaz2016 & roc-auc & 0.9825 $\pm$ 0.0034 & 0.9794 $\pm$ 0.0065 & 0.0030 \\
+FACED & ba & 0.6363 $\pm$ 0.0027 & 0.4079 $\pm$ 0.1514 & 0.2285 \\
+FACED & kappa & 0.5890 $\pm$ 0.0032 & 0.3321 $\pm$ 0.1694 & 0.2569 \\
+FACED & f1 & 0.6374 $\pm$ 0.0030 & 0.3926 $\pm$ 0.1809 & 0.2447 \\
+TUEV & ba & 0.6763 $\pm$ 0.0122 & 0.6312 $\pm$ 0.0524 & 0.0451 \\
+TUEV & kappa & 0.7095 $\pm$ 0.0305 & 0.6721 $\pm$ 0.0167 & 0.0373 \\
+TUEV & f1 & 0.8488 $\pm$ 0.0135 & 0.8259 $\pm$ 0.0121 & 0.0229 \\
+CHB-MIT & ba & 0.7681 $\pm$ 0.0294 & 0.7067 $\pm$ 0.0540 & 0.0615 \\
+CHB-MIT & pr-auc & 0.4734 $\pm$ 0.0345 & 0.4294 $\pm$ 0.0628 & 0.0440 \\
+MentalArithmetic & ba & 0.7667 $\pm$ 0.0234 & 0.7097 $\pm$ 0.0656 & 0.0569 \\
+MentalArithmetic & pr-auc & 0.7598 $\pm$ 0.0436 & 0.6198 $\pm$ 0.1237 & 0.1401 \\
+TUAB & ba & 0.8165 $\pm$ 0.0053 & 0.7469 $\pm$ 0.1235 & 0.0696 \\
+TUAB & pr-auc & 0.9057 $\pm$ 0.0032 & 0.8603 $\pm$ 0.0649 & 0.0454 \\
+TUAB & roc-auc & 0.9011 $\pm$ 0.0046 & 0.8090 $\pm$ 0.1545 & 0.0921 \\
+SHU-MI & ba & 0.6358 $\pm$ 0.0075 & 0.6004 $\pm$ 0.0523 & 0.0354 \\
+SHU-MI & pr-auc & 0.6910 $\pm$ 0.0129 & 0.6822 $\pm$ 0.0333 & 0.0088 \\
+SHU-MI & roc-auc & 0.7006 $\pm$ 0.0112 & 0.6865 $\pm$ 0.0363 & 0.0141 \\
+HMC & ba & 0.7581 $\pm$ 0.0055 & 0.7244 $\pm$ 0.0039 & 0.0337 \\
+HMC & kappa & 0.7111 $\pm$ 0.0063 & 0.6700 $\pm$ 0.0050 & 0.0411 \\
+HMC & f1 & 0.7744 $\pm$ 0.0043 & 0.7406 $\pm$ 0.0036 & 0.0338 \\
+\bottomrule\end{tabular}\end{table}
+
+\begin{table}[tbp]\centering\scriptsize\caption{Phase folding versus contiguous reshape (vit-small-dinov3).}\begin{tabular}{@{}l l c c c@{}}\toprule Dataset & Metric & Phase fold & Chunk reshape & $\Delta$ \\ \midrule
+ISRUC & ba & 0.8130 $\pm$ 0.0027 & 0.7741 $\pm$ 0.0024 & 0.0389 \\
+ISRUC & kappa & 0.7875 $\pm$ 0.0026 & 0.7473 $\pm$ 0.0023 & 0.0402 \\
+ISRUC & f1 & 0.8349 $\pm$ 0.0023 & 0.8023 $\pm$ 0.0022 & 0.0326 \\
+Mumtaz2016 & ba & 0.9112 $\pm$ 0.0099 & 0.8857 $\pm$ 0.0320 & 0.0255 \\
+Mumtaz2016 & pr-auc & 0.9797 $\pm$ 0.0037 & 0.9729 $\pm$ 0.0094 & 0.0068 \\
+Mumtaz2016 & roc-auc & 0.9767 $\pm$ 0.0047 & 0.9642 $\pm$ 0.0187 & 0.0125 \\
+FACED & ba & 0.4464 $\pm$ 0.0102 & 0.4438 $\pm$ 0.0146 & 0.0027 \\
+FACED & kappa & 0.3744 $\pm$ 0.0109 & 0.3716 $\pm$ 0.0164 & 0.0028 \\
+FACED & f1 & 0.4445 $\pm$ 0.0098 & 0.4436 $\pm$ 0.0142 & 0.0009 \\
+TUEV & ba & 0.7261 $\pm$ 0.0135 & 0.6727 $\pm$ 0.0056 & 0.0534 \\
+TUEV & kappa & 0.7428 $\pm$ 0.0127 & 0.6970 $\pm$ 0.0074 & 0.0458 \\
+TUEV & f1 & 0.8655 $\pm$ 0.0055 & 0.8414 $\pm$ 0.0039 & 0.0241 \\
+CHB-MIT & ba & 0.7204 $\pm$ 0.0175 & 0.7614 $\pm$ 0.0118 & -0.0409 \\
+CHB-MIT & pr-auc & 0.4759 $\pm$ 0.0118 & 0.4958 $\pm$ 0.0123 & -0.0200 \\
+CHB-MIT & roc-auc & 0.9116 $\pm$ 0.0071 & 0.9262 $\pm$ 0.0056 & -0.0146 \\
+MentalArithmetic & ba & 0.7507 $\pm$ 0.0464 & 0.7118 $\pm$ 0.0655 & 0.0389 \\
+MentalArithmetic & pr-auc & 0.7249 $\pm$ 0.0625 & 0.7239 $\pm$ 0.0734 & 0.0010 \\
+MentalArithmetic & roc-auc & 0.8498 $\pm$ 0.0433 & 0.8435 $\pm$ 0.0381 & 0.0063 \\
+TUAB & ba & 0.8202 $\pm$ 0.0031 & 0.8136 $\pm$ 0.0022 & 0.0066 \\
+TUAB & pr-auc & 0.9091 $\pm$ 0.0034 & 0.8994 $\pm$ 0.0017 & 0.0096 \\
+TUAB & roc-auc & 0.9042 $\pm$ 0.0024 & 0.8955 $\pm$ 0.0010 & 0.0087 \\
+SHU-MI & ba & 0.6302 $\pm$ 0.0331 & 0.5519 $\pm$ 0.0652 & 0.0783 \\
+SHU-MI & pr-auc & 0.6891 $\pm$ 0.0457 & 0.5996 $\pm$ 0.1003 & 0.0894 \\
+SHU-MI & roc-auc & 0.6908 $\pm$ 0.0452 & 0.5972 $\pm$ 0.0910 & 0.0936 \\
+HMC & ba & 0.7476 $\pm$ 0.0032 & 0.6751 $\pm$ 0.0060 & 0.0726 \\
+HMC & kappa & 0.6987 $\pm$ 0.0033 & 0.6139 $\pm$ 0.0053 & 0.0848 \\
+HMC & f1 & 0.7634 $\pm$ 0.0017 & 0.6974 $\pm$ 0.0048 & 0.0660 \\
+\bottomrule\end{tabular}\end{table}
+
+\paragraph{Discussion.}
+The phase-folding control shows a consistent advantage for CNN backbones across
+most datasets, with the largest differences on FACED and MentalArithmetic and
+smaller but positive differences on clinical and sleep tasks. ViT-Small is more
+task-sensitive: it benefits clearly on TUEV, HMC, and SHU-MI, but contiguous
+reshape is better on CHB-MIT and nearly tied on FACED and MentalArithmetic.
+Thus the gain is not explained by height expansion alone; it depends on how the
+backbone uses the phase-structured neighborhoods.

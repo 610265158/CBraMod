@@ -2,90 +2,40 @@
 
 \subsection{What can be concluded about EEG foundation models?}
 
-The study is designed around a narrow question: full fine-tuning performance
-alone may not identify the source of a foundation model's gains. The corrected
-benchmark shows that a compact generic encoder is competitive on several
-tasks, while primary-metric deficits on TUAB, SEED-V, SHU-MI, and Mumtaz2016
-reject a universal replacement claim; the retained supervised and foundation
-baselines make the comparison a ladder of controls, not a winner-take-all
-leaderboard. New foundation models should therefore be compared against strong
-architecture-and-geometry controls, not only task-specific networks with
-weaker transfer recipes, consistent with recent calls to reassess EEG
-foundation models \citep{yang2026eegworth}. The conclusion is methodological:
-stronger controls are needed before an improvement can be attributed
-specifically to large-scale EEG pretraining, which is not evidence that
-foundation models are categorically unnecessary.
+Full-fine-tuning accuracy alone does not identify the source of a foundation
+model's gains. Our controls show that a compact generic encoder can be highly
+competitive after geometry alignment, while deficits on TUAB, SEED-V, SHU-MI,
+and Mumtaz2016 rule out universal replacement. Visual pretraining improves
+balanced accuracy in 34 of 36 matched backbone--dataset comparisons under the
+same five-seed, validation-selected protocol, with exceptions for EfficientNet-
+B0 on SEED-V and Mumtaz2016. Thus the gain reflects transferable structure in
+the visual weights, not only a favorable architecture. Geometry, backbone,
+task, and optimization still matter, so EEG foundation models should be
+compared against strong architecture-and-geometry controls.
 
-The matched initialization ablation isolates one part of this claim. Across
-TUEV, PhysioNet-MI, ISRUC, and SHU-MI, random initialization lowers balanced
-accuracy in 11 of 12 backbone--dataset pairs by 0.4--24.6 points under the
-same five-seed, validation-selected protocol; the one exception (SHU-MI with
-ViT-Small) is within one point, and the pretraining benefit otherwise grows
-with model capacity, from +0.4 points for EfficientNet-B0 on the largest
-training set to +24.6 points for ConvNeXt-Tiny on TUEV. Thus the pretrained
-visual representation itself supplies transferable structure for EEG
-fine-tuning, not merely a workable architecture; whether EEG pretraining is
-better for frozen, few-shot, unseen-montage, or topology-sensitive transfer
-remains open.
+Vision pretraining is therefore a \emph{conditional} free lunch in a strong
+practical sense: it provides a broadly reusable prior that wins or remains
+closely competitive on most benchmarks without EEG-specific pretraining. Its
+value still depends on representation geometry, backbone, and task, so this
+does not imply that EEG pretraining is unnecessary in frozen, few-shot, or
+cross-montage settings. Rather, our results provide a design reference for
+EEG-specific pretraining and downstream transfer: future EEG models should
+quantify gains beyond a geometry-aligned visual prior, especially for few-shot
+adaptation, frozen representations, or cross-montage generalization.
 
-The comparison also sharpens the role of scale and spatial resolution. Several
-64-channel tasks remain competitive at $P=1$, whereas low-channel recordings
-benefit from folding, which preserves signal-bearing height and exposes
-phase-structured neighborhoods; channel count is nevertheless confounded with
-montage, dataset, and task, so denser electrodes are a testable direction
-rather than a guaranteed improvement. Against 69M-parameter \reve{}-Base,
-\method{} is competitive on selected shared tasks, and the common held-out
-partitions make the comparison directly interpretable. PhysioNet-MI and
-BCIC2020-3 show that large-scale EEG pretraining is not always necessary under
-full fine-tuning, while FACED favors ConvNeXt-Tiny over both EEG references,
-and TUAB stays close; these outcomes show task and architecture dependence
-without isolating physical coordinates or EEG pretraining.
+\subsection{Limitations}
 
-In the terminology of our title, vision pretraining is a \emph{conditional}
-free lunch: its weights are available without EEG pretraining, but their value
-depends on input geometry, downstream optimization, and task characteristics,
-and the mixed pattern across the 12 benchmarks makes this conditionality
-visible. The results do \emph{not} show that EEG pretraining is unnecessary:
-few-shot learning, missing-channel robustness, frozen features, cross-montage
-transfer, and pretraining-data efficiency are untested, and these are
-precisely the settings where large coordinate-aware EEG models should be most
-valuable.
-
-\subsection{Threats to validity}
-
-\begin{itemize}
-    \item \textbf{Protocol alignment.} EEGNet, SPaRCNet, BIOT, LaBraM,
-    \cbramod{}, and \reve{} are published results rather than local paired
-    reproductions. Those rows share our subject- or trial-level partitions,
-    which are inherited from the public \cbramod{} and \reve{} code
-    \citep{wang2024cbramod,elouahidi2025reve}; the remaining rows are
-    transcribed contextual references. The local TUEV release differs only in
-    its training and validation segments, with an unchanged held-out test
-    set, and TUAB/TUEV use \cbramod{}'s target-corpus-excluded controls.
-    Preprocessing, optimization, seeds, and model selection remain
-    method-specific.
-    \item \textbf{Dataset-specific recipes.} The encoder is fixed, but
-    optimization, input scale, and augmentation were recipe-searched per
-    dataset, while $P$ follows the prespecified rule of
-    Eq.~\ref{eq:p-geometry-rule}. This is a tuned downstream protocol, not
-    zero-shot universality, and the selected factors are not claimed to be
-    optimal.
-    \item \textbf{Remaining controls.} Random-initialization controls cover
-    TUEV, PhysioNet-MI, ISRUC, and SHU-MI, and parameters and FLOPs are
-    reported in Table~\ref{tab:model-scale}; frozen transfer and
-    same-pipeline EEG-foundation reruns remain for future work.
-    \item \textbf{Statistical uncertainty.} We report population standard
-    deviations over five seeds but no paired significance tests;
-    subject-level bootstrap intervals would better reflect evaluation
-    uncertainty, especially for MentalArithmetic.
-\end{itemize}
+Published EEG baselines are contextual references rather than paired local
+reruns, although the compared rows use inherited benchmark partitions. Our
+experiments use dataset-specific recipes and full fine-tuning; frozen and
+few-shot transfer, missing-channel and cross-montage robustness, pretraining
+efficiency, and paired significance tests remain open. Channel count is
+confounded with montage and task, so folding should not be interpreted as a
+causal effect of electrode density.
 
 \subsection{Broader impact}
 
-A small vision backbone may reduce the hardware barrier for EEG research and
-deployment, but high benchmark performance does not imply clinical readiness:
-EEG datasets encode acquisition-site, demographic, device, and labeling biases
-that a model can exploit. Clinical use would require external validation,
-calibration, uncertainty reporting, subgroup analysis, and human oversight.
-The invertibility of folding also means it provides no privacy protection,
-since identifiable waveform information remains in the transformed input.
+Compact backbones may lower hardware barriers, but benchmark accuracy is not
+clinical readiness. Deployment requires external validation, calibration,
+subgroup analysis, and human oversight. Because folding is invertible, it
+provides no privacy protection.

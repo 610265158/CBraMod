@@ -1,184 +1,93 @@
-"""Compose the merged folding + receptive-field overview figure.
+"""Real TUEV waveform, phase folding, and a traceable 16-sample inset.
 
-Produces paper/figures/folding_overview.{pdf,png} at final print size
-(7.0 x 3.6 in) so the fonts stay readable when LaTeX includes it at text width.
+Uses the training example and preprocessing in make_lossless_temporal_folding.
+Outputs vector PDF and a PNG preview; no synthetic EEG is used.
 """
-
-import sys
 from pathlib import Path
-
 import matplotlib
-
-matplotlib.use("Agg")
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle, ConnectionPatch
+from matplotlib.colors import TwoSlopeNorm
 import numpy as np
-from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from make_lossless_temporal_folding import load_tuev_example
-
-INK = "#172033"
-MUTED = "#667085"
-NAVY = "#285EA8"
-TEAL = "#159A9C"
-ORANGE = "#E68632"
-MAGENTA = "#B25087"
-PHASE = (NAVY, ORANGE, TEAL, MAGENTA)
-
-
-def panel_title(ax, letter, text, pad=4):
-    ax.set_title(f"({letter}) {text}", loc="left", fontsize=8.6,
-                 weight="bold", color=INK, pad=pad)
-
-
-def panel_raw(ax):
-    rng = np.random.default_rng(7)
-    t = np.arange(40)
-    slow = 0.22 * np.sin(2 * np.pi * t / 14)
-    spike = 1.15 * np.exp(-0.5 * ((t - 19.0) / 0.72) ** 2)
-    after = -0.48 * np.exp(-0.5 * ((t - 22.0) / 2.0) ** 2)
-    y = slow + spike + after + 0.02 * rng.normal(size=t.size)
-    ax.plot(t, y, color=INK, lw=1.0, zorder=2)
-    for phase in range(4):
-        keep = t % 4 == phase
-        ax.scatter(t[keep], y[keep], s=9, color=PHASE[phase],
-                   edgecolor="white", linewidth=0.3, zorder=3)
-    ax.axvspan(15.6, 24.4, color=ORANGE, alpha=0.10, lw=0)
-    ax.annotate("spike + slow wave", xy=(19, y[19]), xytext=(3.2, 1.42),
-                fontsize=6.6, color=ORANGE,
-                arrowprops=dict(arrowstyle="->", color=ORANGE, lw=0.8))
-    ax.text(0.985, 0.03, r"colors: $p = t\ \mathrm{mod}\ 4$", transform=ax.transAxes,
-            ha="right", va="bottom", fontsize=6.3, color=MUTED)
-    ax.set_xlim(-0.6, 39.6)
-    ax.set_ylim(-1.05, 1.72)
-    ax.set_xlabel("sample index $t$", fontsize=7.2)
-    ax.set_ylabel("amplitude", fontsize=7.2)
-    ax.set_yticks([])
-    ax.tick_params(labelsize=6.3, length=2, pad=1)
-    ax.grid(axis="x", color="#E4E9F0", lw=0.45)
-    ax.spines[["top", "right"]].set_visible(False)
-    panel_title(ax, "a", "Raw EEG is one-dimensional")
-
-
-def panel_real_fold(ax, fold_factor=4):
-    eeg, folded, _ = load_tuev_example(fold_factor)
-    limit = float(np.percentile(np.abs(folded), 99.5))
-    ax.imshow(np.clip(folded, -limit, limit), aspect="auto",
-              interpolation="nearest", cmap="RdBu_r",
-              vmin=-limit, vmax=limit, origin="upper")
-    for boundary in range(fold_factor, folded.shape[0], fold_factor):
-        ax.axhline(boundary - 0.5, color="white", linewidth=0.5, alpha=0.9)
-    ticks = list(range(1, folded.shape[0], 8))
-    ax.set_yticks(ticks, [f"ch{i // 4 + 1}" for i in ticks], fontsize=5.6)
-    for tick, row in zip(ax.get_yticklabels(), ticks):
-        tick.set_color(PHASE[row % fold_factor])
-    ax.set_xticks([0, 50, 100, 150, 200, 249],
-                  ["0", "1", "2", "3", "4", "5"])
-    ax.tick_params(labelsize=6.0, length=2, pad=1)
-    ax.set_xlabel("folded time (s)", fontsize=7.2)
-    ax.set_ylabel("16 electrodes $\\times$ 4 phases", fontsize=6.8)
-    ax.text(0.99, 0.02, r"$I[cP{+}p,w]=X[c,wP{+}p]$", transform=ax.transAxes,
-            ha="right", va="bottom", fontsize=7.2, color=INK,
-            bbox=dict(facecolor="white", edgecolor="none", alpha=0.82, pad=1.2))
-    panel_title(ax, "b", "Real TUEV: lossless fold ($P=4$)")
-
-
-def panel_offsets(ax):
-    ax.set_axis_off()
-    ax.set_xlim(-1.7, 6.1)
-    ax.set_ylim(-1.35, 4.35)
-    values = np.array([[-5, -1, 3], [-4, 0, 4], [-3, 1, 5]])
-    size = 1.12
-    for row in range(3):
-        for col in range(3):
-            x = col * size
-            y = (2 - row) * size
-            center = row == 1 and col == 1
-            ax.add_patch(Rectangle(
-                (x, y), size - 0.12, size - 0.12,
-                facecolor="#FFF2E8" if center else "#EDF6F6",
-                edgecolor=ORANGE if center else TEAL, lw=1.0))
-            ax.text(x + (size - 0.12) / 2, y + (size - 0.12) / 2,
-                    f"{values[row, col]:+d}", ha="center", va="center",
-                    fontsize=8.4, weight="bold", color=INK)
-    ax.text(-1.35, 1.5, r"$\Delta p$", rotation=90, va="center",
-            fontsize=7.4, color=MUTED)
-    ax.text(1.5, 3.55, r"$\Delta w$", ha="center", fontsize=7.4, color=MUTED)
-    ax.text(1.5, -0.72, r"$\Delta t = P\,\Delta w + \Delta p$",
-            ha="center", fontsize=7.8, color=INK, weight="bold")
-    ax.text(1.5, -1.18, "one $3\\times3$ patch: $\\pm1$-sample phases\nand $\\pm4$-sample context",
-            ha="center", va="top", fontsize=6.4, color=MUTED)
-    panel_title(ax, "c", "Multi-lag $3\\times3$ filtering", pad=2)
-
-
-def panel_hierarchy(ax):
-    ax.set_axis_off()
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    cards = [
-        (ORANGE, "Stem / early", "3–7 px  →  55–140 ms",
-         "spikes, slopes,\nlocal phase"),
-        (TEAL, "Middle", "19 px  →  380 ms",
-         "waveform complexes,\nshort oscillations"),
-        (NAVY, "Deep", "67–147 px  →  1.3–2.9 s",
-         "bursts, rhythms,\ncross-electrode"),
-        (MAGENTA, "Aggregation", "851 px  →  17 s / token",
-         "whole segment\n→ task decision"),
-    ]
-    width, gap = 0.235, 0.02
-    starts = [i * (width + gap) for i in range(4)]
-    for start, (color, title, scale, function) in zip(starts, cards):
-        ax.add_patch(FancyBboxPatch(
-            (start, 0.12), width, 0.58,
-            boxstyle="round,pad=0.006,rounding_size=0.012",
-            transform=ax.transAxes, facecolor="white", edgecolor="#CDD6E1",
-            lw=0.8))
-        ax.add_patch(Rectangle(
-            (start, 0.64), width, 0.055, transform=ax.transAxes,
-            facecolor=color, edgecolor="none"))
-        ax.text(start + 0.012, 0.565, title, transform=ax.transAxes,
-                fontsize=7.4, weight="bold", color=color, va="top")
-        ax.text(start + 0.012, 0.435, scale, transform=ax.transAxes,
-                fontsize=6.6, weight="bold", color=INK, va="top")
-        ax.text(start + 0.012, 0.325, function, transform=ax.transAxes,
-                fontsize=6.2, color=MUTED, va="top", linespacing=1.25)
-    for start in starts[:-1]:
-        ax.add_patch(FancyArrowPatch(
-            (start + width + 0.002, 0.42), (start + width + gap - 0.002, 0.42),
-            transform=ax.transAxes, arrowstyle="-|>", mutation_scale=7,
-            lw=0.9, color="#8B98A9"))
-    panel_title(ax, "d", "EfficientNet-B0: receptive fields grow with depth",
-                pad=1)
+from make_lossless_temporal_folding import load_tuev_example, TUEV_CHANNELS, TUEV_LABELS
 
 
 def main():
-    plt.rcParams.update({
-        "font.family": "DejaVu Sans",
-        "font.size": 7.5,
-        "axes.edgecolor": "#98A2B3",
-    })
-    fig = plt.figure(figsize=(7.0, 3.6), facecolor="white")
-    grid = fig.add_gridspec(
-        2, 3, height_ratios=(1.0, 0.78), width_ratios=(1.0, 1.22, 1.0),
-        left=0.052, right=0.99, bottom=0.085, top=0.925,
-        hspace=0.62, wspace=0.30,
-    )
-    raw_ax = fig.add_subplot(grid[0, 0])
-    fold_ax = fig.add_subplot(grid[0, 1])
-    offset_ax = fig.add_subplot(grid[0, 2])
-    hierarchy_ax = fig.add_subplot(grid[1, :])
-
-    panel_raw(raw_ax)
-    panel_real_fold(fold_ax)
-    panel_offsets(offset_ax)
-    panel_hierarchy(hierarchy_ax)
-
-    output = Path(__file__).resolve().parent / "folding_overview"
-    fig.savefig(str(output) + ".png", dpi=300, facecolor="white",
-                bbox_inches="tight")
-    fig.savefig(str(output) + ".pdf", facecolor="white", bbox_inches="tight")
+    eeg, folded, label = load_tuev_example(4)
+    # Deterministic illustrative training window: highest energy, 16 samples,
+    # aligned to a four-sample group. This is not a model attribution.
+    energy = (eeg.reshape(16, 250, 4)**2).sum(-1)
+    scores = np.stack([energy[:, i:i+4].sum(1) for i in range(247)], axis=1)
+    ch, group = np.unravel_index(np.argmax(scores), scores.shape)
+    start = int(group * 4)
+    values = eeg[ch, start:start+16]
+    local = values.reshape(4, 4).T
+    assert np.array_equal(local, folded[ch*4:ch*4+4, group:group+4])
+    assert np.array_equal(folded.reshape(16,4,250).transpose(0,2,1).reshape(16,1000), eeg)
+    phase = ['#2166AC','#D97706','#138A72','#9B4C96']
+    plt.rcParams.update({'font.family':'DejaVu Sans','font.size':8,'axes.titlesize':10,
+                         'axes.titlepad':19,'axes.labelsize':8,'xtick.labelsize':7,'ytick.labelsize':7})
+    fig = plt.figure(figsize=(10.0,6.4),facecolor='white')
+    gs = fig.add_gridspec(2,2,left=.13,right=.94,bottom=.15,top=.84,
+                          hspace=.85,wspace=.35,height_ratios=[1.3,1])
+    a,b,c,d = [fig.add_subplot(gs[i,j]) for i,j in [(0,0),(0,1),(1,0),(1,1)]]
+    scale = max(float(np.percentile(np.abs(eeg),99)),1e-6)*2.8
+    time=np.arange(1000)/200
+    for k in range(16):
+        a.plot(time,k-eeg[k]/scale,color=phase[0] if k==ch else '#536578',lw=.55)
+    a.axvspan(start/200,(start+16)/200,color='#E7A026',alpha=.25)
+    a.set(xlim=(0,5),ylim=(15.9,-.9),xlabel='Time (s)',yticks=range(16),yticklabels=TUEV_CHANNELS)
+    a.set_title('(a) Real EEG: 16 × 1,000',loc='left',fontweight='bold')
+    a.tick_params(axis='y',length=0,labelsize=6.5)
+    a.text(.02,1.02,'Shared amplitude scale; traces vertically offset',transform=a.transAxes,fontsize=7,color='#596675')
+    vmax=float(np.max(np.abs(eeg)))
+    norm=TwoSlopeNorm(vmin=-vmax,vcenter=0,vmax=vmax)
+    im=b.imshow(folded,aspect='auto',cmap='RdBu_r',norm=norm,interpolation='nearest')
+    for k in range(1,16): b.axhline(k*4-.5,color='white',lw=.4)
+    b.set(yticks=np.arange(16)*4+1.5,yticklabels=TUEV_CHANNELS,xlabel='Column w (four samples per column)',xticks=[0,50,100,150,200,249])
+    b.tick_params(axis='y',length=0,labelsize=6.5)
+    b.set_title('(b) Same data folded: 64 × 250',loc='left',fontweight='bold')
+    b.add_patch(Rectangle((group-.5,ch*4-.5),4,4,fill=False,ec='#E7A026',lw=1.8))
+    b.text(.02,1.02,'Each channel occupies four consecutive phase rows',transform=b.transAxes,fontsize=7,color='#596675')
+    cb=fig.colorbar(im,ax=b,fraction=.026,pad=.02);cb.ax.tick_params(labelsize=6);cb.set_label('Scaled EEG amplitude',fontsize=7)
+    x=np.arange(16)
+    c.plot(x,values,color='#52606E',lw=1)
+    for p,col in enumerate(phase):
+        ix=x[p::4];c.scatter(ix,values[p::4],c=col,s=25,zorder=4)
+    span=max(float(np.ptp(values)),1e-4)
+    for i,v in enumerate(values):c.annotate(str(i),(i,v),xytext=(0,7),textcoords='offset points',ha='center',fontsize=7,color=phase[i%4])
+    for edge in [3.5,7.5,11.5]:c.axvline(edge,color='#B9C4CF',ls='--',lw=.8)
+    c.set(xlim=(-.7,15.7),ylim=(min(values)-span*.15,max(values)+span*.3),xticks=[0,4,8,12,15],xlabel=f'Local index i (original t = {start} + i)',ylabel='Scaled EEG amplitude')
+    c.set_title(f'(c) Zoom: {TUEV_CHANNELS[ch]}, 16 real samples',loc='left',fontweight='bold')
+    c.text(.0,1.02,'Numbers identify samples; colors identify phase i mod 4',transform=c.transAxes,fontsize=7,color='#596675')
+    d.imshow(local,cmap='RdBu_r',norm=norm,aspect='auto',interpolation='nearest')
+    for p in range(4):
+        for w in range(4):
+            i=4*w+p
+            d.text(w,p,f'{i}',ha='center',va='center',fontsize=11,fontweight='bold',color=phase[p],
+                   bbox=dict(boxstyle='round,pad=.22',facecolor='white',edgecolor='none',alpha=.95))
+    d.set(xticks=range(4),xticklabels=[f'{group+w}' for w in range(4)],yticks=range(4),yticklabels=[f'p = {p}' for p in range(4)],xlabel='Folded column w')
+    for p,tick in enumerate(d.get_yticklabels()):tick.set_color(phase[p])
+    d.set_xticks(np.arange(-.5,4),minor=True);d.set_yticks(np.arange(-.5,4),minor=True);d.grid(which='minor',color='white',lw=1.2);d.tick_params(which='minor',length=0)
+    d.set_title('(d) Folded samples and a 3 × 3 kernel',loc='left',fontweight='bold')
+    d.add_patch(Rectangle((-.5,-.5),3,3,fill=False,ec='#E69F00',lw=2.5,zorder=8,clip_on=False))
+    d.plot(1,1,marker='s',markersize=25,markerfacecolor='none',
+           markeredgecolor='#E69F00',markeredgewidth=1.6,zorder=9)
+    d.text(.5,-.34,r'$3\times3$ kernel: center 5; samples 0–2, 4–6, 8–10',
+           transform=d.transAxes,ha='center',fontsize=8,color='#815B00')
+    assert np.array_equal(np.arange(16).reshape(4,4).T[:3,:3],
+                          [[0,4,8],[1,5,9],[2,6,10]])
+    d.text(0,1.02,'Numbers identify the same samples shown in (c)',transform=d.transAxes,fontsize=7,color='#596675')
+    fig.add_artist(ConnectionPatch(xyA=(15.8,np.mean(values)),coordsA=c.transData,xyB=(-.65,1.5),coordsB=d.transData,arrowstyle='->',mutation_scale=12,color='#667085',lw=1.2))
+    fig.text(.51,.29,'P = 4',ha='center',fontsize=9,fontweight='bold')
+    fig.suptitle('Lossless phase-interleaved folding on real EEG',fontsize=12,fontweight='bold',y=.97)
+    fig.text(.13,.025,r'Each column groups four consecutive samples; each row follows one phase: $I[cP+p,w]=X[c,wP+p]$.',fontsize=9)
+    for ax in [a,c]:ax.spines[['top','right']].set_visible(False)
+    target=Path(__file__).resolve().parent/'folding_overview'
+    fig.savefig(target.with_suffix('.pdf'))
+    fig.savefig(target.with_suffix('.png'),dpi=220)
     plt.close(fig)
+    print(f'Validated exact fold/unfold; channel={ch}, window=[{start},{start+16}); saved {target}')
 
-
-if __name__ == "__main__":
-    main()
+if __name__=='__main__':main()

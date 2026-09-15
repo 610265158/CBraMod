@@ -7,12 +7,12 @@ Each EEG segment is represented as a channel--time tensor
 $\mathbf{X}\in\mathbb{R}^{C\times T}$, where $C$ is the number of channels
 and $T$ is the number of time samples. A minibatch is passed through the same
 folding adapter and visual encoder before task-specific prediction. Dataset-specific
-sequence handling is described in Appendix~\ref{app:protocol}.
+sequence handling follows the released evaluation code.
 
-The objective is deliberately conventional.  Binary tasks use one logit and
-binary cross entropy.  Multiclass tasks use cross entropy with label smoothing.
-The contribution lies in the interface between $\mathbf{X}$ and a generic 2D
-backbone.
+We use standard binary cross-entropy (BCE) for binary tasks and cross-entropy
+(CE) for multiclass tasks; label smoothing and other optimization details are
+given in Appendix~\ref{app:recipes}. Our contribution lies in the interface
+between $\mathbf{X}$ and a generic 2D backbone.
 
 \subsection{Lossless temporal folding}
 
@@ -42,8 +42,8 @@ x_3&x_7&x_{11}&x_{15}
 \end{bmatrix}$.
 \end{center}
 
-Figure~\ref{fig:folding-overview} illustrates the reindexing on a controlled
-example and on a real 16-channel TUEV segment. The raster is a computational
+Figure~\ref{fig:folding-overview} illustrates the reindexing on a real 16-channel TUEV segment
+and a magnified window from the same recording. The raster is a computational
 representation, not a physical image of the scalp. It gives the visual encoder
 a taller signal-bearing input and places short within-channel temporal
 patterns in local 2D neighborhoods before strided stages reduce resolution.
@@ -51,103 +51,51 @@ Additional geometric, seizure, and controlled-waveform visualizations appear
 in Appendix Figs.~\ref{fig:side-top-view}, \ref{fig:seizure-folding}, and
 \ref{fig:synthetic-folding-patterns}.
 
-\begin{proposition}[Information preservation]
-$F_P$ is a bijection between $\mathbb{R}^{C\times T}$ and
-$\mathbb{R}^{(CP)\times(T/P)}$.
-\end{proposition}
-
-\begin{proof}
-Every original index $(c,t)$ has a unique decomposition
-$t=wP+p$, where $p=t\bmod P$ and $w=\lfloor t/P\rfloor$.  Equation
-\ref{eq:fold} therefore maps it to exactly one output index.  The inverse is
-$\mathbf{X}_{c,wP+p}=\mathbf{I}_{1,cP+p,w}$.  No value is duplicated,
-averaged, interpolated, or discarded.
-\end{proof}
-
-Folding is consequently not a filter and should not be described as denoising.
-It changes only the neighborhoods on which the following network operates.
-Its purpose is twofold: to preserve signal-bearing height for sparse montages,
-and to expose existing temporal patterns in a structured phase--time layout.
-The model can still access every waveform value, while local 2D kernels now
-combine adjacent phases and $P$-spaced context. Information preservation alone
-does not guarantee an advantage; the benefit depends on whether this new
-computational neighborhood matches the task.
+Because folding is a bijective reindexing, every sample is preserved exactly
+and the original waveform is recoverable by the inverse map. Additional
+visualizations are provided in the Appendix.
 
 \subsection{Locality induced by folding}
 
-Consider two folded pixels from the same electrode,
-$\mathbf{I}_{cP+p,w}$ and $\mathbf{I}_{cP+p',w'}$.  Their Manhattan distance
-in the image is
-
+For two folded samples from the same electrode, the image and original-time
+distances are respectively
 \begin{equation}
-  d_{\mathrm{img}}=|p-p'|+|w-w'|,
+d_{\mathrm{img}}=|p-p'|+|w-w'|,\qquad
+d_{\mathrm{time}}=|(w-w')P+(p-p')|.
 \end{equation}
-
-while their temporal separation in the original waveform is
-
-\begin{equation}
-  d_{\mathrm{time}}=|(w-w')P+(p-p')|.
-\end{equation}
-
-A vertical one-pixel step within an electrode therefore connects consecutive
-samples, whereas a horizontal one-pixel step connects samples $P$ time points
-apart.  A $k\times k$ convolution combines offsets of the form
-$\Delta t=P\Delta w+\Delta p$ within one local receptive field.  The local
-patch is flattened and multiplied by the kernel weights, so this is an
-ordinary dot product followed by bias and nonlinearity.  For $P=4$, a
-$3\times3$ kernel directly mixes offsets
-$\{-5,-4,-3,-1,0,1,3,4,5\}$.  This is a polyphase view of the waveform: each
-column holds a group of $P$ consecutive samples, and each row follows one
-temporal phase across groups.
-
-Figure~\ref{fig:folding-overview} summarizes this mechanism and its
-interaction with the hierarchical receptive fields of EfficientNet-B0.
+A vertical step connects consecutive samples, whereas a horizontal step connects
+samples $P$ time points apart. Therefore, a local $k\times k$ convolution
+captures temporal offsets of the form $\Delta t=P\Delta w+\Delta p$; for
+$P=4$, a $3\times3$ kernel combines the offsets
+$\{-5,-4,-3,-1,0,1,3,4,5\}$ around its center. Figure~\ref{fig:folding-overview}
+visualizes how this kernel captures both adjacent-sample structure and
+$P$-spaced temporal context after folding.
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{folding_overview.pdf}
-\caption{Lossless phase-interleaved temporal folding and its interaction with
-hierarchical 2D receptive fields. (a) Raw EEG is a one-dimensional
-channel-by-time signal. (b) A real 16-channel TUEV segment is folded with
-$P=4$: row $cP+p$ contains samples $x[c,p::P]$, turning $16\times1000$ into
-$64\times250$ while retaining all 16{,}000 values. (c) A $3\times3$ kernel
-therefore mixes original-time offsets $\Delta t=P\Delta w+\Delta p$,
-combining adjacent phases with $P$-spaced context. (d) EfficientNet-B0 turns
-this layout into progressively longer and wider receptive fields, from local
-morphology to global segment context. Folding adds no parameters and changes
-only adjacency, with no interpolation, discarded samples, or learnable
-adapter.}
+\caption{Lossless folding of a real TUEV training segment ($P=4$).
+(a) Sixteen EEG channels before folding; traces share an amplitude scale and
+are vertically offset. The highlighted channel and time window identify the
+zoom below; the C3--P3 waveform exhibits the original temporal periodicity.
+(b) The same preprocessed samples rearranged from $16\times1000$
+to $64\times250$; white separators delimit four phase rows per channel.
+(The folded view makes the corresponding phase/visual periodic pattern more
+explicit.) (c) Sixteen consecutive samples from channel C3--P3, numbered locally from
+0 to 15 and colored by phase. (d) The identical samples arranged into four
+phase rows: numbers retain the indices in (c). The gold outline encloses a
+$3\times3$ kernel centered on sample 5, covering samples 0--2, 4--6,
+and 8--10; the small square marks its center. Heatmaps in (b) and (d) share a color
+scale. The local window is selected by signal energy for illustration;
+folding itself preserves all preprocessed values exactly.}
 \label{fig:folding-overview}
 \end{figure*}
 \FloatBarrier
 
-The rasterization introduces a phase-wrap boundary.  The original consecutive
-pair at phases $P-1$ and $0$ lies across adjacent columns rather than adjacent
-rows.  Large $P$ therefore increases height and temporal offset diversity, but
-also makes this wrap less local to a small square kernel.
-
-At the boundary between the last phase row of electrode $c$ and the first
-phase row of electrode $c+1$, vertical locality becomes cross-electrode and
-slightly time-shifted.  This is useful only when the chosen channel order has
-meaningful structure.  It also exposes a limitation: the adapter does not know
-physical electrode coordinates and cannot distinguish a physiological
-neighborhood from an arbitrary row ordering.
-
-\paragraph{Downsampling and signal occupancy.}
-EfficientNet-B0 has nominal spatial stride 32. Folding increases the
-signal-bearing height from $C$ to $CP$, delaying its collapse through the
-convolutional stages; the implementation pads both dimensions to multiples of
-32. The exact padded dimensions and occupancy ratio are given in
-Appendix~\ref{app:recipes}. Larger $P$ improves vertical occupancy but reduces
-horizontal temporal resolution and increases phase-wrap boundaries, so the
-effect is not necessarily monotonic.
-
-\begin{equation}
-  H_{\mathrm{pad}}=32\left\lceil\frac{CP}{32}\right\rceil,
-  \qquad
-  W_{\mathrm{pad}}=32\left\lceil\frac{T/P}{32}\right\rceil.
-\end{equation}
-
+The layout has two boundary effects: consecutive samples across a phase wrap
+are separated across folded columns, and transitions between electrode blocks
+depend on channel order rather than physical proximity. Larger $P$ increases
+height and temporal-offset diversity but can make these boundaries less local.
 
 \subsection{Architecture-aligned fold-factor selection}
 \label{sec:p-selection}
@@ -174,17 +122,15 @@ left unfolded. We select
  \end{cases}
 \end{equation}
 
-The target height 64 leaves two signal-bearing cells after stride 32. This is
+The target height 64 leaves two signal-bearing cells after stride 32. For
+ViT-Small, the same folded tensor is zero-padded to the patch-embedding
+canvas and tokenized with its native $16\times16$ patch projection; folding
+therefore changes the spatial arrangement presented to the patch embedder but
+does not alter samples or introduce interpolation. This is
 an architecture-alignment heuristic, not a claim that 64 rows are intrinsically
 optimal. It uses only $(C,T)$ and backbone geometry and can therefore be fixed
 before training. The smallest valid factor limits the loss of horizontal
 resolution; task-specific tuning remains possible on validation data.
-
-\begin{hypothesis}[Geometry alignment]
-Folding should help when improved signal occupancy exposes useful temporal
-relations before hierarchical downsampling; gains may weaken when electrode
-topology or long uninterrupted context dominates.
-\end{hypothesis}
 
 \subsection{Vision backbone and task head}
 
@@ -213,12 +159,8 @@ dataset-specific feature aggregation followed by a linear classifier:
 \end{center}
 
 We use one-channel timm backbones \citep{wightman2019timm}: ImageNet-pretrained
-EfficientNet-B0 and DINOv3-pretrained ConvNeXt-Tiny and ViT-Small. Their
-natural-image classifiers are replaced by task-specific heads, and the
-encoder and head are fine-tuned jointly without EEG self-supervised
-pretraining. The default readout is global average pooling (GAP) for CNNs and
-the CLS token for ViT. When global aggregation is unstable or underfits on the
-validation split, we use a flatten--FC readout, following the downstream
-readout practice of \cbramod{} and \reve{}
-\citep{wang2024cbramod,elouahidi2025reve}. Dataset-specific head choices are
-reported in Appendix~\ref{app:recipes}.
+EfficientNet-B0 and DINOv3-pretrained ConvNeXt-Tiny and ViT-Small. Natural-image
+classifiers are replaced with task-specific heads, and encoder and head are
+fine-tuned jointly. CNNs use global average pooling and ViT uses the CLS token
+by default; dataset-specific flatten--FC readouts are listed in
+Appendix~\ref{app:recipes}.

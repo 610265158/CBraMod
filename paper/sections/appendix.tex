@@ -114,12 +114,29 @@ can also cross electrodes, so the interpretation depends on channel ordering.
 
 \input{sections/appendix_detailed_results}
 
+\clearpage
+\section{Ablation Studies}
+\label{app:ablations}
+\input{sections/appendix_c_ablations}
+
 \section{Model-Family Comparison}
 \label{app:model-families}
+
+This appendix separates the representational interface from model scale. All
+three vision backbones receive the same folded EEG tensor, whereas the EEG
+foundation models use their native patching and positional mechanisms. The
+comparison is descriptive rather than a runtime benchmark: parameter and FLOP
+counts are measured on a shared input and exclude task heads. Using the
+released implementations and an explicit PyTorch FLOP counter, the vision
+encoders at a shared $32\times1000$ input with $P=4$ require 4.01M/0.247G
+(EfficientNet-B0), 27.82M/2.903G (ConvNeXt-Tiny), and 21.39M/3.000G
+(ViT-Small) parameters/FLOPs, respectively. FLOPs count one multiply-add as
+one operation; attention fast paths are disabled for reproducible accounting.
 
 \begin{table*}[tbp]
 \centering
 \caption{Conceptual scope of the model families discussed in the paper.}
+\label{tab:model-scale}
 \small
 \renewcommand{\arraystretch}{1.06}
 \begin{tabularx}{\textwidth}{@{}lXXX@{}}
@@ -142,15 +159,15 @@ $32\times1000$ input; the \cbramod{} paper reports about 4.0M parameters,
 whereas its released checkpoint contains 4.92M.}
 \end{table*}
 
-\section{Dataset-Specific Training Recipes}
+\section{Training Recipes and Backbone Input Shapes}
 \label{app:recipes}
 
-The corresponding YAML files are the source of truth for the formal
-EfficientNet-B0 runs; Table~\ref{tab:recipes} mirrors their recipes for
-readability. ``Folded'' is the non-padded image shape; zero padding is appended only
-at the bottom and right. EfficientNet-B0 uses GAP except for FACED, which
-uses flatten aggregation. All B0 runs use a linear head, ImageNet
-initialization, AdamW, cosine decay, dropout .1, and bfloat16 mixed precision.
+Table~\ref{tab:recipes} summarizes one representative ConvNeXt-Tiny training
+recipe for each dataset. ``Folded'' denotes the non-padded image shape; zero
+padding is appended only at the bottom and right. All runs use DINOv3
+initialization, AdamW, cosine decay, dropout .1, bfloat16 mixed precision, and
+a dataset-specific linear head. Learning rates, epoch budgets, fold factors,
+and validation metrics are selected before the final test evaluation.
 
 \begin{table*}[tbp]
 \centering
@@ -159,22 +176,22 @@ initialization, AdamW, cosine decay, dropout .1, and bfloat16 mixed precision.
 \footnotesize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.06}
-\begin{tabularx}{\textwidth}{@{}lccrcclX@{}}
+\begin{tabularx}{\textwidth}{@{}lccrccc@{}}
 \toprule
-Dataset & $P$ & Folded $H\times W$ & Epochs & LR & WD & Select & Special setting \\
+Dataset & $P$ & Folded $H\times W$ & Epochs & LR & WD & Select \\
 \midrule
-CHB-MIT & 4 & $64\times500$ & 10 & $10^{-3}$ & $5\cdot10^{-3}$ & PR-AUC & RA4 weights, head std .002, fixed 1:10 positive:negative sampling, no augmentation \\
-TUAB & 4 & $64\times500$ & 10 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & RA4 weights, head std .002, EMA .995, grad clip 1 \\
-TUEV & 4 & $64\times250$ & 10 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & grad clip 1, head std .002, no augmentation/EMA \\
-ISRUC & 12 & $72\times500$ & 15 & $10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, roll+mirror, head std .002 \\
-FACED & 2 & $64\times1000$ & 50 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & RA4 weights, flatten, head std .002, warmup 5, EMA .995 \\
-SEED-V & 1 & $62\times200$ & 50 & $5\cdot10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ & no folding \\
-PhysioNet-MI & 1 & $64\times800$ & 30 & $2\cdot10^{-3}$ & $5\cdot10^{-3}$ & $\kappa$ & warmup 3, EMA .995, no folding \\
-SHU-MI & 2 & $64\times400$ & 10 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & RA4 weights, clip 1024/scale 32, no augmentation, EMA .995 \\
-BCIC2020-3 & 1 & $64\times600$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & no fold, warmup 3, EMA .995, bf16, clip 1, time roll \\
-Mumtaz2016 & 4 & $76\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & warmup 3, no EMA, amplitude scale $[.5,2.0]$ \\
-MentalArithmetic & 4 & $80\times250$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & PR-AUC & EMA .995, weighted BCE, roll+mirror \\
-HMC & 16 & $64\times375$ & 30 & $10^{-3}$ & $5\cdot10^{-4}$ & $\kappa$ & four-channel PSG, EMA .995, no augmentation \\
+CHB-MIT & 4 & $64\times500$ & 30 & $10^{-4}$ & $5\cdot10^{-4}$ & PR-AUC \\
+TUAB & 4 & $64\times500$ & 10 & $10^{-4}$ & $5\cdot10^{-4}$ & PR-AUC \\
+TUEV & 4 & $64\times250$ & 5 & $10^{-4}$ & $5\cdot10^{-4}$ & $\kappa$ \\
+ISRUC & 12 & $72\times500$ & 15 & $10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ \\
+FACED & 2 & $64\times1000$ & 50 & $10^{-4}$ & $5\cdot10^{-4}$ & $\kappa$ \\
+SEED-V & 1 & $62\times200$ & 50 & $10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ \\
+PhysioNet-MI & 1 & $64\times800$ & 30 & $10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ \\
+SHU-MI & 2 & $64\times400$ & 10 & $10^{-4}$ & $5\cdot10^{-4}$ & PR-AUC \\
+BCIC2020-3 & 1 & $64\times600$ & 70 & $10^{-5}$ & $5\cdot10^{-3}$ & $\kappa$ \\
+Mumtaz2016 & 4 & $76\times250$ & 30 & $10^{-4}$ & $5\cdot10^{-4}$ & PR-AUC \\
+MentalArithmetic & 4 & $80\times250$ & 50 & $10^{-4}$ & $5\cdot10^{-4}$ & PR-AUC \\
+HMC & 16 & $64\times375$ & 30 & $10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ \\
 \bottomrule
 \end{tabularx}
 \tablenote{``Select'' is the validation metric used for checkpointing. All
@@ -183,97 +200,12 @@ head, and bfloat16 mixed precision. FACED uses flatten; the other B0 recipes
 use GAP.}
 \end{table*}
 
-CHB-MIT uses RA4 EfficientNet-B0 weights, classifier initialization std .002,
-fixed 1:10 positive-to-negative sampling, and no augmentation. TUEV uses
-bottom/right-only padding, classifier initialization std .002, gradient
-clipping at 1, and no augmentation or EMA. ISRUC uses batch size 16, three
-warmup epochs, EMA decay .995, time roll
-($p=.5$, maximum fraction .25), and mirror augmentation ($p=.5$), which swaps
-left/right channel pairs according to the known montage. Its classifier uses
-truncated-normal weight initialization with standard deviation .002 and zero
-bias. PhysioNet-MI uses
-batch size 32, three warmup epochs, EMA decay .995, BF16 AMP, and no data
-augmentation; left/right mirror is disabled because its motor-imagery labels
-are side-specific. SHU-MI uses three warmup epochs, EMA decay .995, RA4
-weights, and no train-time augmentation.
-BCIC2020-3 uses time roll with $p=1$ and maximum fraction .5. Mumtaz2016 uses
-only log-uniform amplitude scaling in $[.5,2.0]$, with no time roll, mirror,
-mixup, or EMA. MentalArithmetic
-uses batch size 64, three warmup epochs,
-\texttt{pos\_weight=3}, time roll ($p=.5$, maximum fraction .25), and mirror
-($p=.5$).
-SHU-MI uses the finalized clip-to-1024 and divide-by-32 scaling; all other
-datasets use the same default
-preprocessing.
+The ConvNeXt-Tiny runs share DINOv3 initialization, AdamW, cosine decay,
+dropout .1, bfloat16 training, and validation-selected checkpointing. The
+dataset-specific choices relevant to reproduction are summarized in
+Table~\ref{tab:recipes}; all datasets use the common preprocessing described
+in Section~4.2, with no separate SHU-MI scaling rule.
 
-\section{Backbone Input Shapes}
-
-\begin{table}[tbp]
-\centering
-\caption{Architecture-aligned fold factors and backbone input shapes. The
-fold factor follows Eq.~\ref{eq:p-geometry-rule}; zero padding is appended
-only at the bottom and right.}
-\label{tab:backbone-shapes}
-\small
-\renewcommand{\arraystretch}{1.04}
-\begin{tabularx}{\linewidth}{@{}lrrrrr@{}}
-\toprule
-Dataset & $C$ & $T$ & $P$ & Folded & Padded \\
-\midrule
-CHB-MIT / TUAB & 16 & 2000 & 4 & $64\times500$ & $64\times512$ \\
-TUEV & 16 & 1000 & 4 & $64\times250$ & $64\times256$ \\
-ISRUC & 6 & 6000 & 12 & $72\times500$ & $96\times512$ \\
-FACED & 32 & 2000 & 2 & $64\times1000$ & $64\times1024$ \\
-SEED-V & 62 & 200 & 1 & $62\times200$ & $64\times224$ \\
-PhysioNet-MI & 64 & 800 & 1 & $64\times800$ & $64\times800$ \\
-SHU-MI & 32 & 800 & 2 & $64\times400$ & $64\times416$ \\
-BCIC2020-3 & 64 & 600 & 1 & $64\times600$ & $64\times608$ \\
-Mumtaz2016 & 19 & 1000 & 4 & $76\times250$ & $96\times256$ \\
-MentalArithmetic & 20 & 1000 & 4 & $80\times250$ & $96\times256$ \\
-HMC & 4 & 6000 & 16 & $64\times375$ & $64\times384$ \\
-\bottomrule
-\end{tabularx}
-\tablenote{``Folded'' is the tensor shape after phase-interleaved folding;
-``Padded'' is the backbone input after zero padding to multiples of 32.}
-\end{table}
-
-Parameters and FLOPs are counted with PyTorch's FLOP counter at the shared
-$32\times1000$ input (folded with $P=2$ for our backbones). Reference-model
-counts are taken from the officially released implementations in their native
-patch formats, so no pretrained weights are required. For \cbramod{} we
-disable PyTorch's fused multi-head-attention fast path so that every matrix
-product is counted. The counting scripts are included in the code release.
-
-\section{Formal Evaluation Protocol}
-\label{app:protocol}
-
-The executable protocol is:
-
-\begin{enumerate}
-    \item Verify every configured dataset path with
-    \texttt{experiments/run\_downstream.sh --check\_only --all}.
-    \item Smoke-test the current code using a CPU, random-initialized one-batch
-    forward pass.
-    \item During recipe search, set \texttt{test\_each\_epoch=false} and
-    \texttt{run\_final\_test=false}.  Rank candidates by mean best validation
-    metric across two search seeds.
-    \item Freeze the winning recipe before the formal runs.
-    \item Train every formal dataset with the seed set recorded in its YAML
-    configuration (the current EfficientNet-B0 recipes use seeds 42--46),
-    always with \texttt{test\_each\_epoch=false}. Save the best validation
-    checkpoint.
-    \item Restore that checkpoint and evaluate the test set exactly once.
-    \item Aggregate the final test values as mean and population standard
-    deviation over the recipe's seed set. Do not choose a seed or epoch using
-    test performance.
-\end{enumerate}
-
-All downstream training is launched through
-\texttt{bash experiments/run\_downstream.sh}; direct invocation of the legacy
-entrypoint can silently change path resolution.
-
-\FloatBarrier
-\clearpage
 \section{Data and Code Reproducibility Statement}
 
 The codebase records exact dataset paths, input shapes, preprocessing, seeds,

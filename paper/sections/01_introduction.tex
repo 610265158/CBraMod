@@ -41,18 +41,8 @@ therefore combines fine temporal differences with $P$-spaced context, while
 the taller representation carries more nonzero rows through the height
 hierarchy.
 
-This viewpoint leads to three questions:
-
-\begin{enumerate}
-    \item When can a lossless geometry adapter make vision pretraining
-    competitive across heterogeneous EEG tasks?
-    \item How do fold factor and induced adjacency change the receptive field
-    presented to a hierarchical 2D CNN?
-    \item On which tasks does an artificial row geometry fail, revealing the
-    need for channel identity, physical coordinates, or EEG pretraining?
-\end{enumerate}
-
-We study these questions with EfficientNet-B0, ConvNeXt-Tiny, and ViT-Small
+We evaluate this interface across heterogeneous EEG tasks and analyze when it
+helps or fails, using EfficientNet-B0, ConvNeXt-Tiny, and ViT-Small
 across 12 downstream benchmarks, keeping conventional supervised models and
 the BIOT, LaBraM, CBraMod, and REVE foundation models as contextual baselines.
 
@@ -61,23 +51,20 @@ Our contributions are:
 \begin{itemize}
     \item \textbf{A lossless EEG--vision interface.} Temporal folding is a
     bijective channel--time reindexing with no interpolation, filtering, or
-    learned parameters; it compensates for sparse montages while leaving dense
-    64-channel inputs unfolded.
+    learned parameters, preserving signal-bearing height for sparse montages.
     \item \textbf{Evidence that visual representations transfer to EEG.}
-    ImageNet-initialized EfficientNet-B0 and DINOv3-initialized ConvNeXt-Tiny
-    and ViT-Small all learn from the same folded waveform interface across
-    heterogeneous tasks, despite the lack of semantic correspondence between
-    natural images and EEG.
+    ImageNet- and DINOv3-initialized CNN and Transformer backbones learn from
+    the same folded waveform interface across heterogeneous tasks.
     \item \textbf{A broad benchmark comparison.} We compare the visual
-    transfer approach with published supervised architectures and foundation
-    models, including CBraMod and REVE, on 12 datasets using shared benchmark
-    splits.
+    transfer with supervised architectures and EEG foundation models, including
+    CBraMod and REVE, on 12 datasets under shared benchmark splits.
 \end{itemize}
 
-Our claim is that visual pretraining is a transferable cross-domain prior for
-EEG when the representation geometry is aligned. The transfer is conditional:
-EEG-specific foundation models retain advantages on some tasks, but not
-universally under full supervised fine-tuning. This suggests a design
-principle for future EEG systems: before scaling EEG-specific pretraining,
-measure how much transfer follows from aligning signal geometry with mature
+Our central claim is specific and testable: when EEG is mapped to a geometry
+that a vision encoder can process without discarding temporal information,
+mature visual representations become a competitive cross-domain prior for EEG
+decoding. The effect is substantial but not universal—EEG-specific foundation
+models remain ahead on several tasks—so this is not a replacement claim. It is
+a design principle: before investing in larger EEG-specific pretraining,
+quantify the gain obtained from geometry alignment and established
 representations from other modalities.

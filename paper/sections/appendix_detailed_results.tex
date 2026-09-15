@@ -29,7 +29,7 @@ the same held-out test set used by the references.
 CHB-MIT evaluates binary seizure detection in clinical EEG recordings \citep{shoeb2009application}. Each local input contains 16 channels and 2,000 time samples. PR-AUC complements balanced accuracy and ROC-AUC by emphasizing detection of the positive seizure class.
 CHB-MIT uses the CBraMod subject split CHB01--20/CHB21--22/CHB23--24. The local row
 uses the locked five-seed recipe.
-\begin{table}[H]\centering\caption{CHB-MIT under the shared subject split.}\label{tab:detail-chb}
+\begin{table}[t]\centering\caption{CHB-MIT under the shared subject split.}\label{tab:detail-chb}
 \detailhead{Balanced accuracy}{PR-AUC}{ROC-AUC}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.5658\pm0.0106$ & $0.1914\pm0.0182$ & $0.8048\pm0.0136$  \\
@@ -51,13 +51,12 @@ ST-Transformer& $0.5915\pm0.0195$ & $0.1422\pm0.0094$ & $0.8237\pm0.0491$  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.7682\pm0.0294} & \bestcell{0.4734\pm0.0345} & \bestcell{0.9067\pm0.0156}  \\
 \method{} (ViT-Small)& $0.7278\pm0.0105$ & \secondcell{0.4566\pm0.0131} & \secondcell{0.9054\pm0.0114}  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{TUAB: Abnormal EEG Detection}
 TUAB evaluates binary classification of normal and abnormal clinical EEG \citep{obeid2016temple}. The local pipeline represents each segment by 16 channels and 2,000 time samples. We report balanced accuracy, PR-AUC, and ROC-AUC; the local split contains 297,103 training, 75,407 validation, and 36,945 test segments.
 TUAB uses the target-corpus-excluded \cbramod{} control because TUAB is part
 of the TUEG pretraining source.
-\begin{table}[H]\centering\caption{TUAB under the shared split.}\label{tab:detail-tuab}
+\begin{table}[t]\centering\caption{TUAB under the shared split.}\label{tab:detail-tuab}
 \detailhead{Balanced accuracy}{PR-AUC}{ROC-AUC}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.7642\pm0.0036$ & $0.8299\pm0.0043$ & $0.8412\pm0.0031$  \\
@@ -79,7 +78,6 @@ ST-Transformer& $0.7966\pm0.0023$ & $0.8521\pm0.0026$ & $0.8707\pm0.0019$  \\
 \method{} (ConvNeXt-Tiny)& $0.8216\pm0.0050$ & $0.9059\pm0.0045$ & $0.9020\pm0.0045$  \\
 \method{} (ViT-Small)& $0.8226\pm0.0007$ & $0.9114\pm0.0019$ & $0.9066\pm0.0014$  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{TUEV: Event Type Classification}
 TUEV evaluates six-class EEG event classification \citep{obeid2016temple}. Local inputs contain 16 channels and 1,000 time samples, corresponding to five seconds at 200\,Hz. We report balanced accuracy, Cohen's $\kappa$, and weighted F1 over 68,445 training, 15,487 validation, and 29,421 test segments.
@@ -87,7 +85,7 @@ The local files use TUEV v2.0.1 rather than the v2.0.0 release used by the
 reference benchmarks; the held-out test partition is the official evaluation
 set, unchanged at 29,421 segments, while v2.0.1 changes only the training and
 validation segments (68,445/15,487 rather than 67,436/15,634).
-\begin{table}[H]\centering\caption{TUEV event classification.}\label{tab:detail-tuev}
+\begin{table}[t]\centering\caption{TUEV event classification.}\label{tab:detail-tuev}
 \detailhead{Balanced accuracy}{Cohen's $\kappa$}{Weighted F1}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.3876\pm0.0143$ & $0.3577\pm0.0155$ & $0.6539\pm0.0120$  \\
@@ -109,14 +107,13 @@ ST-Transformer& $0.3984\pm0.0228$ & $0.3765\pm0.0306$ & $0.6823\pm0.0190$  \\
 \method{} (ConvNeXt-Tiny)& \secondcell{0.6763\pm0.0122} & \secondcell{0.7095\pm0.0305} & \secondcell{0.8488\pm0.0135}  \\
 \method{} (ViT-Small)& \bestcell{0.7217\pm0.0062} & \bestcell{0.7263\pm0.0043} & \bestcell{0.8563\pm0.0029}  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{ISRUC: Sleep Staging}
 ISRUC-Sleep provides overnight polysomnography for five-stage sleep classification \citep{khalighi2016isruc}. Each local epoch contains six channels and 6,000 time samples (30 seconds at 200\,Hz). Balanced accuracy, Cohen's $\kappa$, and weighted F1 are computed over epoch labels.
 ISRUC uses the published benchmark split (subjects 1--80/81--90/91--100 for
 train/validation/test), identical to the \reve{} protocol. The local loader
 retains 20 consecutive epochs per record during visual encoding.
-\begin{table}[H]\centering\caption{ISRUC five-class sleep staging.}\label{tab:detail-isruc}
+\begin{table}[t]\centering\caption{ISRUC five-class sleep staging.}\label{tab:detail-isruc}
 \detailhead{Balanced accuracy}{Cohen's $\kappa$}{Weighted F1}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.7154\pm0.0121$ & $0.7040\pm0.0173$ & $0.7513\pm0.0124$  \\
@@ -138,13 +135,12 @@ ST-Transformer& $0.7381\pm0.0205$ & $0.7013\pm0.0352$ & $0.7681\pm0.0175$  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.8142\pm0.0009} & \bestcell{0.7906\pm0.0018} & \bestcell{0.8372\pm0.0012}  \\
 \method{} (ViT-Small)& \secondcell{0.8058\pm0.0017} & \secondcell{0.7785\pm0.0028} & \secondcell{0.8286\pm0.0021}  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{FACED: Emotion Recognition}
 FACED evaluates nine-class emotion recognition using recordings from 123 participants \citep{chen2023large}. The local inputs contain 32 channels and 2,000 time samples, corresponding to 10-second segments at 200\,Hz. The split contains 6,720 training, 1,680 validation, and 1,932 test segments; evaluation uses balanced accuracy, Cohen's $\kappa$, and weighted F1.
 FACED uses the CBraMod partition of subjects 1--80/81--100/101--123 for
 train/validation/test.
-\begin{table}[H]\centering\caption{FACED nine-class emotion recognition.}\label{tab:detail-faced}
+\begin{table}[t]\centering\caption{FACED nine-class emotion recognition.}\label{tab:detail-faced}
 \detailhead{Balanced accuracy}{Cohen's $\kappa$}{Weighted F1}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.4090\pm0.0122$ & $0.3342\pm0.0251$ & $0.4124\pm0.0141$  \\
@@ -166,14 +162,13 @@ ST-Transformer& $0.4810\pm0.0079$ & $0.4137\pm0.0133$ & $0.4795\pm0.0096$  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.6363\pm0.0027} & \bestcell{0.5891\pm0.0032} & \bestcell{0.6374\pm0.0030}  \\
 \method{} (ViT-Small)& $0.3867\pm0.0071$ & $0.3097\pm0.0072$ & $0.3849\pm0.0071$  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{SEED-V: Emotion Recognition}
 SEED-V evaluates five-class emotion recognition \citep{liu2021comparing}. Each local sample contains 62 channels and 200 time samples. The trial-based protocol yields 34,432 training, 42,960 validation, and 40,352 test samples. We report balanced accuracy, Cohen's $\kappa$, and weighted F1.
 SEED-V follows the CBraMod trial-level split: for each session, the first five
 trials form training, the middle five validation, and the last five test.
 \reve{} does not report this dataset.
-\begin{table}[H]\centering\caption{SEED-V five-class emotion recognition.}\label{tab:detail-seedv}
+\begin{table}[t]\centering\caption{SEED-V five-class emotion recognition.}\label{tab:detail-seedv}
 \detailhead{Balanced accuracy}{Cohen's $\kappa$}{Weighted F1}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.2961\pm0.0102$ & $0.1006\pm0.0143$ & $0.2749\pm0.0098$  \\
@@ -195,13 +190,12 @@ ST-Transformer& $0.3052\pm0.0072$ & $0.1083\pm0.0121$ & $0.2833\pm0.0105$  \\
 \method{} (ConvNeXt-Tiny)& $0.3884\pm0.0071$ & $0.2396\pm0.0095$ & $0.3976\pm0.0081$  \\
 \method{} (ViT-Small)& $0.3930\pm0.0035$ & \secondcell{0.2442\pm0.0045} & \secondcell{0.4016\pm0.0038}  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{PhysioNet-MI: Motor Imagery}
 PhysioNet-MI evaluates four-class motor decoding using the PhysioNet motor movement/imagery recordings \citep{schalk2004bci2000}. Local segments contain 64 channels and 800 time samples. The split yields 6,300 training, 1,734 validation, and 1,803 test samples; evaluation uses balanced accuracy, Cohen's $\kappa$, and weighted F1.
 PhysioNet-MI uses the shared CBraMod/REVE subject split 1--70/71--89/90--109
 and $P=1$ in the local model.
-\begin{table}[H]\centering\caption{PhysioNet-MI four-class motor imagery.}\label{tab:detail-physio}
+\begin{table}[t]\centering\caption{PhysioNet-MI four-class motor imagery.}\label{tab:detail-physio}
 \detailhead{Balanced accuracy}{Cohen's $\kappa$}{Weighted F1}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.5814\pm0.0125$ & $0.4468\pm0.0199$ & $0.5796\pm0.0115$  \\
@@ -223,13 +217,12 @@ ST-Transformer& $0.6035\pm0.0081$ & $0.4712\pm0.0199$ & $0.6053\pm0.0075$  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.6609\pm0.0079} & \bestcell{0.5479\pm0.0105} & \bestcell{0.6618\pm0.0079}  \\
 \method{} (ViT-Small)& $0.5773\pm0.0052$ & $0.4363\pm0.0070$ & $0.5774\pm0.0060$  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{SHU-MI: Motor Imagery}
 SHU-MI evaluates binary motor-imagery classification \citep{ma2022large}. Local segments contain 32 channels and 800 time samples. Subject-disjoint evaluation uses 7,210 training, 2,431 validation, and 2,347 test segments, with balanced accuracy, PR-AUC, and ROC-AUC as metrics.
 SHU-MI uses the CBraMod subject split 1--15/16--20/21--25; \reve{} does not
 report this dataset.
-\begin{table}[H]\centering\caption{SHU-MI binary motor imagery.}\label{tab:detail-shu}
+\begin{table}[t]\centering\caption{SHU-MI binary motor imagery.}\label{tab:detail-shu}
 \detailhead{Balanced accuracy}{PR-AUC}{ROC-AUC}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.5889\pm0.0177$ & $0.6311\pm0.0142$ & $0.6283\pm0.0152$  \\
@@ -251,13 +244,12 @@ ST-Transformer& $0.5992\pm0.0206$ & $0.6394\pm0.0122$ & $0.6431\pm0.0111$  \\
 \method{} (ConvNeXt-Tiny)& \secondcell{0.6358\pm0.0075} & $0.6910\pm0.0129$ & \bestcell{0.7006\pm0.0112}  \\
 \method{} (ViT-Small)& $0.5957\pm0.0096$ & $0.6619\pm0.0161$ & $0.6347\pm0.0133$  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{BCIC2020-3: Imagined Speech}
 BCIC2020-3 evaluates five-class imagined-speech decoding \citep{jeong20222020}. Each local input contains 64 channels and 600 time samples. The benchmark contains 4,500 training, 750 validation, and 750 test segments. We report balanced accuracy, Cohen's $\kappa$, and weighted F1.
 BCIC2020-3 uses the official 60/10/10 trials-per-class split, the same
 partition used by the CBraMod and REVE benchmarks.
-\begin{table}[H]\centering\caption{BCIC2020-3 five-class imagined speech.}\label{tab:detail-bcic}
+\begin{table}[t]\centering\caption{BCIC2020-3 five-class imagined speech.}\label{tab:detail-bcic}
 \detailhead{Balanced accuracy}{Cohen's $\kappa$}{Weighted F1}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.4413\pm0.0096$ & $0.3016\pm0.0123$ & $0.4413\pm0.0102$  \\
@@ -279,14 +271,13 @@ ST-Transformer& $0.4126\pm0.0122$ & $0.2941\pm0.0159$ & $0.4247\pm0.0138$  \\
 \method{} (ConvNeXt-Tiny)& $0.6448\pm0.0091$ & $0.5560\pm0.0114$ & $0.6447\pm0.0092$  \\
 \method{} (ViT-Small)& \bestcell{0.6619\pm0.0090} & \bestcell{0.5773\pm0.0113} & \bestcell{0.6618\pm0.0089}  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{Mumtaz2016: Depression Detection}
 Mumtaz2016 evaluates binary discrimination between major depressive disorder (MDD) and healthy controls \citep{mumtaz2016mdd}. Each local input contains 19 channels and 1,000 time samples. The fixed benchmark partition is subject-disjoint and yields 4,891 training, 1,041 validation, and 1,211 test segments; evaluation uses balanced accuracy, PR-AUC, and ROC-AUC.
 The partition assigns 22/5/6 MDD and 21/4/5 control subjects to
 train/validation/test (63 subjects; both eyes-open and eyes-closed recordings),
 matching the shared CBraMod/REVE preprocessing code.
-\begin{table}[H]\centering\caption{Mumtaz2016 depression detection.}\label{tab:detail-mumtaz}
+\begin{table}[t]\centering\caption{Mumtaz2016 depression detection.}\label{tab:detail-mumtaz}
 \detailhead{Balanced accuracy}{PR-AUC}{ROC-AUC}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.9232\pm0.0104$ & $0.9626\pm0.0095$ & $0.9639\pm0.0093$  \\
@@ -308,13 +299,12 @@ ST-Transformer& $0.9135\pm0.0103$ & $0.9578\pm0.0086$ & $0.9594\pm0.0059$  \\
 \method{} (ConvNeXt-Tiny)& $0.9176\pm0.0138$ & $0.9842\pm0.0020$ & $0.9825\pm0.0034$  \\
 \method{} (ViT-Small)& $0.9072\pm0.0152$ & $0.9807\pm0.0016$ & $0.9788\pm0.0021$  \\
 \detailend\end{table}
-\FloatBarrier
 
 \subsection{MentalArithmetic: Mental Workload}
 MentalArithmetic evaluates binary workload classification from EEG recorded before and during mental arithmetic \citep{zyma2019mental}. Local inputs contain 20 channels and 1,000 time samples. The subject-disjoint split yields 1,343 training, 172 validation, and 192 test segments. We report balanced accuracy, PR-AUC, and ROC-AUC.
 MentalArithmetic uses the shared CBraMod/REVE subject split
 1--28/29--32/33--36 for train/validation/test.
-\begin{table}[H]\centering\caption{MentalArithmetic binary workload classification.}\label{tab:detail-mental}
+\begin{table}[t]\centering\caption{MentalArithmetic binary workload classification.}\label{tab:detail-mental}
 \detailhead{Balanced accuracy}{PR-AUC}{ROC-AUC}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 EEGNet& $0.6770\pm0.0116$ & $0.5763\pm0.0102$ & $0.7321\pm0.0108$  \\
@@ -336,7 +326,6 @@ ST-Transformer& $0.6631\pm0.0173$ & $0.5672\pm0.0259$ & $0.7132\pm0.0174$  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.7667\pm0.0234} & \secondcell{0.7598\pm0.0436} & \secondcell{0.8752\pm0.0313}  \\
 \method{} (ViT-Small)& $0.7118\pm0.0353$ & $0.5739\pm0.0617$ & $0.7619\pm0.0389$  \\
 \detailend\end{table}
-\FloatBarrier
 
 
 \subsection{HMC: Sleep Staging}
@@ -348,7 +337,7 @@ The local configuration uses $P=16$ phase-interleaved folding,
 validation-selected checkpoints, and one final test evaluation per seed.
 Published rows are transcribed from \reve{}'s sleep-staging table, which uses
 the same held-out recordings; \cbramod{} does not report this corpus.
-\begin{table}[H]\centering\caption{HMC five-class sleep staging.}\label{tab:detail-hmc}
+\begin{table}[t]\centering\caption{HMC five-class sleep staging.}\label{tab:detail-hmc}
 \detailhead{Balanced accuracy}{Cohen's $\kappa$}{Weighted F1}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\
 SPaRCNet& $0.4756\pm0.1109$ & $0.3147\pm0.1315$ & $0.4108\pm0.1310$  \\
@@ -367,158 +356,4 @@ ST-Transformer& $0.2559\pm0.0141$ & $0.0503\pm0.0183$ & $0.1428\pm0.0122$  \\
 \method{} (ConvNeXt-Tiny) & \bestcell{0.7581\pm0.0055} & \bestcell{0.7111\pm0.0063} & \bestcell{0.7744\pm0.0043} \\
 \method{} (ViT-Small) & $0.7474\pm0.0032$ & $0.6981\pm0.0016$ & $0.7643\pm0.0006$ \\
 \detailend\end{table}
-\FloatBarrier
 
-\subsection{Fold-factor sensitivity}
-\label{app:p-ablation}
-
-To examine whether the preferred fold factor is task- and backbone-dependent,
-we run controlled sweeps with $P\in\{1,2,4,8\}$ on CHB-MIT, TUEV, and
-MentalArithmetic. All other training settings, data splits, validation
-checkpoint selection, and final test protocols are held fixed within each
-backbone; the $P=4$ rows coincide with the finalized recipes used in the main
-tables. Bold and underlined values are the best and second-best values within
-each backbone and metric, respectively.
-
-\begin{table*}[t]
-\centering
-\caption{CHB-MIT fold-factor sensitivity (BA / PR-AUC / ROC-AUC). Values are
-test means $\pm$ population standard deviations after validation-based
-checkpoint selection.}
-\label{tab:p-ablation-chb}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
-\toprule
-Backbone & $P$ & Folded shape & BA & PR-AUC & ROC-AUC \\
-\midrule
-EfficientNet-B0 & 1 & $16\times2000$ & $0.7136\pm0.0425$ & $0.3686\pm0.0958$ & \bestcell{0.9171\pm0.0089} \\
- & 2 & $32\times1000$ & $0.6913\pm0.0357$ & $0.3676\pm0.0498$ & $0.8772\pm0.0409$ \\
- & 4 & $64\times500$ & \secondcell{0.7552\pm0.0599} & \bestcell{0.4092\pm0.0536} & \secondcell{0.8974\pm0.0194} \\
- & 8 & $128\times250$ & \bestcell{0.8210\pm0.0249} & \secondcell{0.3879\pm0.0493} & $0.8941\pm0.0133$ \\
-\midrule
-ConvNeXt-Tiny & 1 & $16\times2000$ & $0.7170\pm0.0100$ & \bestcell{0.5103\pm0.0057} & $0.9078\pm0.0046$ \\
- & 2 & $32\times1000$ & $0.7249\pm0.0306$ & \secondcell{0.4960\pm0.0106} & \bestcell{0.9112\pm0.0054} \\
- & 4 & $64\times500$ & \bestcell{0.7681\pm0.0294} & $0.4734\pm0.0345$ & $0.9066\pm0.0155$ \\
- & 8 & $128\times250$ & \secondcell{0.7391\pm0.0430} & $0.4264\pm0.0334$ & \secondcell{0.9084\pm0.0118} \\
-\midrule
-ViT-Small & 1 & $16\times2000$ & $0.6991\pm0.0151$ & $0.3599\pm0.0250$ & $0.9031\pm0.0193$ \\
- & 2 & $32\times1000$ & $0.7002\pm0.0214$ & \secondcell{0.4278\pm0.0152} & \bestcell{0.9142\pm0.0056} \\
- & 4 & $64\times500$ & \bestcell{0.7278\pm0.0105} & \bestcell{0.4566\pm0.0131} & \secondcell{0.9054\pm0.0114} \\
- & 8 & $128\times250$ & \secondcell{0.7145\pm0.0224} & $0.4083\pm0.0143$ & $0.8996\pm0.0089$ \\
-\bottomrule
-\end{tabular*}
-\tablenote{Each row is a separate five-seed run; the $P=4$ row matches the
-finalized CHB-MIT recipe. The primary metric is PR-AUC.}
-\end{table*}
-
-\begin{table*}[t]
-\centering
-\caption{TUEV fold-factor sensitivity (BA / Cohen's $\kappa$ / weighted F1).
-Values are test means $\pm$ population standard deviations after
-validation-based checkpoint selection.}
-\label{tab:p-ablation-tuev}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
-\toprule
-Backbone & $P$ & Folded shape & BA & $\kappa$ & Weighted F1 \\
-\midrule
-EfficientNet-B0 & 1 & $16\times1000$ & $0.5172\pm0.0679$ & $0.6298\pm0.0235$ & $0.8034\pm0.0161$ \\
- & 2 & $32\times500$ & \secondcell{0.5859\pm0.0871} & \bestcell{0.6907\pm0.0473} & \secondcell{0.8355\pm0.0253} \\
- & 4 & $64\times250$ & \bestcell{0.6423\pm0.0164} & \secondcell{0.6901\pm0.0190} & \bestcell{0.8380\pm0.0076} \\
- & 8 & $128\times125$ & $0.5583\pm0.0878$ & $0.6308\pm0.0429$ & $0.8118\pm0.0215$ \\
-\midrule
-ConvNeXt-Tiny & 1 & $16\times1000$ & $0.4977\pm0.1376$ & $0.5381\pm0.1921$ & $0.7576\pm0.0965$ \\
- & 2 & $32\times500$ & $0.6274\pm0.0263$ & $0.7042\pm0.0414$ & $0.8475\pm0.0197$ \\
- & 4 & $64\times250$ & \secondcell{0.6763\pm0.0122} & \secondcell{0.7095\pm0.0305} & \secondcell{0.8488\pm0.0135} \\
- & 8 & $128\times125$ & \bestcell{0.7001\pm0.0232} & \bestcell{0.7274\pm0.0124} & \bestcell{0.8576\pm0.0084} \\
-\midrule
-ViT-Small & 1 & $16\times1000$ & $0.6521\pm0.0186$ & $0.6769\pm0.0108$ & $0.8268\pm0.0068$ \\
- & 2 & $32\times500$ & $0.6988\pm0.0187$ & \bestcell{0.7284\pm0.0195} & \bestcell{0.8569\pm0.0096} \\
- & 4 & $64\times250$ & \secondcell{0.7217\pm0.0062} & \secondcell{0.7262\pm0.0043} & \secondcell{0.8563\pm0.0029} \\
- & 8 & $128\times125$ & \bestcell{0.7223\pm0.0113} & $0.7203\pm0.0073$ & $0.8554\pm0.0023$ \\
-\bottomrule
-\end{tabular*}
-\tablenote{Each row is a separate five-seed run; the $P=4$ row matches the
-finalized TUEV recipe. The primary metric is $\kappa$.}
-\end{table*}
-
-\begin{table*}[t]
-\centering
-\caption{MentalArithmetic fold-factor sensitivity (BA / PR-AUC / ROC-AUC).
-Values are test means $\pm$ population standard deviations after
-validation-based checkpoint selection.}
-\label{tab:p-ablation-mental}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}}
-\toprule
-Backbone & $P$ & Folded shape & BA & PR-AUC & ROC-AUC \\
-\midrule
-EfficientNet-B0 & 1 & $20\times1000$ & $0.4764\pm0.0499$ & $0.2119\pm0.0839$ & $0.3150\pm0.0931$ \\
- & 2 & $40\times500$ & \bestcell{0.7056\pm0.0207} & \secondcell{0.6672\pm0.0409} & \secondcell{0.8012\pm0.0365} \\
- & 4 & $80\times250$ & \secondcell{0.6910\pm0.0418} & \bestcell{0.7903\pm0.0536} & \bestcell{0.8779\pm0.0251} \\
- & 8 & $160\times125$ & $0.6646\pm0.0341$ & $0.5944\pm0.0578$ & $0.7411\pm0.0332$ \\
-\midrule
-ConvNeXt-Tiny & 1 & $20\times1000$ & $0.6215\pm0.1549$ & $0.6968\pm0.1400$ & $0.8604\pm0.0920$ \\
- & 2 & $40\times500$ & \secondcell{0.7514\pm0.0970} & \bestcell{0.7781\pm0.1431} & \bestcell{0.8991\pm0.0905} \\
- & 4 & $80\times250$ & \bestcell{0.7667\pm0.0234} & \secondcell{0.7598\pm0.0436} & \secondcell{0.8752\pm0.0313} \\
- & 8 & $160\times125$ & $0.6326\pm0.0284$ & $0.4703\pm0.0694$ & $0.6825\pm0.0351$ \\
-\midrule
-ViT-Small & 1 & $20\times1000$ & \secondcell{0.7743\pm0.0280} & \secondcell{0.7781\pm0.0378} & \secondcell{0.8761\pm0.0280} \\
- & 2 & $40\times500$ & \bestcell{0.8028\pm0.0212} & \bestcell{0.8034\pm0.0226} & \bestcell{0.9000\pm0.0080} \\
- & 4 & $80\times250$ & $0.7118\pm0.0353$ & $0.5739\pm0.0617$ & $0.7619\pm0.0389$ \\
- & 8 & $160\times125$ & $0.6188\pm0.0336$ & $0.4212\pm0.0281$ & $0.7042\pm0.0275$ \\
-\bottomrule
-\end{tabular*}
-\tablenote{Each row is a separate five-seed run; the $P=4$ row matches the
-finalized MentalArithmetic recipe. The primary metric is PR-AUC.}
-\end{table*}
-
-The sweeps confirm that the preferred factor is task- and backbone-dependent.
-On MentalArithmetic, EfficientNet-B0 peaks at $P=4$ whereas both DINOv3
-backbones peak at $P=2$ on PR-AUC. On CHB-MIT, PR-AUC is best at $P=4$ for
-EfficientNet-B0 and ViT-Small but at $P=1$ for ConvNeXt-Tiny, and
-EfficientNet-B0 reaches its highest BA at $P=8$ without improving its
-validation-selected metric. On TUEV, $\kappa$ and weighted F1 are best at
-$P=8$ for ConvNeXt-Tiny and at $P=2$ for ViT-Small, while EfficientNet-B0 is
-nearly tied between $P=2$ and $P=4$ ($\kappa=.6907$ vs $.6901$). The geometry
-rule therefore serves as a reproducible default; validation-based tuning can
-improve the result when additional compute is available.
-
-\subsection{Phase folding versus contiguous reshape}
-\label{app:fold-reshape}
-
-This control compares the proposed phase-interleaved permutation with a
-contiguous-chunk reshape of identical output dimensions. The EfficientNet-B0
-results below use five seeds and the same recipes; negative $\Delta$ means that
-phase folding is better.
-
-\begin{table*}[t]
-\centering
-\caption{Phase-interleaved folding versus contiguous reshape.}
-\small
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}lccc r@{} }
-\toprule
-Dataset & Metric & Phase fold & Contiguous reshape & $\Delta$ \\
-\midrule
-ISRUC & $\kappa$ & $0.7705\pm0.0032$ & $0.7397\pm0.0044$ & $-0.0308$ \\
-TUAB & PR-AUC & $0.9178\pm0.0025$ & $0.9031\pm0.0016$ & $-0.0147$ \\
-FACED & $\kappa$ & $0.4953\pm0.0197$ & $0.3198\pm0.0649$ & $-0.1755$ \\
-MentalArithmetic & PR-AUC & $0.7903\pm0.0536$ & $0.5849\pm0.0734$ & $-0.2054$ \\
-TUEV & $\kappa$ & $0.6901\pm0.0190$ & $0.6509\pm0.0231$ & $-0.0392$ \\
-Mumtaz2016 & PR-AUC & $0.9864\pm0.0045$ & $0.9761\pm0.0092$ & $-0.0103$ \\
-HMC & $\kappa$ & $0.7070\pm0.0023$ & $0.6379\pm0.0050$ & $-0.0691$ \\
-CHB-MIT & PR-AUC & $0.4092\pm0.0536$ & $0.3815\pm0.0604$ & $-0.0276$ \\
-SHU-MI & PR-AUC & $0.6982\pm0.0178$ & $0.7009\pm0.0138$ & $+0.0028$ \\
-\bottomrule
-\end{tabular}
-\tablenote{Both mappings are lossless and produce identical dimensions. The
-contiguous-reshape controls are available for EfficientNet-B0; additional
-backbone-specific controls are reported as they are finalized.}
-\end{table*}

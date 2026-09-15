@@ -2,13 +2,14 @@
 
 \subsection{Task-specific decoders and EEG foundation models}
 
-Early EEG decoders established convolution as a useful inductive bias.
-EEGNet combines compact temporal filtering with depthwise spatial convolution
-\citep{lawhern2018eegnet}, while DeepConvNet and ShallowConvNet stack temporal
-filters, spatial filters, and pooling like a learned signal-processing
-pipeline \citep{schirrmeister2017deep}. Such models remain strong on their
-target benchmarks but are trained from scratch and assume a fixed channel
-layout, limiting transfer across datasets, montages, and label spaces.
+Early EEG decoders established convolution as an effective inductive bias for
+task-specific analysis. EEGNet combines compact temporal filtering with
+depthwise spatial convolution \citep{lawhern2018eegnet}, while DeepConvNet and
+ShallowConvNet use stacked temporal and spatial filters with pooling
+\citep{schirrmeister2017deep}. Although these models can perform strongly on
+their target tasks, they are typically trained from scratch and assume a fixed
+channel layout, which limits transfer across datasets, montages, and label
+spaces.
 
 EEG foundation models address this limitation by scaling self-supervised
 pretraining. BIOT maps heterogeneous biosignals to frequency-domain tokens
@@ -18,14 +19,18 @@ magnitude, and criss--cross attention in a compact encoder
 \citep{wang2024cbramod}; and REVE incorporates physical electrode coordinates
 for large-scale pretraining and unseen montages \citep{elouahidi2025reve}.
 
-These methods change pretraining data, objective, backbone, tokenization, and
-input geometry simultaneously, so it remains unclear how much of the observed
-improvement is attributable to EEG pretraining. Recent work raises a related
-concern by showing that carefully tuned conventional decoders remain
-competitive across diverse BCI tasks \citep{yang2026eegworth}. We provide a
-complementary control: remove EEG pretraining, retain a mature visual backbone
-and a lossless geometry adapter, and test whether generic visual
-representations transfer when EEG is presented in a compatible form.
+However, EEG foundation models typically require large pretraining corpora and
+substantial computational resources. Their architectures and self-supervised
+objectives are also often inspired by successful approaches in vision, while
+the pretraining data, backbone, tokenization, and input geometry change
+simultaneously. This makes it difficult to determine how much of the
+downstream gain comes from EEG-specific pretraining itself. Recent work raises
+a related concern by showing that carefully tuned conventional decoders remain
+competitive across diverse BCI tasks \citep{yang2026eegworth}. We take a
+complementary perspective: instead of introducing another large EEG
+pretraining pipeline, we retain a mature visual backbone, provide EEG with a
+lossless geometry adapter, and test whether visual representations learned
+without EEG data can transfer to downstream EEG tasks.
 
 \subsection{Vision transfer and lossless rearrangement}
 
@@ -44,15 +49,3 @@ it trades temporal width for a joint electrode--phase height, with each folded
 column holding $P$ consecutive samples and each row following one phase at
 stride $P$. This explicit signal meaning lets us analyze the original temporal
 offsets seen by local 2D neighbors.
-
-\subsection{Positioning of this work}
-
-The closest empirical references are \cbramod{} and \reve{}, whose benchmark
-suites supply the subject- or trial-level partitions used here and which
-expose two complementary EEG priors: a compact criss-cross transformer over
-temporal and cross-channel structure versus physical electrode coordinates
-with 69M parameters pretrained on 92 datasets. We do not propose another EEG
-foundation model; we ask how far a 4.01M-parameter vision-pretrained encoder
-can go after only a lossless change of input geometry, separating three
-sources of downstream performance---task architecture, EEG pretraining, and
-representation geometry---that are otherwise easy to conflate.

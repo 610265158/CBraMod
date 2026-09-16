@@ -96,7 +96,8 @@ rows. All 32,000 values are retained.}
 \end{figure*}
 \FloatBarrier
 
-\paragraph{What a convolution sees.}
+\subsection{What a convolution sees}
+\label{app:convolution}
 Within one electrode's phase block, a vertical step changes the phase index,
 while a horizontal step advances by $P$ original samples. A $k\times k$
 convolution therefore mixes offsets
@@ -107,8 +108,35 @@ where $(\Delta w,\Delta p)$ is a kernel offset in folded coordinates. The
 local patch is flattened and multiplied by the kernel weights, followed by
 bias and nonlinearity; no special EEG operation is introduced. For $P=4$ and
 $k=3$, the direct temporal offsets are
-$\{-5,-4,-3,-1,0,1,3,4,5\}$. At phase-block boundaries a vertical neighborhood
-can also cross electrodes, so the interpretation depends on channel ordering.
+$\{-5,-4,-3,-1,0,1,3,4,5\}$.
+
+At phase-block boundaries a vertical neighborhood can also cross electrodes,
+so the interpretation depends on channel ordering. Figure~\ref{fig:channel-crossing}
+makes the two regimes explicit. Inside one block, the three columns of a
+$3\times3$ window are $P$ samples apart, so the window samples the waveform
+like a dilated (atrous) pattern with rate $P$: for $P=4$ its nine taps cover
+three consecutive samples around each of $t-P$, $t$, and $t+P$, which is
+exactly the offset set above. At a block boundary, however, the $\Delta p=+1$
+row is no longer the next phase of the same electrode: row $cP+P-1$ is
+adjacent to row $(c+1)P$, so that row reads electrode $c+1$ instead, and its
+offsets are measured in the neighbour's own time frame. The crossing therefore
+mixes two electrodes only at block boundaries, and the induced neighborhood
+depends on channel ordering.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.94\textwidth]{channel_crossing.pdf}
+\caption{A $3\times3$ window at a phase-block boundary ($P=4$, real TUEV
+segment; channels T5--O1 and FP2--F8). (a) Each channel occupies $P$
+consecutive phase rows, separated by the bold line. The solid window straddles
+the boundary, so its $\Delta p=+1$ row belongs to the next electrode, whereas
+the dashed window for comparison stays inside a single electrode. (b) The same
+boundary window on the original traces: one row of the window reads $c+1$
+(blue), and within each electrode the taps form a dilated pattern with rate
+$P=4$, matching $\Delta t=P\Delta w+\Delta p$.}
+\label{fig:channel-crossing}
+\end{figure*}
+\FloatBarrier
 
 
 

@@ -117,7 +117,10 @@ folding itself preserves all preprocessed values exactly.}
 
 The induced neighborhood is not universally favorable. Consecutive samples across a phase wrap
 are separated across folded columns, and transitions between electrode blocks
-depend on channel order rather than physical proximity. Larger $P$ increases
+depend on channel order rather than physical proximity; Appendix~\ref{app:convolution}
+analyzes what a local window reads inside one electrode block and across such
+a boundary, where the vertical neighbor is a different electrode rather than an
+adjacent sample. Larger $P$ increases
 height and temporal-offset diversity but can make these boundaries less local.
 
 \subsection{Geometry-based fold-factor selection}

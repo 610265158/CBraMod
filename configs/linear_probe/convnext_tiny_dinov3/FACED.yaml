@@ -1,0 +1,118 @@
+dataset: FACED
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter:
+    fold_factor: 2
+  feature_aggregation: flatten
+  head_init_std: 0.002
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 50
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 5
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: true
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+    42:
+      ba: 0.27952
+      kappa: 0.18846
+      f1: 0.27842
+    43:
+      ba: 0.27925
+      kappa: 0.1883
+      f1: 0.2787
+    44:
+      ba: 0.27576
+      kappa: 0.18456
+      f1: 0.27531
+    45:
+      ba: 0.27684
+      kappa: 0.18611
+      f1: 0.27629
+    46:
+      ba: 0.27563
+      kappa: 0.18393
+      f1: 0.27449
+  mean:
+    ba: 0.2774
+    kappa: 0.186272
+    f1: 0.276642
+  std_population:
+    ba: 0.001676
+    kappa: 0.001862
+    f1: 0.001669
+notes: Five-seed (42--46) FACED run with ConvNeXt-Tiny (v1) DINOv3 LVD-1689M self-supervised
+  weights. FACED geometry (P=2, 32x2000 -> [B,1,64,1000] -> 64x1024), 9-way emotion
+  classification kappa selection, one final test evaluation per seed. lr=1e-4 because
+  the ConvNeXt family is unstable at the EfficientNet FACED lr=1e-3; the rest of the
+  schedule (flatten+FC head, head_init_std 0.002, wd 5e-4, warmup 5, ema 0.995) follows
+  the FACED recipe. Population standard deviations.
+output:
+  model_root: experiments/checkpoints/faced_convnext_tiny_dinov3_p2_5seed_v1/seed{seed}
+  log_root: experiments/logs/faced_convnext_tiny_dinov3_p2_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/convnext_tiny_dinov3/faced_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.40789
+    kappa: 0.3321
+    f1: 0.39262
+  std_population:
+    ba: 0.15136
+    kappa: 0.16937
+    f1: 0.18086
+  delta_vs_fold:
+    ba: -0.22845
+    kappa: -0.25695
+    f1: -0.24474

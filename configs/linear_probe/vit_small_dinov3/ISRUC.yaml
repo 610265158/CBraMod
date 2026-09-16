@@ -1,0 +1,142 @@
+dataset: ISRUC
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter:
+    fold_factor: 12
+  feature_aggregation: cls_token
+  head_init_std: 0.02
+training:
+  lr: 0.0005
+  backbone_lr_scale: 0.1
+  batch_size: 16
+  epochs: 15
+  weight_decay: 0.01
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 15
+  frozen: true
+  multi_lr: false
+  use_pretrained_weights: true
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 0.5
+  time_roll_max_fraction: 0.25
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+    42:
+      ba: 0.64121
+      kappa: 0.60548
+      f1: 0.68156
+    43:
+      ba: 0.63804
+      kappa: 0.6024
+      f1: 0.67884
+    44:
+      ba: 0.64066
+      kappa: 0.60574
+      f1: 0.68151
+    45:
+      ba: 0.63864
+      kappa: 0.60303
+      f1: 0.67959
+    46:
+      ba: 0.64016
+      kappa: 0.6049
+      f1: 0.6799
+  mean:
+    ba: 0.639742
+    kappa: 0.60431
+    f1: 0.68028
+  std_population:
+    ba: 0.001207
+    kappa: 0.001345
+    f1: 0.001081
+head_comparison:
+  flatten:
+    status: complete
+    feature_aggregation: flatten
+    lr: 0.0001
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.80575
+      kappa: 0.77854
+      f1: 0.82864
+    std_population:
+      ba: 0.00168
+      kappa: 0.00277
+      f1: 0.00207
+  patch_mean:
+    status: complete
+    feature_aggregation: gap
+    note: Previously recorded as "cls_token"; verified to be patch-token mean pooling
+      (timm Eva, global_pool='avg'), not the CLS token.
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.80896
+      kappa: 0.78255
+      f1: 0.83176
+    std_population:
+      ba: 0.00317
+      kappa: 0.00352
+      f1: 0.00261
+  recommendation: cls_token
+notes: True CLS-token head at lr 5e-4 with clip 1, replacing the flatten head (+0.90pp
+  kappa). The [B,20,C,T] loader contract and P=12 are retained. Five seeds, validation-selected
+  checkpoint, one final test per seed.
+output:
+  model_root: experiments/checkpoints/vit_small_dinov3_isruc_p12_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_isruc_p12_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/vit_small_dinov3/isruc_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.77405
+    kappa: 0.7473
+    f1: 0.80234
+  std_population:
+    ba: 0.00235
+    kappa: 0.00227
+    f1: 0.00217
+  delta_vs_fold:
+    ba: -0.03895
+    kappa: -0.04024
+    f1: -0.03258

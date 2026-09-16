@@ -1,0 +1,142 @@
+dataset: SHU-MI
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter:
+    fold_factor: 2
+  squeeze_binary: true
+  feature_aggregation: cls_token
+  head_init_std: 0.02
+training:
+  lr: 0.0005
+  backbone_lr_scale: 1.0
+  batch_size: 32
+  epochs: 10
+  weight_decay: 0.01
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 20
+  frozen: true
+  multi_lr: false
+  use_pretrained_weights: true
+  time_roll_augmentation: false
+  shu_clip_limit: 1024.0
+  shu_scale: 32.0
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: pr_auc
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+    42:
+      ba: 0.50078
+      pr_auc: 0.50073
+      roc_auc: 0.49879
+    43:
+      ba: 0.50686
+      pr_auc: 0.49725
+      roc_auc: 0.50255
+    44:
+      ba: 0.51459
+      pr_auc: 0.50055
+      roc_auc: 0.50538
+    45:
+      ba: 0.50579
+      pr_auc: 0.50557
+      roc_auc: 0.5141
+    46:
+      ba: 0.50919
+      pr_auc: 0.50172
+      roc_auc: 0.50564
+  mean:
+    ba: 0.507442
+    pr_auc: 0.501164
+    roc_auc: 0.505292
+  std_population:
+    ba: 0.004508
+    pr_auc: 0.002669
+    roc_auc: 0.00505
+head_comparison:
+  flatten:
+    status: complete
+    feature_aggregation: flatten
+    lr: 0.0001
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.59568
+      pr_auc: 0.66185
+      roc_auc: 0.63474
+    std_population:
+      ba: 0.00959
+      pr_auc: 0.0161
+      roc_auc: 0.01334
+  patch_mean:
+    status: complete
+    feature_aggregation: gap
+    note: Previously recorded as "cls_token"; verified to be patch-token mean pooling
+      (timm Eva, global_pool='avg'), not the CLS token.
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.60375
+      pr_auc: 0.66889
+      roc_auc: 0.6515
+    std_population:
+      ba: 0.00707
+      pr_auc: 0.00318
+      roc_auc: 0.01181
+  recommendation: cls_token
+notes: True CLS-token head at lr 5e-4 with clip 1, replacing the flatten head (+2.72pp
+  pr_auc; one outlier seed lowers the aggregate). clip=1024 and scale=32 are retained.
+  Five seeds, validation-selected checkpoint, one final test per seed.
+output:
+  model_root: experiments/checkpoints/vit_small_dinov3_shu_mi_p2_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_shu_mi_p2_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/vit_small_dinov3/shu_mi_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.55186
+    pr_auc: 0.59963
+    roc_auc: 0.59721
+  std_population:
+    ba: 0.06521
+    pr_auc: 0.10027
+    roc_auc: 0.09103
+  delta_vs_fold:
+    ba: -0.07831
+    pr_auc: -0.08942
+    roc_auc: -0.09363

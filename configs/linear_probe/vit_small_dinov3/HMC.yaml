@@ -1,0 +1,144 @@
+dataset: HMC
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter:
+    fold_factor: 16
+  feature_aggregation: cls_token
+  head_init_std: 0.02
+training:
+  lr: 0.0005
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.01
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: true
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  mirror_augmentation: false
+  time_roll_augmentation: false
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: kappa
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+    42:
+      ba: 0.6369
+      kappa: 0.58178
+      f1: 0.67209
+    43:
+      ba: 0.63685
+      kappa: 0.58188
+      f1: 0.67188
+    44:
+      ba: 0.63418
+      kappa: 0.58023
+      f1: 0.6691
+    45:
+      ba: 0.63626
+      kappa: 0.58085
+      f1: 0.66972
+    46:
+      ba: 0.63434
+      kappa: 0.58039
+      f1: 0.66924
+  mean:
+    ba: 0.635706
+    kappa: 0.581026
+    f1: 0.670406
+  std_population:
+    ba: 0.001203
+    kappa: 0.000688
+    f1: 0.001307
+head_comparison:
+  flatten:
+    status: complete
+    feature_aggregation: flatten
+    lr: 0.0001
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    per_seed:
+      seed42:
+        ba: 0.74411
+        kappa: 0.69731
+        f1: 0.76439
+      seed43:
+        ba: 0.74664
+        kappa: 0.6974
+        f1: 0.76357
+      seed44:
+        ba: 0.74453
+        kappa: 0.69586
+        f1: 0.76363
+      seed45:
+        ba: 0.75279
+        kappa: 0.70012
+        f1: 0.76501
+      seed46:
+        ba: 0.74913
+        kappa: 0.69957
+        f1: 0.7648
+    mean:
+      ba: 0.74744
+      kappa: 0.69805
+      f1: 0.76428
+    std_population:
+      ba: 0.00321
+      kappa: 0.00157
+      f1: 0.00059
+  recommendation: cls_token
+notes: True CLS-token head at lr 5e-4 with clip 1; parity with the flatten head (+0.06pp
+  kappa). P=16 retained. Five seeds, validation-selected checkpoint, one final test
+  per seed.
+output:
+  model_root: experiments/checkpoints/vit_small_dinov3_hmc_p16_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_hmc_p16_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+reshape_control:
+  fold_mode: chunk
+  source: configs/ablation_fold_geometry/vit_small_dinov3/hmc_chunk.yaml
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  mean:
+    ba: 0.67506
+    kappa: 0.61389
+    f1: 0.69736
+  std_population:
+    ba: 0.006
+    kappa: 0.00531
+    f1: 0.00482
+  delta_vs_fold:
+    ba: -0.07256
+    kappa: -0.08479
+    f1: -0.06604

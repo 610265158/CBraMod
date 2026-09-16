@@ -1,0 +1,117 @@
+dataset: PhysioNet-MI
+backbone_name: vit_small_patch16_dinov3.lvd1689m
+vision:
+  adapter:
+    fold_factor: 1
+  feature_aggregation: cls_token
+  head_init_std: 0.02
+training:
+  lr: 0.0005
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.01
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: true
+  multi_lr: false
+  use_pretrained_weights: true
+  time_roll_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  selection_metric: kappa
+  test_each_epoch: false
+  run_final_test: true
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds:
+    42:
+      ba: 0.35842
+      kappa: 0.14449
+      f1: 0.35743
+    43:
+      ba: 0.34563
+      kappa: 0.12745
+      f1: 0.34456
+    44:
+      ba: 0.35122
+      kappa: 0.13486
+      f1: 0.34902
+    45:
+      ba: 0.34562
+      kappa: 0.12745
+      f1: 0.34544
+    46:
+      ba: 0.34455
+      kappa: 0.12599
+      f1: 0.34319
+  mean:
+    ba: 0.349088
+    kappa: 0.132048
+    f1: 0.347928
+  std_population:
+    ba: 0.005219
+    kappa: 0.006953
+    f1: 0.005128
+head_comparison:
+  flatten:
+    status: complete
+    feature_aggregation: flatten
+    lr: 0.0001
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.57728
+      kappa: 0.43634
+      f1: 0.5774
+    std_population:
+      ba: 0.00524
+      kappa: 0.00698
+      f1: 0.00604
+  patch_mean:
+    status: complete
+    feature_aggregation: gap
+    note: Previously recorded as "cls_token"; verified to be patch-token mean pooling
+      (timm Eva, global_pool='avg'), not the CLS token.
+    seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    mean:
+      ba: 0.60335
+      kappa: 0.4711
+      f1: 0.60467
+    std_population:
+      ba: 0.00981
+      kappa: 0.01308
+      f1: 0.01048
+  recommendation: cls_token
+notes: True CLS-token head at lr 5e-4 with clip 1, replacing the flatten head (+8.06pp
+  kappa; all five seeds above the old mean). Native P=1 geometry retained. Five seeds,
+  validation-selected checkpoint, one final test per seed.
+output:
+  model_root: experiments/checkpoints/vit_small_dinov3_physionet_mi_p1_clstoken_lr5e4_clip1_5seed_v1/seed{seed}
+  log_root: experiments/logs/vit_small_dinov3_physionet_mi_p1_clstoken_lr5e4_clip1_5seed_v1/seed{seed}

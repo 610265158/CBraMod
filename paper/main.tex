@@ -23,6 +23,11 @@
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
 \usepackage{titletoc}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.85}
+
 \titlecontents{section}[0pt]{\addvspace{2pt}\bfseries}{\thecontentslabel\hspace{0.6em}}{}{\titlerule*[0.5pc]{.}\contentspage}
 \titlecontents{subsection}[1.4em]{}{\thecontentslabel\hspace{0.6em}}{}{\titlerule*[0.5pc]{.}\contentspage}
 
@@ -36,7 +41,10 @@
 \newcommand{\labram}{\textsc{LaBraM}}
 \newcommand{\biot}{\textsc{BIOT}}
 \newcommand{\good}[1]{\textbf{#1}}
-\newcommand{\bestcell}[1]{\textbf{\boldmath$#1$}}
+\makeatletter
+\newcommand{\bestcell}[1]{\bestcell@split#1\@nil}
+\def\bestcell@split#1\pm#2\@nil{\textbf{\boldmath$#1$}$\>\pm\>$\textbf{\boldmath$#2$}}
+\makeatother
 \newcommand{\secondcell}[1]{\underline{$#1$}}
 \newcommand{\eg}{e.g.,\ }
 \newcommand{\ie}{i.e.,\ }

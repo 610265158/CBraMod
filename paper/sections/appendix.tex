@@ -147,7 +147,10 @@ $P=4$, matching $\Delta t=P\Delta w+\Delta p$.}
 
 We reran the released CBraMod and REVE-Base checkpoints on TUAB, FACED, and
 HMC using the inherited partitions, seeds 42--46, validation-selected
-checkpoints, and one final test evaluation per seed. The downstream pipeline
+checkpoints, and one final test evaluation per seed. Table~\ref{tab:foundation-reruns}
+lists these reruns next to our finalized vision models, which follow the
+identical protocol, so that the two families can be compared under one
+pipeline. The downstream pipeline
 and optimizer match our local experiments, while each model retains its
 released input normalization. These are matched-protocol reruns rather than
 exact reproductions of every original training stage.
@@ -162,31 +165,64 @@ original references.
 
 \begin{table*}[t]
 \centering\scriptsize
-\caption{Matched-pipeline reruns of released foundation models. Values are
-five-seed means $\pm$ population standard deviations; the primary metric is the
-validation selection metric. Published values are shown for reference.}
+\caption{Protocol-matched comparison on the three rerun datasets. Released
+CBraMod and REVE-Base checkpoints are rerun under our downstream pipeline
+(inherited partitions, seeds 42--46, validation-selected checkpoints, one final
+test per seed) and are listed together with our finalized vision models, which
+follow the same protocol. Values are five-seed means $\pm$ population standard
+deviations; the primary metric is the validation selection metric (PR-AUC for
+TUAB, $\kappa$ for FACED and HMC). Bold marks the best matched-protocol value
+in each column; published values are transcribed from the original benchmark
+tables and are not ranked.}
 \label{tab:foundation-reruns}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.08}
 \begin{tabular}{@{}llccc@{}}
 \toprule
-Dataset & Model & BA & Primary metric & Published primary \\
+Dataset & Method & BA & Primary metric & Published \\
 \midrule
-TUAB & CBraMod & $0.7821\pm0.0099$ & $0.8632\pm0.0056$ (PR-AUC) & $0.9221$ \\
-TUAB & REVE-Base & $0.8052\pm0.0072$ & $0.8901\pm0.0114$ (PR-AUC) & $0.9281$ \\
-FACED & CBraMod & $0.5551\pm0.0107$ & $0.4961\pm0.0124$ ($\kappa$) & $0.5041$ \\
-FACED & REVE-Base & $0.4850\pm0.0062$ & $0.4190\pm0.0063$ ($\kappa$) & $0.5080$ \\
-HMC & CBraMod & $0.7279\pm0.0038$ & $0.6758\pm0.0026$ ($\kappa$) & -- \\
-HMC & REVE-Base & $0.7337\pm0.0031$ & $0.6831\pm0.0046$ ($\kappa$) & $0.6982$ \\
+\multirow{5}{*}{TUAB}
+  & CBraMod (rerun) & $0.7821\pm0.0099$ & $0.8632\pm0.0056$ (PR-AUC) & $0.9221$ \\
+  & REVE-Base (rerun) & $0.8052\pm0.0072$ & $0.8901\pm0.0114$ (PR-AUC) & $0.9281$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & \bestcell{0.8317\pm0.0033} & \bestcell{0.9178\pm0.0025} (PR-AUC) & -- \\
+  & ConvNeXt-Tiny & $0.8216\pm0.0050$ & $0.9059\pm0.0045$ (PR-AUC) & -- \\
+  & ViT-Small & $0.8202\pm0.0031$ & $0.9091\pm0.0034$ (PR-AUC) & -- \\
+\midrule
+\multirow{5}{*}{FACED}
+  & CBraMod (rerun) & $0.5551\pm0.0107$ & $0.4961\pm0.0124$ ($\kappa$) & $0.5041$ \\
+  & REVE-Base (rerun) & $0.4850\pm0.0062$ & $0.4190\pm0.0063$ ($\kappa$) & $0.5080$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.5516\pm0.0179$ & $0.4953\pm0.0197$ ($\kappa$) & -- \\
+  & ConvNeXt-Tiny & \bestcell{0.6363\pm0.0027} & \bestcell{0.5891\pm0.0032} ($\kappa$) & -- \\
+  & ViT-Small & $0.4464\pm0.0102$ & $0.3744\pm0.0109$ ($\kappa$) & -- \\
+\midrule
+\multirow{5}{*}{HMC}
+  & CBraMod (rerun) & $0.7279\pm0.0038$ & $0.6758\pm0.0026$ ($\kappa$) & -- \\
+  & REVE-Base (rerun) & $0.7337\pm0.0031$ & $0.6831\pm0.0046$ ($\kappa$) & $0.6982$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.7557\pm0.0019$ & $0.7070\pm0.0023$ ($\kappa$) & -- \\
+  & ConvNeXt-Tiny & \bestcell{0.7581\pm0.0055} & \bestcell{0.7111\pm0.0063} ($\kappa$) & -- \\
+  & ViT-Small & $0.7476\pm0.0032$ & $0.6987\pm0.0033$ ($\kappa$) & -- \\
 \bottomrule
 \end{tabular}
 \tablenote{Published values are transcribed from the CBraMod and REVE
-benchmark tables. The reruns use a common downstream protocol and are not
-strict replications of all original training stages.}
+benchmark tables; HMC is not reported by CBraMod. The reruns use a common
+downstream protocol and are not strict replications of all original training
+stages.}
 \end{table*}
 
-Per-seed outputs, checkpoint paths, configuration files, and the complete
-protocol log are provided in \texttt{configs/foundation\_models/} and
-\texttt{experiments/reports/foundation\_rerun\_appendix.md}.
-
+Under this matched protocol the two foundation models fall below their
+published values, which quantifies how much those numbers depend on the
+original training recipes. Our vision backbones are competitive under the same
+protocol: EfficientNet-B0 leads all five methods on TUAB in both balanced
+accuracy and PR-AUC, and ConvNeXt-Tiny leads on FACED and HMC. The only near
+ties are on FACED, where EfficientNet-B0 matches the rerun CBraMod in both
+balanced accuracy ($0.5516$ versus $0.5551$) and $\kappa$ ($0.4953$ versus
+$0.4961$), whereas the rerun REVE-Base is clearly lower there than its
+published value. We therefore read this table as a protocol-controlled
+comparison and keep the published values as the external reference in the main
+table.
 
 \clearpage
 \section{Ablation Studies}

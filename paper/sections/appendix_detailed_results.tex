@@ -23,7 +23,43 @@ second-highest is underlined. A double dash denotes an unreported
 result. All metrics are higher-is-better; local results report the mean and
 population standard deviation across five seeds (42--46). The local TUEV
 release contains additional training and validation segments, while retaining
-the same held-out test set used by the references.
+the same held-out test set used by the references. Table~\ref{tab:splits} lists
+the resulting split sizes and partition rules for all 12 datasets.
+
+\begin{table*}[t]
+\centering
+\caption{Split sizes and partition rules for the 12 downstream datasets, as
+produced by the local loaders. All partitions are inherited unchanged from the
+fixed split code of the \cbramod{} and \reve{} benchmarks. TUEV uses v2.0.1
+training and validation counts with the unchanged official 29,421-sample test
+set.}
+\label{tab:splits}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.06}
+\begin{tabularx}{\textwidth}{@{}l l r r r X@{}}
+\toprule
+Dataset & Unit & Train & Val & Test & Partition (inherited) \\
+\midrule
+CHB-MIT & segments & 286{,}961 & 23{,}064 & 16{,}963 & subjects CHB01--20 / CHB21--22 / CHB23--24 \\
+TUAB & segments & 297{,}103 & 75{,}407 & 36{,}945 & official train/test subjects; training subjects split 80:20 \\
+TUEV & segments & 68{,}445 & 15{,}487 & 29{,}421 & same subject protocol; official test set \\
+ISRUC & records & 3{,}559 & 468 & 435 & subjects 1--80 / 81--90 / 91--100 \\
+FACED & segments & 6{,}720 & 1{,}680 & 1{,}932 & subjects 1--80 / 81--100 / 101--123 \\
+SEED-V & trials & 34{,}432 & 42{,}960 & 40{,}352 & per session, trials 1--5 / 6--10 / 11--15 \\
+PhysioNet-MI & segments & 6{,}300 & 1{,}734 & 1{,}803 & subjects 1--70 / 71--89 / 90--109 \\
+SHU-MI & segments & 7{,}210 & 2{,}431 & 2{,}347 & subjects 1--15 / 16--20 / 21--25 \\
+BCIC2020-3 & trials & 4{,}500 & 750 & 750 & official 60/10/10 trials per class \\
+Mumtaz2016 & segments & 4{,}891 & 1{,}041 & 1{,}211 & 22/5/6 MDD and 21/4/5 control subjects \\
+MentalArithmetic & segments & 1{,}343 & 172 & 192 & subjects 1--28 / 29--32 / 33--36 \\
+HMC & epochs & 91{,}248 & 22{,}124 & 23{,}871 & recordings 1--100 / 101--125 / 126--151 (sorted) \\
+\bottomrule
+\end{tabularx}
+\tablenote{CHB-MIT counts exclude five corrupt segments that the loader skips.
+ISRUC records contain 20 consecutive 30-second epochs, and metrics are computed
+over epochs.}
+\end{table*}
+\FloatBarrier
 
 \newcommand{\detailhead}[3]{\begin{detailresults}\toprule \textbf{Method} & \textbf{#1} & \textbf{#2} & \textbf{#3} \\
 \midrule}

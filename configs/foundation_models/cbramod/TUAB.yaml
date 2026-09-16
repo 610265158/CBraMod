@@ -1,0 +1,94 @@
+dataset: TUAB
+model_arch: cbramod
+training:
+  lr: 0.0001
+  batch_size: 32
+  epochs: 5
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 0
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.0
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: pr_auc
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba:
+    mean: 0.78207
+    std: 0.00995
+  pr_auc:
+    mean: 0.86317
+    std: 0.00559
+  roc_auc:
+    mean: 0.85864
+    std: 0.00783
+  per_seed:
+    42:
+      epoch: 1
+      ba: 0.76979
+      pr_auc: 0.86601
+      roc_auc: 0.85665
+    43:
+      epoch: 1
+      ba: 0.79357
+      pr_auc: 0.86744
+      roc_auc: 0.86743
+    44:
+      epoch: 1
+      ba: 0.77323
+      pr_auc: 0.85297
+      roc_auc: 0.84674
+    45:
+      epoch: 5
+      ba: 0.79348
+      pr_auc: 0.86797
+      roc_auc: 0.86713
+    46:
+      epoch: 1
+      ba: 0.78029
+      pr_auc: 0.86144
+      roc_auc: 0.85527
+notes: >-
+  Matched-pipeline CBraMod rerun on TUAB (16-channel bipolar arrays). The
+  per-dataset recipe from configs/downstream.py is used unchanged; the only
+  adapted hyperparameter is the learning rate (1e-4). The loader normalizes
+  inputs with the released CBraMod convention (microvolt / 100, no clipping).
+  Validation-selected checkpoint (validation PR-AUC), one final test per seed,
+  seeds 42-46, population std. Published reference PR-AUC 0.9221 / ROC-AUC
+  0.9156 (delta -0.0589 on PR-AUC; published std not reported).
+  See experiments/reports/foundation_rerun_appendix.md.
+output:
+  model_root: experiments/checkpoints/foundation_rerun/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun/cbramod/seed{seed}

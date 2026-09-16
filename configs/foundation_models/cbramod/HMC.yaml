@@ -1,0 +1,94 @@
+dataset: HMC
+model_arch: cbramod
+training:
+  lr: 0.0001
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: kappa
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba:
+    mean: 0.72788
+    std: 0.00379
+  kappa:
+    mean: 0.67575
+    std: 0.00265
+  f1:
+    mean: 0.74571
+    std: 0.00307
+  per_seed:
+    42:
+      epoch: 5
+      ba: 0.72177
+      kappa: 0.67142
+      f1: 0.74019
+    43:
+      epoch: 6
+      ba: 0.72874
+      kappa: 0.67675
+      f1: 0.74707
+    44:
+      epoch: 7
+      ba: 0.73367
+      kappa: 0.67919
+      f1: 0.74932
+    45:
+      epoch: 5
+      ba: 0.72794
+      kappa: 0.67702
+      f1: 0.74689
+    46:
+      epoch: 5
+      ba: 0.72726
+      kappa: 0.67438
+      f1: 0.74509
+notes: >-
+  Matched-pipeline CBraMod rerun on HMC (supplementary; CBraMod does not report
+  HMC). The per-dataset recipe from configs/downstream.py is used unchanged;
+  the only adapted hyperparameter is the learning rate (1e-4). The loader
+  normalizes inputs with the released CBraMod convention (microvolt / 100, no
+  clipping). The HMC head uses the released two-layer variant because the
+  three-layer S*P hidden width would be 6,000. Validation-selected checkpoint,
+  one final test per seed, seeds 42-46, population std. No published reference.
+  See experiments/reports/foundation_rerun_appendix.md.
+output:
+  model_root: experiments/checkpoints/foundation_rerun/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun/cbramod/seed{seed}

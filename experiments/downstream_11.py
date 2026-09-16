@@ -59,6 +59,18 @@ def main():
     parser.add_argument('--vision_feature_aggregation', type=str, default=None,
                         choices=['gap', 'cls_token', 'flatten'],
                         help='feature aggregation used before the vision head: gap (pooled), cls_token (ViT class token), flatten')
+    parser.add_argument('--model_arch', choices=['vision', 'cbramod', 'reve'], default=None,
+                        help='downstream model family passed to finetune_main.py')
+    parser.add_argument('--foundation_dir', type=str, default=None,
+                        help='CBraMod foundation checkpoint passed to finetune_main.py')
+    parser.add_argument('--reve_weights_dir', type=str, default=None,
+                        help='REVE weights directory passed to finetune_main.py')
+    parser.add_argument('--reve_positions_dir', type=str, default=None,
+                        help='REVE position-bank directory passed to finetune_main.py')
+    parser.add_argument('--eeg_scale', type=float, default=None,
+                        help='loader divisor override passed to finetune_main.py')
+    parser.add_argument('--eeg_clip_limit', type=float, default=None,
+                        help='loader clip-limit override passed to finetune_main.py')
     parser.add_argument('--cuda', type=int, default=0, help='CUDA index passed to finetune_main.py')
     parser.add_argument('--device', choices=['cuda', 'cpu', 'auto'], default=None,
                         help='device policy passed to finetune_main.py')
@@ -259,6 +271,18 @@ def build_command(name, args, extra_args=None, seed=None):
         command.extend(['--vision_squeeze_binary', str(args.vision_squeeze_binary)])
     if args.vision_feature_aggregation is not None:
         command.extend(['--vision_feature_aggregation', str(args.vision_feature_aggregation)])
+    if args.model_arch is not None:
+        command.extend(['--model_arch', args.model_arch])
+    if args.foundation_dir is not None:
+        command.extend(['--foundation_dir', args.foundation_dir])
+    if args.reve_weights_dir is not None:
+        command.extend(['--reve_weights_dir', args.reve_weights_dir])
+    if args.reve_positions_dir is not None:
+        command.extend(['--reve_positions_dir', args.reve_positions_dir])
+    if args.eeg_scale is not None:
+        command.extend(['--eeg_scale', str(args.eeg_scale)])
+    if args.eeg_clip_limit is not None:
+        command.extend(['--eeg_clip_limit', str(args.eeg_clip_limit)])
     if device:
         command.extend(['--device', device])
     if args.dry_run:
@@ -325,6 +349,7 @@ def apply_experiment_config(args, config):
         )
     set_if_absent('backbone_name', config.get('backbone_name') or config.get('backbone', {}).get('name'), 'backbone_name')
     set_if_absent('backbone_config', config.get('backbone_config'), 'backbone_config')
+    set_if_absent('model_arch', config.get('model_arch'), 'model_arch')
     vision = config.get('vision', {})
     for key, attr in {
         'fold_factor': 'vision_fold_factor',

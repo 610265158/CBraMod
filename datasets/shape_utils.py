@@ -4,10 +4,35 @@ import numpy as np
 DEFAULT_EEG_CLIP_LIMIT = 1024
 DEFAULT_EEG_SCALE_DIVISOR = 32.0
 
+_NORMALIZATION_OVERRIDE = {'limit': None, 'scale': None}
 
-def clip_eeg(data, limit=DEFAULT_EEG_CLIP_LIMIT, scale=DEFAULT_EEG_SCALE_DIVISOR):
+
+def configure_eeg_normalization(limit=None, scale=None):
+    """Override the default clip/scale used by clip_eeg (None keeps defaults).
+
+    Foundation-model runs set this so each loader emits batches normalised with
+    the released preprocessing convention of the model being trained.
+    """
+    _NORMALIZATION_OVERRIDE['limit'] = limit
+    _NORMALIZATION_OVERRIDE['scale'] = scale
+
+
+def reset_eeg_normalization():
+    configure_eeg_normalization()
+
+
+def clip_eeg(data, limit=None, scale=None):
+    if limit is None:
+        limit = _NORMALIZATION_OVERRIDE['limit']
+    if limit is None:
+        limit = DEFAULT_EEG_CLIP_LIMIT
+    if scale is None:
+        scale = _NORMALIZATION_OVERRIDE['scale']
+    if scale is None:
+        scale = DEFAULT_EEG_SCALE_DIVISOR
     data = np.asarray(data, dtype=np.float32)
-    data = np.clip(data, -limit, limit)
+    if np.isfinite(limit):
+        data = np.clip(data, -limit, limit)
     if scale is not None and scale != 1:
         data = data / np.float32(scale)
     return data

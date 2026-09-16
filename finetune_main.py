@@ -10,6 +10,8 @@ from configs.downstream import DOWNSTREAM_11_CONFIGS
 from configs.downstream import TRAINING_KEYS
 from configs.downstream import dataset_registry
 from configs.downstream import training_config_for
+from configs.foundation import foundation_spec
+from datasets import shape_utils
 from finetune_evaluator import Evaluator
 from finetune_trainer import Trainer
 
@@ -19,6 +21,12 @@ DATASET_REGISTRY = dataset_registry()
 TRAIN_METHODS = {
     'binary': 'train_for_binaryclass',
     'multiclass': 'train_for_multiclass',
+}
+
+MODEL_MODULES = {
+    'vision': 'models.vision_model',
+    'cbramod': 'models.foundation_cbramod',
+    'reve': 'models.foundation_reve',
 }
 
 def str2bool(value):
@@ -75,6 +83,23 @@ def main():
     parser.add_argument('--vision_feature_aggregation', type=str, default=None,
                         choices=['gap', 'cls_token', 'flatten'],
                         help='feature aggregation used before the vision head: gap (pooled), cls_token (ViT class token), flatten')
+    parser.add_argument('--model_arch', type=str, default='vision',
+                        choices=['vision', 'cbramod', 'reve'],
+                        help='downstream model family: vision (default), cbramod, or reve')
+    parser.add_argument('--foundation_dir', type=str,
+                        default='pretrained_weights/pretrained_weights.pth',
+                        help='released CBraMod foundation checkpoint')
+    parser.add_argument('--reve_weights_dir', type=str, default=None,
+                        help='directory with the released REVE weights (config.json + model.safetensors); '
+                             'default: local Hugging Face cache snapshot of brain-bzh/reve-base')
+    parser.add_argument('--reve_positions_dir', type=str, default=None,
+                        help='directory with the released REVE position bank; default: local cache snapshot '
+                             'of brain-bzh/reve-positions')
+    parser.add_argument('--eeg_scale', type=float, default=None,
+                        help='override the dataset-loader divisor for EEG inputs (e.g. 100 for CBraMod, '
+                             '1000 for REVE on FACED)')
+    parser.add_argument('--eeg_clip_limit', type=float, default=None,
+                        help='override the dataset-loader clip limit; use inf to disable clipping')
     parser.add_argument('--shu_clip_limit', type=float, default=512.0,
                         help='SHU-MI raw-value clip limit before the vision adapter')
     parser.add_argument('--shu_scale', type=float, default=64.0,
@@ -175,6 +200,7 @@ def main():
                         help='load a saved model state and evaluate only on the test split')
     params = parser.parse_args()
     apply_downstream_defaults(params)
+    configure_data_normalization(params)
 
     params.device = resolve_device(params.device, params.cuda)
     print(params)
@@ -185,7 +211,7 @@ def main():
     registry = DATASET_REGISTRY[params.downstream_dataset]
     params.downstream_task = registry['task']
     dataset_module = import_selected_module(registry['dataset_module'])
-    model_module = import_selected_module('models.vision_model')
+    model_module = import_selected_module(MODEL_MODULES[params.model_arch])
     load_dataset = dataset_module.LoadDataset(params)
     data_loader = load_dataset.get_data_loader()
     model = model_module.Model(params)
@@ -227,6 +253,22 @@ def apply_downstream_defaults(params):
         params.model_dir = str(Path('experiments/checkpoints/manual') / safe_name(params.downstream_dataset))
 
 
+def configure_data_normalization(params):
+    scale = params.eeg_scale
+    clip_limit = params.eeg_clip_limit
+    if params.model_arch != 'vision':
+        spec = foundation_spec(params.downstream_dataset)
+        key = 'cbramod' if params.model_arch == 'cbramod' else 'reve'
+        if scale is None:
+            scale = spec[key]['input_scale']
+        if clip_limit is None:
+            clip_limit = float('inf')
+    if scale is not None or clip_limit is not None:
+        shape_utils.configure_eeg_normalization(limit=clip_limit, scale=scale)
+        print('EEG loader normalization: clip {}, scale {}'.format(
+            'disabled' if clip_limit == float('inf') else clip_limit, scale))
+
+
 def safe_name(name):
     return name.lower().replace('-', '_').replace(' ', '_')
 
@@ -264,6 +306,8 @@ def dry_run(params, data_loader, model):
     with torch.no_grad():
         pred = model(x)
     print('Dry run batch x: {}, y: {}, pred: {}'.format(tuple(x.shape), tuple(y.shape), tuple(pred.shape)))
+    print('Dry run input stats: min {:.6g}, max {:.6g}, mean {:.6g}'.format(
+        float(x.min()), float(x.max()), float(x.mean())))
 
 
 def evaluate_checkpoint(params, data_loader, model):

@@ -16,6 +16,9 @@ models_my_parallel/
 runs/
 wandb/
 
+# Downloaded model weights (fetch from Hugging Face instead)
+pretrained_weights/*.pth
+
 # Local environment files
 .env
 .venv/

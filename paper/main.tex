@@ -22,6 +22,9 @@
 \usepackage{tabularx}
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
+\usepackage{titletoc}
+\titlecontents{section}[0pt]{\addvspace{2pt}\bfseries}{\thecontentslabel\hspace{0.6em}}{}{\titlerule*[0.5pc]{.}\contentspage}
+\titlecontents{subsection}[1.4em]{}{\thecontentslabel\hspace{0.6em}}{}{\titlerule*[0.5pc]{.}\contentspage}
 
 \graphicspath{{../figure/}{figures/}}
 \setlist[itemize]{leftmargin=*,topsep=3pt,itemsep=2pt}
@@ -81,6 +84,14 @@
     {\Large\bfseries Appendix}
 \end{center}
 \vspace{0.5em}
+
+% Appendix-only table of contents. \printcontents reads the partial toc file
+% written by \startcontents on the previous LaTeX pass (compile twice).
+% The contents occupy their own page, and the appendix body starts on the next.
+\startcontents[appendix]
+\printcontents[appendix]{}{1}{\subsection*{Appendix contents}\vspace{-0.5em}\small}
+\clearpage
+
 \input{sections/appendix}
 
 \end{document}

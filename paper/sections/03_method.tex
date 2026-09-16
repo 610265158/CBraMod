@@ -3,18 +3,35 @@
 
 \subsection{Overview and problem setting}
 
-Each EEG segment is represented as a channel--time tensor
-$\mathbf{X}\in\mathbb{R}^{C\times T}$, where $C$ is the number of channels
-and $T$ is the number of time samples. A minibatch is passed through the same
-folding adapter and visual encoder before task-specific prediction. Dataset-specific
-sequence handling follows the released evaluation code.
+An EEG segment is naturally represented as a channel--time tensor
+$\mathbf{X}\in\mathbb{R}^{B\times C\times T}$, where $B$ is the batch size,
+$C$ is the number of channels, and $T$ is the number of time samples. Our goal
+is to reuse an off-the-shelf vision encoder without converting the waveform to
+a spectrogram or interpolating it into a conventional image. We therefore
+introduce a parameter-free folding operator $F_P$ between the EEG input and
+the visual backbone:
 
-We use standard binary cross-entropy (BCE) for binary tasks and cross-entropy
-(CE) for multiclass tasks; label smoothing and other optimization details are
-given in Appendix~\ref{app:recipes}. Our contribution lies in the interface
-between $\mathbf{X}$ and a generic 2D backbone.
+\begin{center}
+\fbox{%
+\begin{minipage}{0.91\linewidth}
+\centering
+\[
+[B,C,T]
+\xrightarrow{\;F_P\;}
+[B,1,CP,T/P]
+\xrightarrow{\;\text{zero padding}\;}
+\text{vision backbone}
+\xrightarrow{\;\text{task head}\;}
+\text{logits}.
+\]
+\end{minipage}}
+\end{center}
 
-\subsection{Lossless temporal folding}
+Temporal folding is the only method-specific component in this pipeline. It
+changes the two-dimensional layout presented to the visual encoder while
+preserving every EEG sample exactly.
+
+\subsection{Lossless phase-interleaved temporal folding}
 
 Choose an integer fold factor $P$ such that $P\mid T$ and define
 $W=T/P$.  The folding operator $F_P$ maps the waveform to a single-channel
@@ -42,20 +59,24 @@ x_3&x_7&x_{11}&x_{15}
 \end{bmatrix}$.
 \end{center}
 
-Figure~\ref{fig:folding-overview} illustrates the reindexing on a real 16-channel TUEV segment
-and a magnified window from the same recording. The raster is a computational
-representation, not a physical image of the scalp. It gives the visual encoder
-a taller signal-bearing input and places short within-channel temporal
-patterns in local 2D neighborhoods before strided stages reduce resolution.
-Additional geometric, seizure, and controlled-waveform visualizations appear
-in Appendix Figs.~\ref{fig:side-top-view}, \ref{fig:seizure-folding}, and
-\ref{fig:synthetic-folding-patterns}.
+The inverse map is
+$\mathbf{X}_{c,wP+p}=\mathbf{I}_{1,cP+p,w}$, so $F_P$ is a bijection: it does
+not interpolate, filter, aggregate, or discard samples. This distinguishes
+phase-interleaved folding from signal transformations such as resizing and
+time--frequency conversion. It also differs from a contiguous-chunk reshape,
+which produces the same output shape but assigns consecutive blocks of the
+waveform to rows. Figure~\ref{fig:folding-overview} illustrates the proposed
+reindexing on a real 16-channel TUEV segment; additional visualizations are
+provided in Appendix Figs.~\ref{fig:side-top-view},
+\ref{fig:seizure-folding}, and \ref{fig:synthetic-folding-patterns}.
 
-Because folding is a bijective reindexing, every sample is preserved exactly
-and the original waveform is recoverable by the inverse map. Additional
-visualizations are provided in the Appendix.
+\subsection{Geometry and induced locality}
 
-\subsection{Locality induced by folding}
+Folding changes the computation of a local 2D operator even though it preserves
+the input values. It increases the signal-bearing height from $C$ to $CP$ and
+reduces the width from $T$ to $T/P$. This is useful for sparse EEG montages,
+whose channel dimension can otherwise collapse early in a hierarchical vision
+backbone with repeated spatial downsampling.
 
 For two folded samples from the same electrode, the image and original-time
 distances are respectively
@@ -69,7 +90,9 @@ captures temporal offsets of the form $\Delta t=P\Delta w+\Delta p$; for
 $P=4$, a $3\times3$ kernel combines the offsets
 $\{-5,-4,-3,-1,0,1,3,4,5\}$ around its center. Figure~\ref{fig:folding-overview}
 visualizes how this kernel captures both adjacent-sample structure and
-$P$-spaced temporal context after folding.
+$P$-spaced temporal context after folding. Folding therefore combines two
+effects: it preserves more signal-bearing height through the backbone and
+exposes short- and medium-range temporal relations to local 2D operators.
 
 \begin{figure*}[t]
 \centering
@@ -92,26 +115,16 @@ folding itself preserves all preprocessed values exactly.}
 \end{figure*}
 \FloatBarrier
 
-The layout has two boundary effects: consecutive samples across a phase wrap
+The induced neighborhood is not universally favorable. Consecutive samples across a phase wrap
 are separated across folded columns, and transitions between electrode blocks
 depend on channel order rather than physical proximity. Larger $P$ increases
 height and temporal-offset diversity but can make these boundaries less local.
 
-\subsection{Architecture-aligned fold-factor selection}
+\subsection{Geometry-based fold-factor selection}
 \label{sec:p-selection}
 
-We define a reproducible geometry-based default from the input shape and
-backbone stride. For each divisor $P$ of $T$, let
-
-\begin{equation}
-  H(P)=CP, \qquad W(P)=T/P.
-\end{equation}
-
-EfficientNet-B0 has total spatial stride 32. To retain at least two
-signal-bearing cells along height before feature aggregation, we target at least
-64 folded rows and choose the smallest valid factor. A native channel count very
-close to 64 is treated as sufficient; specifically, SEED-V's 62 channels are
-left unfolded. We select
+The fold factor controls this trade-off. We define a reproducible default from
+the input shape and the stride of a standard hierarchical vision backbone:
 
 \begin{equation}
 \label{eq:p-geometry-rule}
@@ -122,45 +135,15 @@ left unfolded. We select
  \end{cases}
 \end{equation}
 
-The target height 64 leaves two signal-bearing cells after stride 32. For
-ViT-Small, the same folded tensor is zero-padded to the patch-embedding
-canvas and tokenized with its native $16\times16$ patch projection; folding
-therefore changes the spatial arrangement presented to the patch embedder but
-does not alter samples or introduce interpolation. This is
-an architecture-alignment heuristic, not a claim that 64 rows are intrinsically
-optimal. It uses only $(C,T)$ and backbone geometry and can therefore be fixed
-before training. The smallest valid factor limits the loss of horizontal
-resolution; task-specific tuning remains possible on validation data.
+The target of 64 folded rows retains at least two signal-bearing cells after a
+total spatial stride of 32. Native channel counts close to this target are
+treated as sufficient, so the 62-channel SEED-V input remains unfolded. The
+rule uses only $(C,T)$ and backbone geometry, and is fixed before training
+without consulting validation or test performance. Selecting the smallest
+valid factor also preserves as much horizontal resolution as possible.
 
-\subsection{Vision backbone and task head}
-
-All three visual backbones share the folding interface and use a
-dataset-specific feature aggregation followed by a linear classifier:
-
-\begin{center}
-\fbox{%
-\begin{minipage}{0.91\linewidth}
-\centering
-\(\begin{gathered}
-[B,C,T]
-\xrightarrow{\;F_P\;}
-[B,1,CP,T/P]
-\xrightarrow{\;\text{zero pad}\;}
-\text{Vision backbone}
-\longrightarrow \mathbf{Z}
-\\[6pt]
-\mathbf{Z}
-\xrightarrow{\;\text{GAP / CLS token / Flatten}\;}
-\mathbf{z}
-\xrightarrow{\;\text{dropout + linear}\;}
-\text{logits}
-\end{gathered}\)
-\end{minipage}}
-\end{center}
-
-We use one-channel timm backbones \citep{wightman2019timm}: ImageNet-pretrained
-EfficientNet-B0 and DINOv3-pretrained ConvNeXt-Tiny and ViT-Small. Natural-image
-classifiers are replaced with task-specific heads, and encoder and head are
-fine-tuned jointly. CNNs use global average pooling and ViT uses the CLS token
-by default; dataset-specific flatten--FC readouts are listed in
-Appendix~\ref{app:recipes}.
+Equation~\ref{eq:p-geometry-rule} is a reproducible geometric prior rather
+than a claim that 64 rows or the selected $P$ is universally optimal. The
+preferred temporal scale may depend on the task and backbone; we evaluate this
+sensitivity with validation-controlled fold-factor sweeps in
+Appendix~\ref{app:p-ablation}.

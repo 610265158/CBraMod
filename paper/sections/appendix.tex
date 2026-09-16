@@ -1,7 +1,7 @@
-\section{Phase Folding and Geometry}
+\section{Temporal Folding and Geometry}
 \label{app:folding}
 
-\subsection{Phase-folding definition and geometry}
+\subsection{Temporal-folding definition and geometry}
 \label{app:folding-definition}
 
 For an input $X\in\mathbb{R}^{C\times T}$ and a divisor $P$ of $T$, the
@@ -31,7 +31,7 @@ The mapping is bijective: for every original sample index
 $t=wP+p$, the inverse is
 $X_{c,t}=F_P(X)_{cP+(t\bmod P),\lfloor t/P\rfloor}$. Consequently,
 $\|F_P(X)\|_0=\|X\|_0$ and no interpolation, averaging, or frequency-domain
-operation is introduced. Any difference between phase folding and contiguous
+operation is introduced. Any difference between temporal folding and contiguous
 reshape therefore comes solely from the neighborhoods presented to the
 backbone. The examples below visualize this change of coordinates; they are
 not claims that the highlighted patterns are uniquely physiological or
@@ -114,6 +114,52 @@ can also cross electrodes, so the interpretation depends on channel ordering.
 
 \input{sections/appendix_detailed_results}
 
+\section{Matched Foundation-Model Reruns}
+\label{app:foundation-rerun}
+
+We reran the released CBraMod and REVE-Base checkpoints on TUAB, FACED, and
+HMC using the inherited partitions, seeds 42--46, validation-selected
+checkpoints, and one final test evaluation per seed. The downstream pipeline
+and optimizer match our local experiments, while each model retains its
+released input normalization. These are matched-protocol reruns rather than
+exact reproductions of every original training stage.
+
+CBraMod's released multi-learning-rate recipe is replaced by one uniform
+learning rate. REVE's published linear-probe warm start, mixup, StableAdamW,
+LoRA, and model souping are not applied. For TUAB, REVE receives the same
+16-channel bipolar arrays used by CBraMod rather than the released 21-channel
+memmap. These deviations can lower rerun values relative to published results,
+so the experiment quantifies protocol sensitivity rather than replacing the
+original references.
+
+\begin{table*}[t]
+\centering\scriptsize
+\caption{Matched-pipeline reruns of released foundation models. Values are
+five-seed means $\pm$ population standard deviations; the primary metric is the
+validation selection metric. Published values are shown for reference.}
+\label{tab:foundation-reruns}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Dataset & Model & BA & Primary metric & Published primary \\
+\midrule
+TUAB & CBraMod & $0.7821\pm0.0099$ & $0.8632\pm0.0056$ (PR-AUC) & $0.9221$ \\
+TUAB & REVE-Base & $0.8052\pm0.0072$ & $0.8901\pm0.0114$ (PR-AUC) & $0.9281$ \\
+FACED & CBraMod & $0.5551\pm0.0107$ & $0.4961\pm0.0124$ ($\kappa$) & $0.5041$ \\
+FACED & REVE-Base & $0.4850\pm0.0062$ & $0.4190\pm0.0063$ ($\kappa$) & $0.5080$ \\
+HMC & CBraMod & $0.7279\pm0.0038$ & $0.6758\pm0.0026$ ($\kappa$) & -- \\
+HMC & REVE-Base & $0.7337\pm0.0031$ & $0.6831\pm0.0046$ ($\kappa$) & $0.6982$ \\
+\bottomrule
+\end{tabular}
+\tablenote{Published values are transcribed from the CBraMod and REVE
+benchmark tables. The reruns use a common downstream protocol and are not
+strict replications of all original training stages.}
+\end{table*}
+
+Per-seed outputs, checkpoint paths, configuration files, and the complete
+protocol log are provided in \texttt{configs/foundation\_models/} and
+\texttt{experiments/reports/foundation\_rerun\_appendix.md}.
+
+
 \clearpage
 \section{Ablation Studies}
 \label{app:ablations}
@@ -194,17 +240,10 @@ MentalArithmetic & 4 & $80\times250$ & 50 & $10^{-4}$ & $5\cdot10^{-4}$ & PR-AUC
 HMC & 16 & $64\times375$ & 30 & $10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ \\
 \bottomrule
 \end{tabularx}
-\tablenote{``Select'' is the validation metric used for checkpointing. All
-runs use ImageNet initialization, AdamW, cosine decay, dropout .1, a linear
-head, and bfloat16 mixed precision. FACED uses flatten; the other B0 recipes
+\tablenote{``Select'' is the validation metric used for checkpointing.
+ConvNeXt-Tiny uses flatten aggregation except for TUEV, ISRUC, and HMC, which
 use GAP.}
 \end{table*}
-
-The ConvNeXt-Tiny runs share DINOv3 initialization, AdamW, cosine decay,
-dropout .1, bfloat16 training, and validation-selected checkpointing. The
-dataset-specific choices relevant to reproduction are summarized in
-Table~\ref{tab:recipes}; all datasets use the common preprocessing described
-in Section~4.2, with no separate SHU-MI scaling rule.
 
 \section{Data and Code Reproducibility Statement}
 

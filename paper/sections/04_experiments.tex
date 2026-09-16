@@ -1,105 +1,94 @@
 \section{Experimental Setup}
 \label{sec:experiments}
 
-\subsection{Benchmarks and split provenance}
+\subsection{Datasets and splits}
 
-Our suite contains 12 datasets spanning clinical detection (CHB-MIT, TUAB,
-TUEV), sleep staging (ISRUC, HMC), emotion recognition (FACED, SEED-V), motor
-imagery (PhysioNet-MI, SHU-MI), imagined speech (BCIC2020-3), depression
-detection (Mumtaz2016), and mental workload (MentalArithmetic). Table~
-\ref{tab:datasets} gives the input shapes and split sizes. All recordings are
-represented at 200\,Hz in the common preprocessing pipeline. Regular loaders
-use the $[B,C,T]$ convention; ISRUC preserves its sequence of 20 labelled
-epochs.
+We evaluate on 12 datasets spanning clinical detection, sleep staging,
+affective computing, motor imagery, imagined speech, depression detection,
+and mental workload. Table~\ref{tab:datasets} summarizes their task families,
+input shapes, and label spaces. All recordings are represented at 200\,Hz.
+Regular inputs follow the $[B,C,T]$ convention; ISRUC retains a sequence of 20
+labelled epochs per record.
 
 \begin{table*}[t]
 \centering
-\caption{The 12-dataset evaluation suite and inherited benchmark split sizes.}
+\caption{The 12-dataset evaluation suite. Exact split counts and provenance are given in Appendix~\ref{app:foundation-rerun} and the released configurations.}
 \label{tab:datasets}
 \small
 \setlength{\tabcolsep}{3pt}
 \renewcommand{\arraystretch}{0.96}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccrrr@{}}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llcc@{}}
 \toprule
-Dataset & Input shape & Classes & Train & Val & Test \\
+Dataset & Task family & Input shape & Classes \\
 \midrule
-\familyrow{6}{Clinical detection}
-CHB-MIT & $16\times2000$ & 2 & 286,964 & 23,065 & 16,964 \\
-TUAB & $16\times2000$ & 2 & 297,103 & 75,407 & 36,945 \\
-TUEV & $16\times1000$ & 6 & 68,445 & 15,487 & 29,421 \\
-\familyrow{6}{Sleep staging}
-ISRUC & $20\times6\times6000$ & 5 & 3,559 & 468 & 435 \\
-HMC & $4\times6000$ & 5 & 91,248 & 22,124 & 23,871 \\
-\familyrow{6}{Affective computing}
-FACED & $32\times2000$ & 9 & 6,720 & 1,680 & 1,932 \\
-SEED-V & $62\times200$ & 5 & 34,432 & 42,960 & 40,352 \\
-\familyrow{6}{Brain--computer interfaces}
-PhysioNet-MI & $64\times800$ & 4 & 6,300 & 1,734 & 1,803 \\
-SHU-MI & $32\times800$ & 2 & 7,210 & 2,431 & 2,347 \\
-BCIC2020-3 & $64\times600$ & 5 & 4,500 & 750 & 750 \\
-\familyrow{6}{Clinical and cognitive state decoding}
-Mumtaz2016 & $19\times1000$ & 2 & 4,891 & 1,041 & 1,211 \\
-MentalArithmetic & $20\times1000$ & 2 & 1,343 & 172 & 192 \\
+CHB-MIT & Clinical detection & $16\times2000$ & 2 \\
+TUAB & Clinical detection & $16\times2000$ & 2 \\
+TUEV & Clinical detection & $16\times1000$ & 6 \\
+ISRUC & Sleep staging & $20\times6\times6000$ & 5 \\
+HMC & Sleep staging & $4\times6000$ & 5 \\
+FACED & Affective computing & $32\times2000$ & 9 \\
+SEED-V & Affective computing & $62\times200$ & 5 \\
+PhysioNet-MI & BCI & $64\times800$ & 4 \\
+SHU-MI & BCI & $32\times800$ & 2 \\
+BCIC2020-3 & BCI & $64\times600$ & 5 \\
+Mumtaz2016 & Clinical/cognitive & $19\times1000$ & 2 \\
+MentalArithmetic & Clinical/cognitive & $20\times1000$ & 2 \\
 \bottomrule
 \end{tabular*}
-\tablenote{Counts are local input segments, except ISRUC (20-epoch sequences)
-and HMC (30-second epochs). Shapes omit the batch dimension; classes are
-semantic classes. TUEV counts use v2.0.1.}
+\tablenote{Shapes omit the batch dimension; ISRUC retains 20 labelled epochs
+per record.}
 \end{table*}
 
-For all 12 datasets, we follow the CBraMod/REVE benchmark definitions for
-record segmentation, sample construction, preprocessing order, and public
-train/validation/test partitions \citep{wang2024cbramod,elouahidi2025reve}.
-Our implementation preserves these conventions; the explicit study-specific
-operation is the final clipping and scaling applied before folding (specified
-below). For example, CHB-MIT uses
-CHB01--20/CHB21--22/CHB23--24 for train/validation/test. One version caveat is
-TUEV: our preprocessing uses v2.0.1 rather than the v2.0.0 release used by one
-reference implementation. Both releases share the official 29,421-sample test
-set, so the test partition is unchanged; only the training and validation
-counts differ. TUEV comparisons should therefore be interpreted with this
-release difference in mind.
+For all datasets, we inherit the record construction, preprocessing order, and
+public train/validation/test partitions used by the CBraMod and REVE benchmarks
+\citep{wang2024cbramod,elouahidi2025reve}. TUEV is the only version caveat: we
+use v2.0.1 rather than v2.0.0. The releases share the official 29,421-sample
+test set, but their training and validation counts differ. Exact split counts
+and provenance are reported in Appendix~\ref{app:foundation-rerun}.
 
-\subsection{Training and implementation}
-
-All models use AdamW \citep{loshchilov2019decoupled} with cosine decay,
-bfloat16 mixed precision, dropout 0.1, and batch size 32 except ISRUC (16) and
-MentalArithmetic (64). The ImageNet/DINOv3 backbone is fine-tuned jointly with
-a newly initialized linear head, and bias and normalization parameters receive
-zero weight decay. Samples are converted to float32, clipped, and scaled
-before folding (default $x\mapsto x/32$ after clipping to $[-1024,1024]$), and
-the fold factor is fixed before training using Eq.~\ref{eq:p-geometry-rule}.
-Dataset-specific learning rates, weight decay, epochs, EMA settings, and
-augmentations are recorded in Appendix~\ref{app:recipes}; seeds, checkpoint
-selection, and the final-test protocol follow the locked YAML recipes.
-
-\paragraph{Ablation and control studies.}
-We evaluate the interface through four complementary studies: \textbf{(1)
-Cross-backbone consistency} tests ImageNet-pretrained EfficientNet-B0 and
-DINOv3-pretrained ConvNeXt-Tiny and ViT-Small (Table~\ref{tab:unified-results};
-Appendix~\ref{app:detailed-results}). \textbf{(2) Pretraining contribution}
-uses matched pretrained-versus-random initialization under identical recipes
-(Section~\ref{sec:pretraining-ablation}; Table~\ref{tab:vision-pretraining-ablation}).
-\textbf{(3) Folding layout} compares phase-interleaved folding with contiguous
-reshape; $P=1$ is the identity, so the informative comparison is $P>1$
-(Section~\ref{sec:fold-reshape}; Appendix~\ref{app:fold-reshape}).
-\textbf{(4) Fold-factor sensitivity} sweeps $P\in\{1,2,4,8\}$ on CHB-MIT,
-TUEV, and MentalArithmetic (Appendix~\ref{app:p-ablation}); tuned factors use
-validation data only.
-
-\subsection{Evaluation protocol}
-
-We compare \method{} with task-specific EEG models and EEG foundation models,
-using published baseline results from \cbramod{} and \reve{} under the same
-downstream data splits \citep{wang2024cbramod,elouahidi2025reve}. For \cbramod{}
-on TUAB and TUEV, we report the variants whose pretraining excludes the target
-corpus.
+\subsection{Metrics and model selection}
 
 Binary tasks report balanced accuracy (BA), PR-AUC, and ROC-AUC; multiclass
-tasks report BA, Cohen's $\kappa$, and weighted F1. Checkpoint selection uses
-only validation PR-AUC or validation $\kappa$, while the remaining metrics are
-test-time reporting metrics; published BAs are transcribed from the same
-benchmark tables and are never mixed across runs. Each recipe is trained with
-five seeds (42--46), and we report the arithmetic mean and population standard
-deviation after selecting one checkpoint on validation and evaluating it once
-on test; the executable protocol is included in the released code.
+tasks report BA, Cohen's $\kappa$, and weighted F1. Validation PR-AUC and
+validation $\kappa$ are the checkpoint-selection metrics for binary and
+multiclass tasks, respectively. The remaining metrics are used only for final
+reporting. Each recipe is trained with seeds 42--46. For every seed, we select
+one checkpoint using validation performance and evaluate it once on the test
+set; tables report the arithmetic mean and population standard deviation.
+
+We compare against published task-specific models and EEG foundation models
+under the inherited benchmark partitions. For CBraMod on TUAB and TUEV, we
+use variants whose pretraining excludes the target corpus. We additionally
+rerun released CBraMod and REVE models on TUAB, FACED, and HMC as a
+supplementary fairness check; full protocols and results are provided in
+Appendix~\ref{app:foundation-rerun}.
+
+\subsection{Models and training}
+
+We use ImageNet-pretrained EfficientNet-B0 and DINOv3-pretrained
+ConvNeXt-Tiny and ViT-Small with one-channel inputs. Their original
+classification layers are replaced by task-specific prediction heads, and the
+encoder and head are fine-tuned jointly. Frozen-transfer experiments keep the
+encoder fixed and train only the prediction head. Backbone-specific feature
+aggregation and head definitions are reported in Appendix~\ref{app:recipes}.
+
+All models use AdamW \citep{loshchilov2019decoupled} with cosine decay,
+bfloat16 mixed precision, and dropout 0.1. The default batch size is 32, with
+16 for ISRUC and 64 for MentalArithmetic. Signals are clipped and scaled
+before folding, and the fold factor is fixed using
+Eq.~\ref{eq:p-geometry-rule}. Dataset-specific optimization settings and
+preprocessing details are provided in Appendix~\ref{app:recipes}.
+
+\subsection{Ablation and control design}
+
+Five studies isolate the sources of performance. \textbf{Cross-backbone
+evaluation} tests whether the interface transfers across convolutional and
+Transformer encoders. \textbf{Matched initialization controls} compare
+pretrained and randomly initialized versions of the same model under an
+otherwise identical recipe. \textbf{Frozen linear probing} tests transfer
+without updating the encoder. \textbf{Folding-layout controls} compare
+temporal folding with a contiguous reshape that preserves the same
+samples and output shape. Finally, \textbf{fold-factor sweeps} over
+$P\in\{1,2,4,8\}$ measure sensitivity to the induced geometry. Complete
+settings and results are reported in Sections~\ref{sec:pretraining-ablation}--
+\ref{sec:fold-factor-sensitivity} and the appendix.

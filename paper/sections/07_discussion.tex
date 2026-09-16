@@ -4,12 +4,15 @@
 
 Full-fine-tuning accuracy alone does not identify the source of a foundation
 model's gains. Our controls show that a compact generic encoder can be highly
-competitive after geometry alignment, while deficits on TUAB, SEED-V, SHU-MI,
-and Mumtaz2016 rule out universal replacement. Visual pretraining improves
-balanced accuracy in 34 of 36 matched backbone--dataset comparisons under the
-same five-seed, validation-selected protocol, with exceptions for EfficientNet-
-B0 on SEED-V and Mumtaz2016. Thus the gain reflects transferable structure in
-the visual weights, not only a favorable architecture. Geometry, backbone,
+competitive after geometry alignment, while REVE remains ahead on TUAB and
+Mumtaz2016 and CBraMod remains ahead on SEED-V and on the SHU-MI PR-AUC, which
+rules out universal replacement. Visual pretraining improves balanced accuracy
+in 33 of 36 matched backbone--dataset comparisons under the same five-seed,
+validation-selected protocol (34 of 36 under the primary validation metric),
+with exceptions for EfficientNet-B0 on SEED-V and Mumtaz2016 and
+ConvNeXt-Tiny on TUAB under balanced accuracy. Thus the gain reflects
+transferable structure in the visual weights, not only a favorable
+architecture. Geometry, backbone,
 task, and optimization still matter, so EEG foundation models should be
 compared against strong architecture-and-geometry controls.
 
@@ -27,8 +30,8 @@ adaptation, frozen representations, or cross-montage generalization.
 
 Published EEG baselines are contextual references rather than paired local
 reruns, although the compared rows use inherited benchmark partitions. Our
-experiments use dataset-specific recipes and full fine-tuning; frozen and
-few-shot transfer, missing-channel and cross-montage robustness, pretraining
+experiments use dataset-specific recipes; frozen probing covers two visual
+backbones, while few-shot transfer, missing-channel and cross-montage robustness, pretraining
 efficiency, and paired significance tests remain open. Channel count is
 confounded with montage and task, so folding should not be interpreted as a
 causal effect of electrode density.

@@ -14,7 +14,11 @@ are validation-selected results with one final test evaluation per seed.
 EfficientNet-B0 uses its ImageNet initialization; ConvNeXt-Tiny and ViT-Small
 use DINOv3 pretrained weights.
 Supervised EEG models, EEG foundation models, and vision models are separated
-into groups. The highest value in each metric column is bold and the
+into groups; the supervised rows reference EEGNet \citep{lawhern2018eegnet},
+EEGConformer \citep{song2022eeg}, SPaRCNet \citep{jing2023development},
+ContraWR \citep{yang2021self}, CNN-Transformer \citep{peh2022transformer},
+FFCL \citep{li2022motor}, and ST-Transformer \citep{song2021transformer}.
+The highest value in each metric column is bold and the
 second-highest is underlined. A double dash denotes an unreported
 result. All metrics are higher-is-better; local results report the mean and
 population standard deviation across five seeds (42--46). The local TUEV
@@ -48,8 +52,8 @@ ST-Transformer& $0.5915\pm0.0195$ & $0.1422\pm0.0094$ & $0.8237\pm0.0491$  \\
 \midrule
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& \secondcell{0.7552\pm0.0599} & $0.4092\pm0.0536$ & $0.8974\pm0.0194$  \\
-\method{} (ConvNeXt-Tiny)& \bestcell{0.7682\pm0.0294} & \bestcell{0.4734\pm0.0345} & \bestcell{0.9067\pm0.0156}  \\
-\method{} (ViT-Small)& $0.7278\pm0.0105$ & \secondcell{0.4566\pm0.0131} & \secondcell{0.9054\pm0.0114}  \\
+\method{} (ConvNeXt-Tiny)& \bestcell{0.7682\pm0.0294} & \secondcell{0.4734\pm0.0345} & \secondcell{0.9067\pm0.0156}  \\
+\method{} (ViT-Small)& \secondcell{0.7204\pm0.0175} & \bestcell{0.4759\pm0.0118} & \bestcell{0.9116\pm0.0071}  \\
 \detailend\end{table}
 
 \subsection{TUAB: Abnormal EEG Detection}
@@ -76,7 +80,7 @@ ST-Transformer& $0.7966\pm0.0023$ & $0.8521\pm0.0026$ & $0.8707\pm0.0019$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& \bestcell{0.8317\pm0.0033} & $0.9178\pm0.0025$ & $0.9126\pm0.0024$  \\
 \method{} (ConvNeXt-Tiny)& $0.8216\pm0.0050$ & $0.9059\pm0.0045$ & $0.9020\pm0.0045$  \\
-\method{} (ViT-Small)& $0.8226\pm0.0007$ & $0.9114\pm0.0019$ & $0.9066\pm0.0014$  \\
+\method{} (ViT-Small)& $0.8202\pm0.0031$ & $0.9091\pm0.0034$ & $0.9042\pm0.0024$  \\
 \detailend\end{table}
 
 \subsection{TUEV: Event Type Classification}
@@ -105,7 +109,7 @@ ST-Transformer& $0.3984\pm0.0228$ & $0.3765\pm0.0306$ & $0.6823\pm0.0190$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& $0.6423\pm0.0164$ & $0.6901\pm0.0190$ & $0.8380\pm0.0076$  \\
 \method{} (ConvNeXt-Tiny)& \secondcell{0.6763\pm0.0122} & \secondcell{0.7095\pm0.0305} & \secondcell{0.8488\pm0.0135}  \\
-\method{} (ViT-Small)& \bestcell{0.7217\pm0.0062} & \bestcell{0.7263\pm0.0043} & \bestcell{0.8563\pm0.0029}  \\
+\method{} (ViT-Small)& \bestcell{0.7261\pm0.0135} & \bestcell{0.7428\pm0.0127} & \bestcell{0.8655\pm0.0055}  \\
 \detailend\end{table}
 
 \subsection{ISRUC: Sleep Staging}
@@ -133,7 +137,7 @@ ST-Transformer& $0.7381\pm0.0205$ & $0.7013\pm0.0352$ & $0.7681\pm0.0175$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& $0.8025\pm0.0027$ & $0.7705\pm0.0032$ & $0.8197\pm0.0029$  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.8142\pm0.0009} & \bestcell{0.7906\pm0.0018} & \bestcell{0.8372\pm0.0012}  \\
-\method{} (ViT-Small)& \secondcell{0.8058\pm0.0017} & \secondcell{0.7785\pm0.0028} & \secondcell{0.8286\pm0.0021}  \\
+\method{} (ViT-Small)& \secondcell{0.8130\pm0.0027} & \secondcell{0.7875\pm0.0026} & \secondcell{0.8349\pm0.0023}  \\
 \detailend\end{table}
 
 \subsection{FACED: Emotion Recognition}
@@ -160,7 +164,7 @@ ST-Transformer& $0.4810\pm0.0079$ & $0.4137\pm0.0133$ & $0.4795\pm0.0096$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& $0.5516\pm0.0179$ & $0.4953\pm0.0197$ & $0.5567\pm0.0163$  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.6363\pm0.0027} & \bestcell{0.5891\pm0.0032} & \bestcell{0.6374\pm0.0030}  \\
-\method{} (ViT-Small)& $0.3867\pm0.0071$ & $0.3097\pm0.0072$ & $0.3849\pm0.0071$  \\
+\method{} (ViT-Small)& $0.4464\pm0.0102$ & $0.3744\pm0.0109$ & $0.4445\pm0.0098$  \\
 \detailend\end{table}
 
 \subsection{SEED-V: Emotion Recognition}
@@ -215,7 +219,7 @@ ST-Transformer& $0.6035\pm0.0081$ & $0.4712\pm0.0199$ & $0.6053\pm0.0075$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& \secondcell{0.6491\pm0.0125} & \secondcell{0.5322\pm0.0167} & \secondcell{0.6485\pm0.0133}  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.6609\pm0.0079} & \bestcell{0.5479\pm0.0105} & \bestcell{0.6618\pm0.0079}  \\
-\method{} (ViT-Small)& $0.5773\pm0.0052$ & $0.4363\pm0.0070$ & $0.5774\pm0.0060$  \\
+\method{} (ViT-Small)& $0.6377\pm0.0042$ & $0.5169\pm0.0056$ & $0.6386\pm0.0041$  \\
 \detailend\end{table}
 
 \subsection{SHU-MI: Motor Imagery}
@@ -242,7 +246,7 @@ ST-Transformer& $0.5992\pm0.0206$ & $0.6394\pm0.0122$ & $0.6431\pm0.0111$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& $0.6273\pm0.0085$ & \secondcell{0.6982\pm0.0178} & $0.6962\pm0.0139$  \\
 \method{} (ConvNeXt-Tiny)& \secondcell{0.6358\pm0.0075} & $0.6910\pm0.0129$ & \bestcell{0.7006\pm0.0112}  \\
-\method{} (ViT-Small)& $0.5957\pm0.0096$ & $0.6619\pm0.0161$ & $0.6347\pm0.0133$  \\
+\method{} (ViT-Small)& $0.6302\pm0.0331$ & $0.6891\pm0.0457$ & $0.6908\pm0.0452$  \\
 \detailend\end{table}
 
 \subsection{BCIC2020-3: Imagined Speech}
@@ -297,7 +301,7 @@ ST-Transformer& $0.9135\pm0.0103$ & $0.9578\pm0.0086$ & $0.9594\pm0.0059$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& $0.9153\pm0.0061$ & $0.9864\pm0.0045$ & $0.9846\pm0.0053$  \\
 \method{} (ConvNeXt-Tiny)& $0.9176\pm0.0138$ & $0.9842\pm0.0020$ & $0.9825\pm0.0034$  \\
-\method{} (ViT-Small)& $0.9072\pm0.0152$ & $0.9807\pm0.0016$ & $0.9788\pm0.0021$  \\
+\method{} (ViT-Small)& $0.9112\pm0.0099$ & $0.9797\pm0.0037$ & $0.9767\pm0.0047$  \\
 \detailend\end{table}
 
 \subsection{MentalArithmetic: Mental Workload}
@@ -324,7 +328,7 @@ ST-Transformer& $0.6631\pm0.0173$ & $0.5672\pm0.0259$ & $0.7132\pm0.0174$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0)& $0.6910\pm0.0418$ & \bestcell{0.7903\pm0.0536} & \bestcell{0.8779\pm0.0251}  \\
 \method{} (ConvNeXt-Tiny)& \bestcell{0.7667\pm0.0234} & \secondcell{0.7598\pm0.0436} & \secondcell{0.8752\pm0.0313}  \\
-\method{} (ViT-Small)& $0.7118\pm0.0353$ & $0.5739\pm0.0617$ & $0.7619\pm0.0389$  \\
+\method{} (ViT-Small)& $0.7507\pm0.0464$ & $0.7249\pm0.0625$ & $0.8498\pm0.0433$  \\
 \detailend\end{table}
 
 
@@ -333,7 +337,7 @@ HMC evaluates five-stage sleep classification from polysomnography \citep{alvare
 HMC follows the \reve{} benchmark preprocessing and partition, itself adapted
 from NeuroLM: the 151 recordings are sorted by filename and assigned 100/25/26
 to train, validation, and test, yielding four-channel, 30-second PSG epochs.
-The local configuration uses $P=16$ phase-interleaved folding,
+The local configuration uses $P=16$ temporal folding,
 validation-selected checkpoints, and one final test evaluation per seed.
 Published rows are transcribed from \reve{}'s sleep-staging table, which uses
 the same held-out recordings; \cbramod{} does not report this corpus.
@@ -354,6 +358,6 @@ ST-Transformer& $0.2559\pm0.0141$ & $0.0503\pm0.0183$ & $0.1428\pm0.0122$  \\
 \multicolumn{4}{@{}l}{\textit{Vision models}} \\
 \method{} (EfficientNet-B0) & \secondcell{0.7557\pm0.0019} & \secondcell{0.7070\pm0.0023} & \secondcell{0.7700\pm0.0017} \\
 \method{} (ConvNeXt-Tiny) & \bestcell{0.7581\pm0.0055} & \bestcell{0.7111\pm0.0063} & \bestcell{0.7744\pm0.0043} \\
-\method{} (ViT-Small) & $0.7474\pm0.0032$ & $0.6981\pm0.0016$ & $0.7643\pm0.0006$ \\
+\method{} (ViT-Small) & $0.7476\pm0.0032$ & $0.6987\pm0.0033$ & $0.7634\pm0.0017$ \\
 \detailend\end{table}
 

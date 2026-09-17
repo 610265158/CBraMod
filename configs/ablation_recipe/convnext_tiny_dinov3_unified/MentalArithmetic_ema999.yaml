@@ -1,0 +1,81 @@
+dataset: MentalArithmetic
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter: {fold_factor: 4}
+  feature_aggregation: flatten
+  head_init_std: 0.002
+  squeeze_binary: true
+training:
+  lr: 0.0001
+  backbone_lr_scale: 1.0
+  batch_size: 64
+  epochs: 50
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.999
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 3.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: true
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 0.5
+  time_roll_max_fraction: 0.25
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: pr_auc
+source: configs/backbones/convnext_tiny_dinov3_unified/MentalArithmetic.yaml
+protocol:
+  seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  per_seed:
+    42: {ba: 0.78125, pr_auc: 0.72333, roc_auc: 0.85446}
+    43: {ba: 0.71181, pr_auc: 0.72592, roc_auc: 0.83348}
+    44: {ba: 0.76042, pr_auc: 0.77428, roc_auc: 0.89135}
+    45: {ba: 0.76736, pr_auc: 0.77095, roc_auc: 0.88122}
+    46: {ba: 0.77083, pr_auc: 0.78114, roc_auc: 0.87196}
+    47: {ba: 0.76389, pr_auc: 0.80672, roc_auc: 0.90943}
+    48: {ba: 0.77431, pr_auc: 0.72294, roc_auc: 0.87196}
+    49: {ba: 0.77778, pr_auc: 0.76799, roc_auc: 0.87630}
+    50: {ba: 0.69097, pr_auc: 0.69692, roc_auc: 0.82581}
+    51: {ba: 0.78125, pr_auc: 0.81265, roc_auc: 0.90683}
+  mean: {ba: 0.75799, pr_auc: 0.75828, roc_auc: 0.87228}
+  std_population: {ba: 0.02942, pr_auc: 0.03690, roc_auc: 0.02649}
+notes: >-
+  Single-variable ablation against configs/backbones/convnext_tiny_dinov3_unified/MentalArithmetic.yaml:
+  ema_decay 0.995 -> 0.999; batch size 64, lr 1e-4, weight decay 5e-4, grad-norm clip 1.0, warmup 3,
+  early stop 10, flatten head, binary_pos_weight 3.0 unchanged. Ten seeds 42--51 with
+  validation-selected checkpoints and one final test per seed. Matched ema_decay 0.995 control
+  (same ten seeds): pr_auc 0.72538 +/- 0.05865 vs 0.75828 +/- 0.03690 here; paired difference
+  +0.03291 (sd 0.02777, t=3.55, df=9, p~0.006); both seed halves agree (42--46 +0.0385,
+  47--51 +0.0273). roc_auc +0.03027, ba -0.00590.
+output:
+  model_root: experiments/checkpoints/ablation_recipe/convnext_tiny_dinov3_unified/mentalarithmetic_ema999/seed{seed}
+  log_root: experiments/logs/ablation_recipe/convnext_tiny_dinov3_unified/mentalarithmetic_ema999/seed{seed}

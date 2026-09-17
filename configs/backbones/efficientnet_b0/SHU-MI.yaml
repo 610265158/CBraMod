@@ -15,13 +15,13 @@ training:
   warmup_start_factor: 0.1
   clip_value: -1.0
   ema_decay: 0.995
-  num_workers: 4
+  num_workers: 0
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 1.0
   dropout: 0.1
   drop_path_rate: 0.0
-  early_stop: 20
+  early_stop: 10
   frozen: false
   multi_lr: false
   use_pretrained_weights: true

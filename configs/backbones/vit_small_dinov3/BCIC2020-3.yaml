@@ -21,7 +21,7 @@ training:
   binary_pos_weight: 1.0
   dropout: 0.1
   drop_path_rate: 0.0
-  early_stop: 30
+  early_stop: 10
   frozen: false
   multi_lr: false
   use_pretrained_weights: true

@@ -1,0 +1,73 @@
+dataset: SEED-V
+backbone_name: convnext_tiny.dinov3_lvd1689m
+vision:
+  adapter: {fold_factor: 1}
+  feature_aggregation: flatten
+  head_init_std: 0.002
+training:
+  lr: 0.0001
+  backbone_lr_scale: 0.1
+  batch_size: 32
+  epochs: 50
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  amplitude_scale_prob: 1.0
+  amplitude_scale_min: 0.5
+  amplitude_scale_max: 2.0
+  amplitude_scale_distribution: log_uniform
+  mixup_augmentation: false
+  mixup_prob: 1.0
+  mixup_alpha: 0.2
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: kappa
+protocol:
+  seeds: [42, 43, 44, 45, 46]
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds: [42, 43, 44, 45, 46]
+  per_seed:
+    42: {epoch: 16, ba: 0.37588, kappa: 0.22597, f1: 0.38835}
+    43: {epoch: 20, ba: 0.39670, kappa: 0.25229, f1: 0.40765}
+    44: {epoch: 10, ba: 0.38388, kappa: 0.23538, f1: 0.39418}
+    45: {epoch: 5, ba: 0.38269, kappa: 0.23663, f1: 0.39634}
+    46: {epoch: 23, ba: 0.37704, kappa: 0.22520, f1: 0.38652}
+  mean: {ba: 0.38324, kappa: 0.23509, f1: 0.39461}
+  std_population: {ba: 0.00741, kappa: 0.00979, f1: 0.00745}
+notes: >-
+  Unified ConvNeXt-Tiny DINOv3 recipe: lr 1e-4, weight decay 5e-4, EMA 0.995,
+  grad-norm clip 1.0, warmup 3 epochs, early stop 10, dropout 0.1,
+  head_init_std 0.002, flatten aggregation. Five seeds 42--46,
+  validation-selected checkpoint, one final test evaluation per seed,
+  population standard deviation. Primary metric 0.2396 -> 0.2351 (-0.0045 vs
+  previous per-dataset recipe).
+output:
+  model_root: experiments/checkpoints/seed_v_convnext_tiny_dinov3_p1_flatten_lr1e4_wd5e4_ema995_clip1_warm3_5seed_v1/seed{seed}
+  log_root: experiments/logs/seed_v_convnext_tiny_dinov3_p1_flatten_lr1e4_wd5e4_ema995_clip1_warm3_5seed_v1/seed{seed}

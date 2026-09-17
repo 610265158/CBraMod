@@ -1,0 +1,94 @@
+dataset: Mumtaz2016
+model_arch: cbramod
+training:
+  lr: 0.0001
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: pr_auc
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba:
+    mean: 0.8965
+    std: 0.00325
+  pr_auc:
+    mean: 0.97576
+    std: 0.00298
+  roc_auc:
+    mean: 0.97471
+    std: 0.00353
+  per_seed:
+    42:
+      epoch: 3
+      ba: 0.89732
+      pr_auc: 0.97725
+      roc_auc: 0.97708
+    43:
+      epoch: 3
+      ba: 0.89565
+      pr_auc: 0.97327
+      roc_auc: 0.97252
+    44:
+      epoch: 9
+      ba: 0.89149
+      pr_auc: 0.97224
+      roc_auc: 0.9702
+    45:
+      epoch: 3
+      ba: 0.90164
+      pr_auc: 0.97546
+      roc_auc: 0.97356
+    46:
+      epoch: 9
+      ba: 0.8964
+      pr_auc: 0.9806
+      roc_auc: 0.98021
+notes: >-
+  Matched-pipeline CBraMod rerun on Mumtaz2016 (19-channel MDD detection). The
+  per-dataset recipe from configs/downstream.py is used unchanged; the only
+  adapted hyperparameter is the learning rate (1e-4). The loader normalizes
+  inputs with the released CBraMod convention (microvolt / 100, no clipping),
+  configured by finetune_main from configs/foundation.py. Validation-selected
+  checkpoint (validation PR-AUC), one final test per seed, seeds 42-46,
+  population std. Published reference PR-AUC 0.9923 +/- 0.0032 (delta -0.0165).
+  See experiments/reports/foundation_rerun_appendix.md.
+output:
+  model_root: experiments/checkpoints/foundation_rerun/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun/cbramod/seed{seed}

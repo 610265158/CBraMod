@@ -1,0 +1,97 @@
+dataset: Mumtaz2016
+model_arch: reve
+training:
+  lr: 0.0001
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: -1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 30
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: pr_auc
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba:
+    mean: 0.91926
+    std: 0.01154
+  pr_auc:
+    mean: 0.99033
+    std: 0.00366
+  roc_auc:
+    mean: 0.9895
+    std: 0.00398
+  per_seed:
+    42:
+      epoch: 4
+      ba: 0.92397
+      pr_auc: 0.9914
+      roc_auc: 0.99062
+    43:
+      epoch: 2
+      ba: 0.90385
+      pr_auc: 0.98567
+      roc_auc: 0.98455
+    44:
+      epoch: 2
+      ba: 0.93144
+      pr_auc: 0.99647
+      roc_auc: 0.99612
+    45:
+      epoch: 3
+      ba: 0.92983
+      pr_auc: 0.98782
+      roc_auc: 0.98641
+    46:
+      epoch: 3
+      ba: 0.90719
+      pr_auc: 0.99028
+      roc_auc: 0.98981
+notes: >-
+  Matched-pipeline REVE-Base rerun on Mumtaz2016 (19-channel MDD detection). The
+  per-dataset recipe from configs/downstream.py is used unchanged; the only
+  adapted hyperparameter is the learning rate (1e-4). The loader normalizes
+  inputs with the released REVE scale_factor (microvolt / 100, no clipping) and
+  supplies released electrode positions (19 channels, identical to the REVE
+  mumtaz montage), configured by finetune_main from configs/foundation.py. The
+  REVE paper's lp -> ft warm start, mixup, StableAdamW, LoRA and model souping
+  are not applied (documented deviation). Validation-selected checkpoint
+  (validation PR-AUC), one final test per seed, seeds 42-46, population std.
+  Published reference PR-AUC 0.9961 +/- 0.0013 (delta -0.0058).
+  See experiments/reports/foundation_rerun_appendix.md.
+output:
+  model_root: experiments/checkpoints/foundation_rerun/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun/reve/seed{seed}

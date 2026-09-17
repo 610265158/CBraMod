@@ -15,7 +15,7 @@ EfficientNet-B0 uses its ImageNet initialization; ConvNeXt-Tiny and ViT-Small
 use DINOv3 pretrained weights.
 Supervised EEG models, EEG foundation models, and vision models are separated
 into groups; the supervised rows reference EEGNet \citep{lawhern2018eegnet},
-EEGConformer \citep{song2022eeg}, SPaRCNet \citep{jing2023development},
+EEGConformer \citep{song2023eeg}, SPaRCNet \citep{jing2023development},
 ContraWR \citep{yang2021self}, CNN-Transformer \citep{peh2022transformer},
 FFCL \citep{li2022motor}, and ST-Transformer \citep{song2021transformer}.
 The highest value in each metric column is bold and the
@@ -204,7 +204,7 @@ ST-Transformer& $0.4810\pm0.0079$ & $0.4137\pm0.0133$ & $0.4795\pm0.0096$  \\
 \detailend\end{table}
 
 \subsection{SEED-V: Emotion Recognition}
-SEED-V evaluates five-class emotion recognition \citep{liu2021comparing}. Each local sample contains 62 channels and 200 time samples. The trial-based protocol yields 34,432 training, 42,960 validation, and 40,352 test samples. We report balanced accuracy, Cohen's $\kappa$, and weighted F1.
+SEED-V evaluates five-class emotion recognition \citep{liu2022comparing}. Each local sample contains 62 channels and 200 time samples. The trial-based protocol yields 34,432 training, 42,960 validation, and 40,352 test samples. We report balanced accuracy, Cohen's $\kappa$, and weighted F1.
 SEED-V follows the CBraMod trial-level split: for each session, the first five
 trials form training, the middle five validation, and the last five test.
 \reve{} does not report this dataset.
@@ -396,4 +396,3 @@ ST-Transformer& $0.2559\pm0.0141$ & $0.0503\pm0.0183$ & $0.1428\pm0.0122$  \\
 \method{} (ConvNeXt-Tiny) & \bestcell{0.7581\pm0.0055} & \bestcell{0.7111\pm0.0063} & \bestcell{0.7744\pm0.0043} \\
 \method{} (ViT-Small) & $0.7476\pm0.0032$ & $0.6987\pm0.0033$ & $0.7634\pm0.0017$ \\
 \detailend\end{table}
-

@@ -41,7 +41,7 @@ per record.}
 
 For all datasets, we inherit the record construction, preprocessing order, and
 public train/validation/test partitions used by the CBraMod and REVE benchmarks
-\citep{wang2024cbramod,elouahidi2025reve}. TUEV is the only version caveat: we
+\citep{wang2025cbramod,elouahidi2025reve}. TUEV is the only version caveat: we
 use v2.0.1 rather than v2.0.0. The releases share the official 29,421-sample
 test set, but their training and validation counts differ. Exact split counts
 and partition rules for all 12 datasets are reported in
@@ -50,28 +50,37 @@ Table~\ref{tab:splits} (Appendix~\ref{app:detailed-results}).
 \subsection{Metrics and model selection}
 
 Binary tasks report balanced accuracy (BA), PR-AUC, and ROC-AUC; multiclass
-tasks report BA, Cohen's $\kappa$, and weighted F1. Validation PR-AUC and
-validation $\kappa$ are the checkpoint-selection metrics for binary and
-multiclass tasks, respectively. The remaining metrics are used only for final
-reporting. Each recipe is trained with seeds 42--46. For every seed, we select
-one checkpoint using validation performance and evaluate it once on the test
-set; tables report the arithmetic mean and population standard deviation.
+tasks report BA, Cohen's $\kappa$, and weighted F1. Validation PR-AUC (binary)
+or validation $\kappa$ (multiclass) selects the checkpoint and is called the
+\emph{selection metric}. The headline comparison uses the \emph{main metrics}
+(PR-AUC/ROC-AUC or $\kappa$/F1), BA is the common scale in the ablations, and
+Appendix~\ref{app:detailed-results} reports all three metrics per task. Each
+recipe is trained with seeds 42--46; per seed we select one checkpoint on
+validation and evaluate it once on test, reporting the mean and population
+standard deviation.
 
 We compare against published task-specific models and EEG foundation models
 under the inherited benchmark partitions. For CBraMod on TUAB and TUEV, we
 use variants whose pretraining excludes the target corpus. We additionally
-rerun released CBraMod and REVE models on TUAB, FACED, and HMC as a
-supplementary fairness check; full protocols and results are provided in
-Appendix~\ref{app:foundation-rerun}.
+rerun released CBraMod and REVE models on TUAB, FACED, HMC, Mumtaz2016, and
+PhysioNet-MI as a supplementary fairness check; full protocols and results are
+provided in Appendix~\ref{app:foundation-rerun}.
 
 \subsection{Models and training}
 
 We use ImageNet-pretrained EfficientNet-B0 and DINOv3-pretrained
 ConvNeXt-Tiny and ViT-Small with one-channel inputs. Their original
+implementations and pretrained-weight loading are provided through the
+PyTorch Image Models library (timm)~\citep{rw2019timm}. The original
 classification layers are replaced by task-specific prediction heads, and the
 encoder and head are fine-tuned jointly. Frozen-transfer experiments keep the
 encoder fixed and train only the prediction head. Backbone-specific feature
-aggregation and head definitions are reported in Appendix~\ref{app:recipes}.
+aggregation and head definitions are reported in Appendix~\ref{app:recipes};
+encoder size and forward compute are compared with the EEG foundation encoders
+in Appendix~\ref{app:model-families}. EfficientNet-B0 uses 4.01M parameters
+and 0.247 GFLOPs, compared with 4.92M and 0.79 GFLOPs for \cbramod{} and
+69.19M and 11.07 GFLOPs for \reve{}-Base, while ConvNeXt-Tiny and ViT-Small
+require 2.903 and 3.000 GFLOPs.
 
 All models use AdamW \citep{loshchilov2019decoupled} with cosine decay,
 bfloat16 mixed precision, and dropout 0.1. The default batch size is 32, with
@@ -92,4 +101,4 @@ temporal folding with a contiguous reshape that preserves the same
 samples and output shape. Finally, \textbf{fold-factor sweeps} over
 $P\in\{1,2,4,8\}$ measure sensitivity to the induced geometry. Complete
 settings and results are reported in Sections~\ref{sec:pretraining-ablation}--
-\ref{sec:fold-factor-sensitivity} and the appendix.
+\ref{sec:fold-factor-sensitivity} and Appendix~\ref{app:ablations}.

@@ -1,44 +1,46 @@
 \section{Discussion and Limitations}
 
-\subsection{What can be concluded about EEG foundation models?}
+We revisit our three contributions in light of the matched controls and the
+benchmark comparison. For the
+lossless interface, the folding-layout controls show that the reindexing itself
+matters: temporal folding beats a contiguous reshape of the same samples in 25
+of 27 selection-metric comparisons, so ordering, not height alone, carries part
+of the gain, and the fold-factor rule remains a reproducible prior, not a
+universal optimum.
 
-Full-fine-tuning accuracy alone does not identify the source of a foundation
-model's gains. Our controls show that a compact generic encoder can be highly
-competitive after geometry alignment, while REVE remains ahead on TUAB and
-Mumtaz2016 and CBraMod remains ahead on SEED-V and on the SHU-MI PR-AUC, which
-rules out universal replacement. Visual pretraining improves balanced accuracy
-in 33 of 36 matched backbone--dataset comparisons under the same five-seed,
-validation-selected protocol (34 of 36 under the primary validation metric),
-with exceptions for EfficientNet-B0 on SEED-V and Mumtaz2016 and
-ConvNeXt-Tiny on TUAB under balanced accuracy. Thus the gain reflects
-transferable structure in the visual weights, not only a favorable
-architecture. Geometry, backbone,
-task, and optimization still matter, so EEG foundation models should be
-compared against strong architecture-and-geometry controls.
+For the transfer evidence, the gains hold across convolutional and Transformer
+backbones alike. Two controls show that the pretrained representation itself
+matters: with random initialization, the selection metric falls in 34 of 36
+backbone--dataset comparisons (BA: 33 of 36); and a linear probe on frozen
+DINOv3 features still matches the published non-pooling CBraMod probe on
+several tasks, though not REVE-Base.
 
-Vision pretraining is therefore a \emph{conditional} free lunch in a strong
-practical sense: it provides a broadly reusable prior that wins or remains
-closely competitive on most benchmarks without EEG-specific pretraining. Its
-value still depends on representation geometry, backbone, and task, so this
-does not imply that EEG pretraining is unnecessary in frozen, few-shot, or
-cross-montage settings. Rather, our results provide a design reference for
-EEG-specific pretraining and downstream transfer: future EEG models should
-quantify gains beyond a geometry-aligned visual prior, especially for few-shot
-adaptation, frozen representations, or cross-montage generalization.
+For the benchmark comparison, at least one visual backbone exceeds the
+strongest EEG foundation reference on both main metrics in 8 of
+the 12 tasks, while published references remain ahead on TUAB and Mumtaz2016
+(REVE) and on SEED-V and the SHU-MI PR-AUC (CBraMod); visual transfer is
+therefore competitive but not a replacement.
 
-\subsection{Limitations}
+Taken together, vision pretraining is a \emph{conditional} free lunch: a
+broadly reusable prior that wins or stays closely competitive on most
+benchmarks without any EEG-specific pretraining. This matters practically in EEG, where
+pretraining corpora, hardware, and compute are expensive; a compact ImageNet-
+or DINOv3-initialized backbone with a parameter-free adapter already provides a
+strong and reproducible baseline, although benchmark accuracy is not clinical
+readiness. It also offers a new perspective on EEG foundation models: gains
+attributed to EEG-specific pretraining should be measured against a
+geometry-aligned visual control that shares the data, splits, and protocol.
+This does not mean that EEG pretraining is unnecessary; our frozen probes still
+trail REVE-Base on several tasks, and few-shot or cross-montage transfer may
+favor EEG-specific representations.
 
-Published EEG baselines are contextual references rather than paired local
-reruns, although the compared rows use inherited benchmark partitions. Our
-experiments use dataset-specific recipes; frozen probing covers two visual
-backbones, while few-shot transfer, missing-channel and cross-montage robustness, pretraining
-efficiency, and paired significance tests remain open. Channel count is
-confounded with montage and task, so folding should not be interpreted as a
-causal effect of electrode density.
-
-\subsection{Broader impact}
-
-Compact backbones may lower hardware barriers, but benchmark accuracy is not
-clinical readiness. Deployment requires external validation, calibration,
-subgroup analysis, and human oversight. Because folding is invertible, it
-provides no privacy protection.
+Several limitations qualify these conclusions. Most EEG baselines remain
+contextual published references rather than paired local reruns;
+Appendix~\ref{app:foundation-rerun} adds matched-pipeline reruns for five
+datasets, but these do not reproduce every original training stage, and the
+headline counts select the best of three backbones.
+Frozen probing covers two visual backbones, and channel count is confounded
+with montage and task. Future work should therefore address automatic
+fold-factor selection (validation-based or learned), channel-order and
+missing-channel robustness, few-shot and cross-montage transfer,
+pretraining-efficiency comparisons, and paired significance tests.

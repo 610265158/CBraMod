@@ -1,14 +1,15 @@
 Four controls isolate the sources of performance, following the design in
 Section~\ref{sec:experiments}; all four reuse the splits, seeds, and validation
 protocol of the main experiments. \textbf{Matched initialization} repeats each
-recipe with a randomly initialized backbone: visual pretraining improves 33 of
-the 36 dataset--backbone comparisons in balanced accuracy and 34 in the primary
-metric (PR-AUC for binary tasks, $\kappa$ for multiclass tasks). \textbf{Frozen linear probing} updates only a linear head, and the
+recipe with a randomly initialized backbone: visual pretraining improves the
+selection metric in 34 of the 36 dataset--backbone comparisons and balanced
+accuracy in 33 (PR-AUC for binary tasks, $\kappa$ for multiclass tasks).
+\textbf{Frozen linear probing} updates only a linear head, and the
 resulting frozen DINOv3 features remain competitive with the published
 non-pooling CBraMod probe on several tasks but stay below REVE-Base.
 \textbf{Folding-layout controls} replace temporal folding with a contiguous
 reshape of the same samples, and the comparison favors folding in 25 of 27
-cases. \textbf{Fold-factor sweeps} over $P\in\{1,2,4,8\}$ show that the
+selection-metric cases. \textbf{Fold-factor sweeps} over $P\in\{1,2,4,8\}$ show that the
 preferred factor depends on the task and the backbone, while the geometry rule
 of Section~\ref{sec:p-selection} provides a reproducible near-optimal default.
 All values are final test means $\pm$ population standard deviations over five
@@ -174,10 +175,10 @@ versus contiguous reshape).
 \bottomrule\end{tabular}\end{table}
 
 Negative entries are limited to five: EfficientNet-B0 on SEED-V (both balanced
-accuracy and the primary metric), EfficientNet-B0 on Mumtaz2016 and
+accuracy and the selection metric), EfficientNet-B0 on Mumtaz2016 and
 ConvNeXt-Tiny on TUAB (balanced accuracy), and EfficientNet-B0 on ISRUC
-(primary metric). The largest gains appear on
-MentalArithmetic, FACED, and BCIC2020-3, where the primary metric improves by
+(selection metric). The largest gains appear on
+MentalArithmetic, FACED, and BCIC2020-3, where the selection metric improves by
 18--58 points, and on SEED-V for the two DINOv3-initialized backbones and
 PhysioNet-MI for ConvNeXt-Tiny, where it improves by up to 28 points. The
 smallest gains appear on HMC, TUAB, CHB-MIT, and Mumtaz2016. Averaged over the
@@ -397,7 +398,7 @@ ViT-Small & 1 & $16\times2000$ & $0.6884\pm0.0115$ & $0.3527\pm0.0482$ & \second
 \bottomrule
 \end{tabular*}
 \tablenote{Each row is a separate five-seed run; the $P=4$ row matches the
-finalized CHB-MIT recipe. The primary metric is PR-AUC.}
+finalized CHB-MIT recipe. The selection metric is PR-AUC.}
 \end{table*}
 
 \begin{table*}[t]
@@ -430,7 +431,7 @@ ViT-Small & 1 & $16\times1000$ & $0.6577\pm0.0108$ & $0.6848\pm0.0063$ & $0.8311
 \bottomrule
 \end{tabular*}
 \tablenote{Each row is a separate five-seed run; the $P=4$ row matches the
-finalized TUEV recipe. The primary metric is $\kappa$.}
+finalized TUEV recipe. The selection metric is $\kappa$.}
 \end{table*}
 
 \begin{table*}[t]
@@ -463,7 +464,7 @@ ViT-Small & 1 & $20\times1000$ & \secondcell{0.7618\pm0.0282} & \secondcell{0.78
 \bottomrule
 \end{tabular*}
 \tablenote{Each row is a separate five-seed run; the $P=4$ row matches the
-finalized MentalArithmetic recipe. The primary metric is PR-AUC.}
+finalized MentalArithmetic recipe. The selection metric is PR-AUC.}
 \end{table*}
 
 The sweeps confirm that the preferred factor is task- and backbone-dependent.

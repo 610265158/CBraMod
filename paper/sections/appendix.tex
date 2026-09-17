@@ -49,50 +49,22 @@ after the permutation. Pixel values should therefore be compared through the
 index relation above, rather than by interpreting the folded image as a new
 measurement.
 
-We use the figures in a controlled-to-real progression. The simulated signals
-in Fig.~\ref{fig:synthetic-folding-patterns} are shown from side and top views
-before their phase--time rendering; this makes the two-dimensional motifs a
-coordinate change rather than a new signal. Figure~\ref{fig:seizure-folding}
-then shows the same correspondence for a real ictal CHB-MIT segment.
+Figure~\ref{fig:folding-examples} presents the examples in a controlled-to-real
+progression. The upper panels pair three simulated waveforms with their exact
+phase--time renderings; the lower panels show the same correspondence for a
+real ictal CHB-MIT segment.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.94\textwidth]{side_top_view_folding.pdf}
-\caption{The same EEG can be read from two complementary viewpoints. In the
-side view (left), a human follows amplitude as a continuous function of time.
-After lossless $P=4$ folding (right), the identical samples form a
-two-dimensional phase--time texture: samples with phases $p=0,1,2,3$ become
-adjacent vertical rows, while each column advances by four original samples.
-The upper row is a controlled spike--slow-wave example and the lower row is a
-real five-second F7--T7 segment from a CHB-MIT seizure recording. The arrows
-indicate a change of representation and local adjacency, not a change in the
-signal itself.}
-\label{fig:side-top-view}
-\end{figure*}
-\FloatBarrier
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.94\textwidth]{synthetic_folding_patterns.pdf}
-\caption{Controlled simulated morphologies under lossless $P=4$ folding.
-Each row presents the same waveform as a side view, a top view, and a
-phase--time map. Spike--slow-wave complexes, recruited rhythmic oscillations,
-and periodic discharges become localized two-dimensional motifs while every
-sample is retained. These simulations explain the geometry; they are not
-diagnostic templates.}
-\label{fig:synthetic-folding-patterns}
-\end{figure*}
-\FloatBarrier
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.94\textwidth]{seizure_lossless_folding.pdf}
-\caption{A real seizure example processed by the visual interface. The
-10-second CHB-MIT segment is labeled ictal and is resampled from 2560 to 2000
-samples before clipping and scaling. Panel A shows all 16 bipolar channels;
-panel B enlarges F7--T7 in the rhythmic interval; panel C shows the exact
-$64\times500$ tensor after $P=4$ folding; and panel D expands its four phase
-rows. All 32,000 values are retained.}
-\label{fig:seizure-folding}
+\includegraphics[width=0.98\textwidth]{combined_folding_examples.pdf}
+\caption{Controlled and real examples under lossless $P=4$ temporal folding.
+Panels A--F pair three simulated EEG morphologies with the phase--time tensors
+formed from the same 1,000 samples. Panels G--I show a labeled ictal CHB-MIT
+segment after the downstream preprocessing: all 16 bipolar channels, an
+enlarged F7--T7 trace, and the exact $64\times500$ folded tensor. Folding
+retains every sample and changes only its two-dimensional neighborhood. The
+simulations explain the coordinate geometry and are not diagnostic templates.}
+\label{fig:folding-examples}
 \end{figure*}
 \FloatBarrier
 
@@ -145,9 +117,10 @@ $P=4$, matching $\Delta t=P\Delta w+\Delta p$.}
 \section{Matched Foundation-Model Reruns}
 \label{app:foundation-rerun}
 
-We reran the released CBraMod and REVE-Base checkpoints on TUAB, FACED, and
-HMC using the inherited partitions, seeds 42--46, validation-selected
-checkpoints, and one final test evaluation per seed. Table~\ref{tab:foundation-reruns}
+We reran the released CBraMod and REVE-Base checkpoints on TUAB, FACED, HMC,
+Mumtaz2016, and PhysioNet-MI using the inherited partitions, seeds 42--46,
+validation-selected checkpoints, and one final test evaluation per seed.
+Table~\ref{tab:foundation-reruns}
 lists these reruns next to our finalized vision models, which follow the
 identical protocol, so that the two families can be compared under one
 pipeline. The downstream pipeline
@@ -159,27 +132,28 @@ CBraMod's released multi-learning-rate recipe is replaced by one uniform
 learning rate. REVE's published linear-probe warm start, mixup, StableAdamW,
 LoRA, and model souping are not applied. For TUAB, REVE receives the same
 16-channel bipolar arrays used by CBraMod rather than the released 21-channel
-memmap. These deviations can lower rerun values relative to published results,
-so the experiment quantifies protocol sensitivity rather than replacing the
-original references.
+memmap; on Mumtaz2016 and PhysioNet-MI it receives the released electrode
+positions. These deviations can lower rerun values relative to published
+results, so the experiment quantifies protocol sensitivity rather than
+replacing the original references.
 
 \begin{table*}[t]
 \centering\scriptsize
-\caption{Protocol-matched comparison on the three rerun datasets. Released
+\caption{Protocol-matched comparison on the five rerun datasets. Released
 CBraMod and REVE-Base checkpoints are rerun under our downstream pipeline
 (inherited partitions, seeds 42--46, validation-selected checkpoints, one final
 test per seed) and are listed together with our finalized vision models, which
 follow the same protocol. Values are five-seed means $\pm$ population standard
-deviations; the primary metric is the validation selection metric (PR-AUC for
-TUAB, $\kappa$ for FACED and HMC). Bold marks the best matched-protocol value
-in each column; published values are transcribed from the original benchmark
-tables and are not ranked.}
+deviations; the selection metric is PR-AUC for TUAB and Mumtaz2016 and
+$\kappa$ for FACED, HMC, and PhysioNet-MI. Bold marks the
+best matched-protocol value in each column; published values are transcribed
+from the original benchmark tables and are not ranked.}
 \label{tab:foundation-reruns}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular}{@{}llccc@{}}
 \toprule
-Dataset & Method & BA & Primary metric & Published \\
+Dataset & Method & BA & Selection metric & Published \\
 \midrule
 \multirow{5}{*}{TUAB}
   & CBraMod (rerun) & $0.7821\pm0.0099$ & $0.8632\pm0.0056$ (PR-AUC) & $0.9221$ \\
@@ -204,6 +178,22 @@ Dataset & Method & BA & Primary metric & Published \\
   & EfficientNet-B0 & $0.7557\pm0.0019$ & $0.7070\pm0.0023$ ($\kappa$) & -- \\
   & ConvNeXt-Tiny & \bestcell{0.7581\pm0.0055} & \bestcell{0.7111\pm0.0063} ($\kappa$) & -- \\
   & ViT-Small & $0.7476\pm0.0032$ & $0.6987\pm0.0033$ ($\kappa$) & -- \\
+\midrule
+\multirow{5}{*}{Mumtaz2016}
+  & CBraMod (rerun) & $0.8965\pm0.0033$ & $0.9758\pm0.0030$ (PR-AUC) & $0.9923$ \\
+  & REVE-Base (rerun) & \bestcell{0.9193\pm0.0115} & \bestcell{0.9903\pm0.0037} (PR-AUC) & $0.9961$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.9153\pm0.0061$ & $0.9864\pm0.0045$ (PR-AUC) & -- \\
+  & ConvNeXt-Tiny & $0.9176\pm0.0138$ & $0.9842\pm0.0020$ (PR-AUC) & -- \\
+  & ViT-Small & $0.9112\pm0.0099$ & $0.9797\pm0.0037$ (PR-AUC) & -- \\
+\midrule
+\multirow{5}{*}{PhysioNet-MI}
+  & CBraMod (rerun) & $0.6242\pm0.0080$ & $0.4988\pm0.0106$ ($\kappa$) & $0.5222$ \\
+  & REVE-Base (rerun) & \bestcell{0.6916\pm0.0037} & \bestcell{0.5888\pm0.0049} ($\kappa$) & $0.5306$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.6491\pm0.0125$ & $0.5322\pm0.0167$ ($\kappa$) & -- \\
+  & ConvNeXt-Tiny & $0.6609\pm0.0079$ & $0.5479\pm0.0105$ ($\kappa$) & -- \\
+  & ViT-Small & $0.6377\pm0.0042$ & $0.5169\pm0.0056$ ($\kappa$) & -- \\
 \bottomrule
 \end{tabular}
 \tablenote{Published values are transcribed from the CBraMod and REVE
@@ -213,16 +203,19 @@ stages.}
 \end{table*}
 
 Under this matched protocol the two foundation models fall below their
-published values, which quantifies how much those numbers depend on the
-original training recipes. Our vision backbones are competitive under the same
-protocol: EfficientNet-B0 leads all five methods on TUAB in both balanced
-accuracy and PR-AUC, and ConvNeXt-Tiny leads on FACED and HMC. The only near
-ties are on FACED, where EfficientNet-B0 matches the rerun CBraMod in both
-balanced accuracy ($0.5516$ versus $0.5551$) and $\kappa$ ($0.4953$ versus
-$0.4961$), whereas the rerun REVE-Base is clearly lower there than its
-published value. We therefore read this table as a protocol-controlled
-comparison and keep the published values as the external reference in the main
-table.
+published values in eight of the nine published comparisons, which quantifies
+how much those numbers depend on the original training recipes; the exception
+is REVE-Base on PhysioNet-MI, where the rerun exceeds its published $\kappa$
+($0.5888$ versus $0.5306$) and leads every vision backbone in both columns.
+Our vision backbones are competitive under the same protocol: EfficientNet-B0
+leads all five methods on TUAB in both balanced accuracy and PR-AUC, and
+ConvNeXt-Tiny leads on FACED and HMC. The closest comparisons are on FACED,
+where EfficientNet-B0 matches the rerun CBraMod in both balanced accuracy
+($0.5516$ versus $0.5551$) and $\kappa$ ($0.4953$ versus $0.4961$), and on
+Mumtaz2016, where REVE-Base edges out the best vision backbone by $0.0017$
+balanced accuracy and $0.0039$ PR-AUC. We therefore read this table as a
+protocol-controlled comparison and keep the published values as the external
+reference in the main table.
 
 \clearpage
 \section{Ablation Studies}
@@ -242,6 +235,9 @@ encoders at a shared $32\times1000$ input with $P=4$ require 4.01M/0.247G
 (EfficientNet-B0), 27.82M/2.903G (ConvNeXt-Tiny), and 21.39M/3.000G
 (ViT-Small) parameters/FLOPs, respectively. FLOPs count one multiply-add as
 one operation; attention fast paths are disabled for reproducible accounting.
+Table~\ref{tab:model-scale} summarizes the compared model families; folding
+itself adds no learned parameters or arithmetic operations, but requires
+$O(CT)$ memory movement.
 
 \begin{table*}[tbp]
 \centering
@@ -316,9 +312,9 @@ training arguments, logs, and validation-selected checkpoints.  Public data
 licenses and access conditions differ by benchmark; no dataset is redistributed
 with the paper.  The CHB-MIT manifest follows the subject split of the
 \cbramod{} benchmark code (CHB01--20/CHB21--22/CHB23--24 for
-train/validation/test) \citep{wang2024cbramod}; the remaining manifests follow
+train/validation/test) \citep{wang2025cbramod}; the remaining manifests follow
 the fixed subject- or trial-level partitions of the \cbramod{} and \reve{}
-benchmark code \citep{wang2024cbramod,elouahidi2025reve}, with HMC using the
+benchmark code \citep{wang2025cbramod,elouahidi2025reve}, with HMC using the
 \reve{} partition \citep{elouahidi2025reve,alvarez2022hmc}.  Reproduction still
 requires the documented dataset versions and local split manifests. We use
 TUAB v3.0.1 and TUEV v2.0.1; for TUEV, the held-out test partition is the

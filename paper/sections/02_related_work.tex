@@ -13,10 +13,10 @@ spaces.
 
 EEG foundation models address this limitation by scaling self-supervised
 pretraining. BIOT maps heterogeneous biosignals to frequency-domain tokens
-\citep{yang2024biot}; LaBraM applies masked EEG modeling at scale
+\citep{yang2023biot}; LaBraM applies masked EEG modeling at scale
 \citep{jiang2024labram}; CBraMod combines time-domain patches, Fourier
 magnitude, and criss--cross attention in a compact encoder
-\citep{wang2024cbramod}; and REVE incorporates physical electrode coordinates
+\citep{wang2025cbramod}; and REVE incorporates physical electrode coordinates
 for large-scale pretraining and unseen montages \citep{elouahidi2025reve}.
 
 However, EEG foundation models typically require large pretraining corpora and
@@ -26,7 +26,7 @@ the pretraining data, backbone, tokenization, and input geometry change
 simultaneously. This makes it difficult to determine how much of the
 downstream gain comes from EEG-specific pretraining itself. Recent work raises
 a related concern by showing that carefully tuned conventional decoders remain
-competitive across diverse BCI tasks \citep{yang2026eegworth}. We take a
+competitive across diverse BCI tasks \citep{yang2026are}. We take a
 complementary perspective: instead of introducing another large EEG
 pretraining pipeline, we retain a mature visual backbone, provide EEG with a
 lossless geometry adapter, and test whether visual representations learned

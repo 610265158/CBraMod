@@ -1,18 +1,20 @@
-dataset: PhysioNet-MI
+dataset: BCIC2020-3
+source: configs/backbones/convnext_tiny_dinov3_unified/BCIC2020-3.yaml
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
   adapter: {fold_factor: 1}
   feature_aggregation: flatten
+  head_init_std: 0.002
 training:
-  lr: 0.0001
-  backbone_lr_scale: 0.1
+  lr: 1.0e-05
+  backbone_lr_scale: 1.0
   batch_size: 32
-  epochs: 30
-  weight_decay: 0.005
-  min_lr: 0.000001
+  epochs: 70
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
   num_workers: 0
   optimizer: AdamW
@@ -30,7 +32,7 @@ training:
   balanced_sampling_negative_ratio: 0.0
   mirror_augmentation: false
   mirror_prob: 0.5
-  time_roll_augmentation: false
+  time_roll_augmentation: true
   time_roll_prob: 1.0
   time_roll_max_fraction: 0.5
   amplitude_scale_augmentation: false
@@ -43,20 +45,21 @@ training:
   mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
-  selection_metric: kappa
   test_each_epoch: false
   run_final_test: true
+  selection_metric: kappa
 protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.45228, std: 0.00891}
-  kappa: {mean: 0.26965, std: 0.01190}
-  f1: {mean: 0.45291, std: 0.00883}
+  ba: {mean: 0.25733, std: 0.00430}
+  kappa: {mean: 0.07167, std: 0.00537}
+  f1: {mean: 0.25667, std: 0.00397}
 notes: >-
-  Pretrain-vs-random ablation: ConvNeXt-Tiny DINOv3 architecture with random
-  initialization (use_pretrained_weights=false). Same recipe as the DINOv3
-  pretrained PhysioNet-MI run.
+  Matched-initialization control for configs/backbones/convnext_tiny_dinov3_unified/BCIC2020-3.yaml.yaml:
+  the recipe is identical (only use_pretrained_weights=false differs). Five seeds 42--46,
+  validation-selected checkpoint, one final test evaluation per seed; std is the population
+  standard deviation. Primary metric delta (pretrained minus random): +47.67 pp.
 output:
-  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_PhysioNet-MI_random_init/{seed}
-  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_PhysioNet-MI_random_init/{seed}
+  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_unified_bcic2020_3_random_init/{seed}
+  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_unified_bcic2020_3_random_init/{seed}

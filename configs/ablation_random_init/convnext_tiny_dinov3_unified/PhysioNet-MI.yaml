@@ -1,15 +1,17 @@
-dataset: BCIC2020-3
+dataset: PhysioNet-MI
+source: configs/backbones/convnext_tiny_dinov3_unified/PhysioNet-MI.yaml
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
   adapter: {fold_factor: 1}
   feature_aggregation: flatten
+  head_init_std: 0.002
 training:
-  lr: 0.00001
-  backbone_lr_scale: 1.0
+  lr: 0.0001
+  backbone_lr_scale: 0.1
   batch_size: 32
-  epochs: 70
-  weight_decay: 0.005
-  min_lr: 0.000001
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: 1.0
@@ -20,7 +22,7 @@ training:
   binary_pos_weight: 1.0
   dropout: 0.1
   drop_path_rate: 0.0
-  early_stop: 30
+  early_stop: 10
   frozen: false
   multi_lr: false
   use_pretrained_weights: false
@@ -30,7 +32,7 @@ training:
   balanced_sampling_negative_ratio: 0.0
   mirror_augmentation: false
   mirror_prob: 0.5
-  time_roll_augmentation: true
+  time_roll_augmentation: false
   time_roll_prob: 1.0
   time_roll_max_fraction: 0.5
   amplitude_scale_augmentation: false
@@ -43,24 +45,21 @@ training:
   mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
-  selection_metric: kappa
   test_each_epoch: false
   run_final_test: true
+  selection_metric: kappa
 protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.29467, std: 0.01869}
-  kappa: {mean: 0.11833, std: 0.02336}
-  f1: {mean: 0.29391, std: 0.01908}
-results:
-  ba: {mean: 0.29467, std: 0.01869}
-  kappa: {mean: 0.11833, std: 0.02336}
-  f1: {mean: 0.29391, std: 0.01908}
+  ba: {mean: 0.53548, std: 0.00748}
+  kappa: {mean: 0.38058, std: 0.00998}
+  f1: {mean: 0.53352, std: 0.00736}
 notes: >-
-  Pretrain-vs-random ablation: convnext_tiny_dinov3 architecture with random initialization
-  (use_pretrained_weights=false). Matches the BCIC2020-3 pretrained recipe; only
-  the initialization differs.
+  Matched-initialization control for configs/backbones/convnext_tiny_dinov3_unified/PhysioNet-MI.yaml.yaml:
+  the recipe is identical (only use_pretrained_weights=false differs). Five seeds 42--46,
+  validation-selected checkpoint, one final test evaluation per seed; std is the population
+  standard deviation. Primary metric delta (pretrained minus random): +16.05 pp.
 output:
-  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_BCIC2020-3_random_init/{seed}
-  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_BCIC2020-3_random_init/{seed}
+  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_unified_physionet_mi_random_init/{seed}
+  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_unified_physionet_mi_random_init/{seed}

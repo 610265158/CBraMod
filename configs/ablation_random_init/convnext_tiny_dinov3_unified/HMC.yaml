@@ -1,23 +1,25 @@
-dataset: SEED-V
+dataset: HMC
+source: configs/backbones/convnext_tiny_dinov3_unified/HMC.yaml
 backbone_name: convnext_tiny.dinov3_lvd1689m
 vision:
-  adapter: {fold_factor: 1}
-  feature_aggregation: flatten
+  adapter: {fold_factor: 16}
+  feature_aggregation: gap
   head_init_std: 0.002
 training:
   lr: 0.0001
   backbone_lr_scale: 0.1
   batch_size: 32
-  epochs: 50
-  weight_decay: 0.005
-  min_lr: 0.000001
-  warmup_epochs: 5
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
-  num_workers: 0
+  num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.1
+  binary_pos_weight: 1.0
   dropout: 0.1
   drop_path_rate: 0.0
   early_stop: 10
@@ -43,24 +45,26 @@ training:
   mixup_alpha: 0.2
   amp: true
   amp_dtype: bfloat16
-  selection_metric: kappa
   test_each_epoch: false
   run_final_test: true
+  selection_metric: kappa
 protocol:
-  seeds: [42, 43, 44, 45, 46]
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.21381, std: 0.00115}
-  kappa: {mean: 0.01909, std: 0.00163}
-  f1: {mean: 0.21440, std: 0.00329}
-results:
-  ba: {mean: 0.21381, std: 0.00115}
-  kappa: {mean: 0.01909, std: 0.00163}
-  f1: {mean: 0.21440, std: 0.00329}
+  ba: {mean: 0.70567, std: 0.00295}
+  kappa: {mean: 0.64872, std: 0.00254}
+  f1: {mean: 0.72517, std: 0.00206}
 notes: >-
-  Pretrain-vs-random ablation: convnext_tiny_dinov3 architecture with random initialization
-  (use_pretrained_weights=false). Matches the SEED-V pretrained recipe; only
-  the initialization differs.
+  Matched-initialization control for configs/backbones/convnext_tiny_dinov3_unified/HMC.yaml.yaml:
+  the recipe is identical (only use_pretrained_weights=false differs). Five seeds 42--46,
+  validation-selected checkpoint, one final test evaluation per seed; std is the population
+  standard deviation. Primary metric delta (pretrained minus random): +5.73 pp.
 output:
-  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_SEED-V_random_init/{seed}
-  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_SEED-V_random_init/{seed}
+  model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_unified_hmc_random_init/{seed}
+  log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_unified_hmc_random_init/{seed}

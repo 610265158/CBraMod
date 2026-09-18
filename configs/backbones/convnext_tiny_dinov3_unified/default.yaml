@@ -7,6 +7,7 @@ notes: >-
   Locked unified recipe shared by all dataset profiles in this directory:
   lr 1e-4, weight decay 5e-4, AdamW, EMA 0.995, grad-norm clip 1.0, warmup 3
   epochs, early_stop 10, dropout 0.1, head_init_std 0.002, GAP or flatten
-  aggregation per dataset. Two documented per-dataset exceptions: BCIC2020-3 keeps lr 1e-5, MentalArithmetic keeps EMA 0.999. All results were produced
+  aggregation per dataset. Three documented per-dataset exceptions: BCIC2020-3 keeps lr 1e-5, MentalArithmetic keeps EMA 0.999,
+  and CHB-MIT uses a GAP head with EMA 0.999. All results were produced
   by the 2026-09 rerun. The previous per-dataset recipe and its results remain
   in configs/backbones/convnext_tiny_dinov3.

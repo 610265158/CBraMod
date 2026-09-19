@@ -20,6 +20,7 @@ EPOCH_BINARY = re.compile(
 TEST_MULTI = re.compile(r'Test Evaluation: ba: ([-\d.e+]+), kappa: ([-\d.e+]+), f1: ([-\d.e+]+)')
 TEST_BINARY = re.compile(r'Test Evaluation: ba: ([-\d.e+]+), pr_auc: ([-\d.e+]+), roc_auc: ([-\d.e+]+)')
 STOP = re.compile(r'Early stopping at epoch (\d+): (\w+) did not improve')
+SAVE_EPOCH = re.compile(r'model save in .*epoch(\d+)_.*\.pth')
 CMD = re.compile(r'--downstream_dataset (\S+).*?--lr (\S+).*?--batch_size (\d+)')
 
 PUBLISHED = {
@@ -29,10 +30,15 @@ PUBLISHED = {
     ('TUAB', 'reve'): {'BA': (0.8315, 0.0014), 'PR_AUC': (0.9281, 0.0009), 'ROC_AUC': (0.9245, 0.0013)},
     ('HMC', 'cbramod'): {},
     ('HMC', 'reve'): {'BA': (0.7401, 0.0075), 'kappa': (0.6982, 0.0078), 'f1': (0.7638, 0.0074)},
+    ('Mumtaz2016', 'cbramod'): {'BA': (0.9560, 0.0056), 'PR_AUC': (0.9923, 0.0032), 'ROC_AUC': (0.9921, 0.0025)},
+    ('Mumtaz2016', 'reve'): {'BA': (0.9644, 0.0097), 'PR_AUC': (0.9961, 0.0013), 'ROC_AUC': (0.9957, 0.0015)},
+    ('PhysioNet-MI', 'cbramod'): {'BA': (0.6417, None), 'kappa': (0.5222, 0.0169), 'f1': (0.6427, None)},
+    ('PhysioNet-MI', 'reve'): {'BA': (0.6480, None), 'kappa': (0.5306, 0.0187), 'f1': (0.6484, None)},
 }
 
 SAFE_TO_DATASET = {
     'faced': 'FACED', 'tuab': 'TUAB', 'hmc': 'HMC', 'mumtaz2016': 'Mumtaz2016',
+    'physionet_mi': 'PhysioNet-MI',
 }
 
 
@@ -61,6 +67,11 @@ def parse_run(log_path):
         result['val_metric'] = metric
         result['val_best'] = best[metric]
         result['val_ba'] = best['ba']
+    saves = SAVE_EPOCH.findall(text)
+    if saves:
+        # Final "model save in .../epochN_....pth" is the trainer's
+        # last-improvement epoch; the printed-metric argmax can tie at 5dp.
+        result['best_epoch'] = int(saves[-1])
     stop = STOP.search(text)
     if stop:
         result['stopped_epoch'] = int(stop.group(1))
@@ -128,17 +139,27 @@ def summarize(records):
     return summaries
 
 
-def write_appendix(path, records, summaries):
+def write_appendix(path, records, summaries, recipe='v1'):
     lines = []
     lines.append('# Foundation-model matched-pipeline rerun (CBraMod / REVE)')
     lines.append('')
-    lines.append(
-        'Protocol: per-dataset recipe from `configs/downstream.py` (unchanged); the only adapted '
-        'hyperparameter is the learning rate (`--lr 1e-4`). Inputs are normalized by the dataset '
-        'loaders with each model\'s released convention (CBraMod microvolt / 100; REVE per-dataset '
-        '`scale_factor`; no clipping). Checkpoints are selected on the validation metric and '
-        'evaluated once on test per seed.'
-    )
+    if recipe == 'v2':
+        lines.append(
+            'Protocol: the v2 unified recipe (learning rate 1e-4, warmup 3 epochs at factor 0.1, EMA 0.995, '
+            'weight decay 5e-4, gradient clipping 1.0, early stop 10) with each dataset\'s epochs and '
+            'selection metric from `configs/downstream.py`. Inputs are normalized by the dataset loaders '
+            'with each model\'s released convention (CBraMod microvolt / 100; REVE per-dataset '
+            '`scale_factor`; no clipping). Checkpoints are selected on the validation metric and evaluated '
+            'once on test per seed (seeds 42-46).'
+        )
+    else:
+        lines.append(
+            'Protocol: per-dataset recipe from `configs/downstream.py` (unchanged); the only adapted '
+            'hyperparameter is the learning rate (`--lr 1e-4`). Inputs are normalized by the dataset '
+            'loaders with each model\'s released convention (CBraMod microvolt / 100; REVE per-dataset '
+            '`scale_factor`; no clipping). Checkpoints are selected on the validation metric and '
+            'evaluated once on test per seed.'
+        )
     lines.append('')
     lines.append(
         'Models: CBraMod (4.92M parameters, full fine-tuning of the released checkpoint) and '
@@ -147,8 +168,12 @@ def write_appendix(path, records, summaries):
     lines.append('')
     lines.append('### Deviations and provenance')
     lines.append('')
-    lines.append('- Training recipe: this repository\'s per-dataset configuration is used unchanged; the only adapted '
-                 'hyperparameter is the learning rate (1e-4 for both models).')
+    if recipe == 'v2':
+        lines.append('- Training recipe: the v2 unified recipe is applied to both models; the learning rate '
+                     '(1e-4) remains the only per-model adaptation.')
+    else:
+        lines.append('- Training recipe: this repository\'s per-dataset configuration is used unchanged; the only adapted '
+                     'hyperparameter is the learning rate (1e-4 for both models).')
     lines.append('- CBraMod: the released recipe uses a multi-LR setting (encoder 1e-4, head 1e-3*sqrt(batch/256)); '
                  'this rerun uses one uniform learning rate. AdamW in both cases.')
     lines.append('- REVE: the released procedure warm-starts with a linear probe before full fine-tuning, applies '
@@ -162,9 +187,10 @@ def write_appendix(path, records, summaries):
     lines.append('')
     lines.append('## Suggested main-text sentence')
     lines.append('')
+    dataset_phrase = 'five datasets' if recipe == 'v2' else 'three representative datasets'
     lines.append('> To assess the comparability of published foundation-model references, we additionally reran '
-                 'CBraMod and REVE on three representative datasets under the inherited partitions and final-test '
-                 'protocol. The rerun results and deviations from published values are reported in Appendix X.')
+                 'CBraMod and REVE on {} under the inherited partitions and final-test '
+                 'protocol. The rerun results and deviations from published values are reported in Appendix X.'.format(dataset_phrase))
     lines.append('')
     lines.append('## Summary (completed seeds, mean +/- population standard deviation)')
     lines.append('')
@@ -224,6 +250,8 @@ def main():
     parser.add_argument('--checkpoint_root', default='experiments/checkpoints/foundation_rerun')
     parser.add_argument('--out', default='experiments/reports/foundation_rerun_results.csv')
     parser.add_argument('--appendix_out', default='experiments/reports/foundation_rerun_appendix.md')
+    parser.add_argument('--recipe', choices=['v1', 'v2'], default='v1',
+                        help='appendix provenance wording: v1 matched pipeline or the v2 unified recipe')
     args = parser.parse_args()
 
     log_root = ROOT / args.log_root
@@ -289,7 +317,7 @@ def main():
 
     summaries = summarize(records)
     appendix_path = ROOT / args.appendix_out
-    write_appendix(appendix_path, records, summaries)
+    write_appendix(appendix_path, records, summaries, recipe=args.recipe)
 
     print('wrote {} ({} runs) and {} ({} completed groups)'.format(
         out_path.relative_to(ROOT), len(records), appendix_path.relative_to(ROOT), len(summaries)))

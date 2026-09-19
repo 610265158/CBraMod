@@ -8,15 +8,15 @@ training:
   min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
-  num_workers: 4
+  num_workers: 0
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 1.0
   dropout: 0.1
   drop_path_rate: 0.0
-  early_stop: 30
+  early_stop: 10
   frozen: false
   multi_lr: false
   use_pretrained_weights: true
@@ -46,49 +46,52 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.8965
-    std: 0.00325
+    mean: 0.90076
+    std: 0.00779
   pr_auc:
-    mean: 0.97576
-    std: 0.00298
+    mean: 0.97667
+    std: 0.01089
   roc_auc:
-    mean: 0.97471
-    std: 0.00353
+    mean: 0.97427
+    std: 0.01309
   per_seed:
     42:
-      epoch: 3
-      ba: 0.89732
-      pr_auc: 0.97725
-      roc_auc: 0.97708
+      epoch: 4
+      ba: 0.91415
+      pr_auc: 0.984
+      roc_auc: 0.98273
     43:
-      epoch: 3
-      ba: 0.89565
-      pr_auc: 0.97327
-      roc_auc: 0.97252
+      epoch: 5
+      ba: 0.89392
+      pr_auc: 0.98717
+      roc_auc: 0.98595
     44:
-      epoch: 9
-      ba: 0.89149
-      pr_auc: 0.97224
-      roc_auc: 0.9702
+      epoch: 7
+      ba: 0.89816
+      pr_auc: 0.97772
+      roc_auc: 0.9756
     45:
-      epoch: 3
-      ba: 0.90164
-      pr_auc: 0.97546
-      roc_auc: 0.97356
+      epoch: 6
+      ba: 0.89318
+      pr_auc: 0.95607
+      roc_auc: 0.9491
     46:
-      epoch: 9
-      ba: 0.8964
-      pr_auc: 0.9806
-      roc_auc: 0.98021
+      epoch: 4
+      ba: 0.90438
+      pr_auc: 0.97841
+      roc_auc: 0.97796
 notes: >-
-  Matched-pipeline CBraMod rerun on Mumtaz2016 (19-channel MDD detection). The
-  per-dataset recipe from configs/downstream.py is used unchanged; the only
-  adapted hyperparameter is the learning rate (1e-4). The loader normalizes
-  inputs with the released CBraMod convention (microvolt / 100, no clipping),
-  configured by finetune_main from configs/foundation.py. Validation-selected
-  checkpoint (validation PR-AUC), one final test per seed, seeds 42-46,
-  population std. Published reference PR-AUC 0.9923 +/- 0.0032 (delta -0.0165).
-  See experiments/reports/foundation_rerun_appendix.md.
+  Foundation rerun v2 record for CBraMod on Mumtaz2016 (binary MDD detection).
+  Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at factor 0.1, EMA
+  0.995, weight decay 5e-4, gradient clipping 1.0, early stop 10) with 30
+  epochs and pr_auc checkpoint selection from configs/downstream.py; the
+  loader applies the released CBraMod normalization (microvolt / 100, no
+  clipping). The released multi-LR schedule is not used; the whole network
+  trains with a single 1e-4 learning rate (documented deviation).
+  Validation-selected checkpoint, one final test per seed, seeds 42-46,
+  population std. Published reference pr_auc 0.9923 +/- 0.0032 (delta
+  -0.0156). Replaces the v1 matched-pipeline record (pr_auc 0.9758 +/-
+  0.0030). See experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/cbramod/seed{seed}
-  log_root: experiments/logs/foundation_rerun/cbramod/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}

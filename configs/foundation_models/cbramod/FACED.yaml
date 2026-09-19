@@ -4,13 +4,13 @@ training:
   lr: 0.0001
   batch_size: 32
   epochs: 50
-  weight_decay: 0.005
+  weight_decay: 0.0005
   min_lr: 1.0e-06
-  warmup_epochs: 0
+  warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
-  ema_decay: 0.0
-  num_workers: 4
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 0
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 1.0
@@ -46,49 +46,52 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.55512
-    std: 0.0107
+    mean: 0.55311
+    std: 0.00295
   kappa:
-    mean: 0.49612
-    std: 0.01236
+    mean: 0.49391
+    std: 0.0035
   f1:
-    mean: 0.55535
-    std: 0.01079
+    mean: 0.55377
+    std: 0.0033
   per_seed:
     42:
-      epoch: 47
-      ba: 0.56065
-      kappa: 0.50317
-      f1: 0.56151
-    43:
-      epoch: 39
-      ba: 0.54227
-      kappa: 0.48199
-      f1: 0.5441
-    44:
       epoch: 43
-      ba: 0.5632
-      kappa: 0.5047
-      f1: 0.56187
-    45:
+      ba: 0.55153
+      kappa: 0.49338
+      f1: 0.55236
+    43:
+      epoch: 40
+      ba: 0.55623
+      kappa: 0.49835
+      f1: 0.55828
+    44:
       epoch: 38
-      ba: 0.54227
-      kappa: 0.48054
-      f1: 0.54097
+      ba: 0.55354
+      kappa: 0.49347
+      f1: 0.55394
+    45:
+      epoch: 24
+      ba: 0.55596
+      kappa: 0.49635
+      f1: 0.55579
     46:
-      epoch: 39
-      ba: 0.56723
-      kappa: 0.51021
-      f1: 0.56832
+      epoch: 33
+      ba: 0.54831
+      kappa: 0.48799
+      f1: 0.54848
 notes: >-
-  Matched-pipeline CBraMod rerun on FACED. The per-dataset recipe from
-  configs/downstream.py is used unchanged; the only adapted hyperparameter is
-  the learning rate (1e-4). The loader normalizes inputs with the released
-  CBraMod convention (microvolt / 100, no clipping), configured by
-  finetune_main from configs/foundation.py. Validation-selected checkpoint,
-  one final test per seed, seeds 42-46, population std. Published reference
-  kappa 0.5041 +/- 0.0122 (delta -0.0080; 95% CI [0.4790, 0.5133] overlaps).
-  See experiments/reports/foundation_rerun_appendix.md.
+  Foundation rerun v2 record for CBraMod on FACED (9-class emotion
+  recognition). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at
+  factor 0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop
+  10) with 50 epochs and kappa checkpoint selection from
+  configs/downstream.py; the loader applies the released CBraMod normalization
+  (microvolt / 100, no clipping). The released multi-LR schedule is not used;
+  the whole network trains with a single 1e-4 learning rate (documented
+  deviation). Validation-selected checkpoint, one final test per seed, seeds
+  42-46, population std. Published reference kappa 0.5041 +/- 0.0122 (delta
+  -0.0102). Replaces the v1 matched-pipeline record (kappa 0.4961 +/- 0.0124).
+  See experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/cbramod/seed{seed}
-  log_root: experiments/logs/foundation_rerun/cbramod/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}

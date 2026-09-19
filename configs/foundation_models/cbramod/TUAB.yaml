@@ -3,13 +3,13 @@ model_arch: cbramod
 training:
   lr: 0.0001
   batch_size: 32
-  epochs: 5
+  epochs: 10
   weight_decay: 0.0005
   min_lr: 1.0e-06
-  warmup_epochs: 0
+  warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: 1.0
-  ema_decay: 0.0
+  ema_decay: 0.995
   num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.1
@@ -46,49 +46,52 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.78207
-    std: 0.00995
+    mean: 0.8066
+    std: 0.00264
   pr_auc:
-    mean: 0.86317
-    std: 0.00559
+    mean: 0.89235
+    std: 0.00255
   roc_auc:
-    mean: 0.85864
-    std: 0.00783
+    mean: 0.88888
+    std: 0.00339
   per_seed:
     42:
       epoch: 1
-      ba: 0.76979
-      pr_auc: 0.86601
-      roc_auc: 0.85665
+      ba: 0.80697
+      pr_auc: 0.89523
+      roc_auc: 0.89098
     43:
       epoch: 1
-      ba: 0.79357
-      pr_auc: 0.86744
-      roc_auc: 0.86743
+      ba: 0.8022
+      pr_auc: 0.88942
+      roc_auc: 0.88458
     44:
       epoch: 1
-      ba: 0.77323
-      pr_auc: 0.85297
-      roc_auc: 0.84674
+      ba: 0.80745
+      pr_auc: 0.89062
+      roc_auc: 0.88991
     45:
-      epoch: 5
-      ba: 0.79348
-      pr_auc: 0.86797
-      roc_auc: 0.86713
+      epoch: 1
+      ba: 0.80602
+      pr_auc: 0.89087
+      roc_auc: 0.8854
     46:
       epoch: 1
-      ba: 0.78029
-      pr_auc: 0.86144
-      roc_auc: 0.85527
+      ba: 0.81037
+      pr_auc: 0.89559
+      roc_auc: 0.89352
 notes: >-
-  Matched-pipeline CBraMod rerun on TUAB (16-channel bipolar arrays). The
-  per-dataset recipe from configs/downstream.py is used unchanged; the only
-  adapted hyperparameter is the learning rate (1e-4). The loader normalizes
-  inputs with the released CBraMod convention (microvolt / 100, no clipping).
-  Validation-selected checkpoint (validation PR-AUC), one final test per seed,
-  seeds 42-46, population std. Published reference PR-AUC 0.9221 / ROC-AUC
-  0.9156 (delta -0.0589 on PR-AUC; published std not reported).
-  See experiments/reports/foundation_rerun_appendix.md.
+  Foundation rerun v2 record for CBraMod on TUAB (binary abnormal EEG
+  detection). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at
+  factor 0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop
+  10) with 10 epochs and pr_auc checkpoint selection from
+  configs/downstream.py; the loader applies the released CBraMod normalization
+  (microvolt / 100, no clipping). The released multi-LR schedule is not used;
+  the whole network trains with a single 1e-4 learning rate (documented
+  deviation). Validation-selected checkpoint, one final test per seed, seeds
+  42-46, population std. Published reference pr_auc 0.9221 (delta -0.0298).
+  Replaces the v1 matched-pipeline record (pr_auc 0.8632 +/- 0.0056). See
+  experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/cbramod/seed{seed}
-  log_root: experiments/logs/foundation_rerun/cbramod/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}

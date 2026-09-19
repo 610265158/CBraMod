@@ -3,13 +3,13 @@ model_arch: reve
 training:
   lr: 0.0001
   batch_size: 32
-  epochs: 5
+  epochs: 10
   weight_decay: 0.0005
   min_lr: 1.0e-06
-  warmup_epochs: 0
+  warmup_epochs: 3
   warmup_start_factor: 0.1
   clip_value: 1.0
-  ema_decay: 0.0
+  ema_decay: 0.995
   num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.1
@@ -46,53 +46,53 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.80517
-    std: 0.00715
+    mean: 0.80636
+    std: 0.00533
   pr_auc:
-    mean: 0.89006
-    std: 0.01141
+    mean: 0.88329
+    std: 0.00622
   roc_auc:
-    mean: 0.88655
-    std: 0.0122
+    mean: 0.88099
+    std: 0.00457
   per_seed:
     42:
-      epoch: 1
-      ba: 0.81307
-      pr_auc: 0.89492
-      roc_auc: 0.89683
+      epoch: 4
+      ba: 0.79741
+      pr_auc: 0.87573
+      roc_auc: 0.8739
     43:
-      epoch: 2
-      ba: 0.81015
-      pr_auc: 0.90418
-      roc_auc: 0.89928
-    44:
-      epoch: 1
-      ba: 0.80547
-      pr_auc: 0.89699
-      roc_auc: 0.88999
-    45:
-      epoch: 5
-      ba: 0.79219
-      pr_auc: 0.87239
-      roc_auc: 0.86573
-    46:
       epoch: 3
-      ba: 0.80498
-      pr_auc: 0.8818
-      roc_auc: 0.88092
+      ba: 0.80878
+      pr_auc: 0.88252
+      roc_auc: 0.88197
+    44:
+      epoch: 4
+      ba: 0.80355
+      pr_auc: 0.88177
+      roc_auc: 0.87851
+    45:
+      epoch: 3
+      ba: 0.81255
+      pr_auc: 0.88168
+      roc_auc: 0.88303
+    46:
+      epoch: 1
+      ba: 0.80949
+      pr_auc: 0.89473
+      roc_auc: 0.88755
 notes: >-
-  Matched-pipeline REVE-Base rerun on TUAB. The per-dataset recipe from
-  configs/downstream.py is used unchanged; the only adapted hyperparameter is
-  the learning rate (1e-4). The loader normalizes inputs with the effective
-  released REVE scale (microvolt / 100, no clipping) and supplies released
-  electrode positions (16 bipolar channels, averaged by the position bank).
-  Documented deviation: the released REVE TUAB pipeline uses a 21-channel
-  memmap; this rerun feeds REVE the same 16-channel bipolar arrays as CBraMod.
-  The REVE paper's lp -> ft warm start, mixup, StableAdamW, LoRA and model
-  souping are not applied. Validation-selected checkpoint (validation PR-AUC),
-  one final test per seed, seeds 42-46, population std. Published reference
-  PR-AUC 0.9281 +/- 0.0009 (delta -0.0380; no interval overlap).
-  See experiments/reports/foundation_rerun_appendix.md.
+  Foundation rerun v2 record for REVE-Base on TUAB (binary abnormal EEG
+  detection). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at
+  factor 0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop
+  10) with 10 epochs and pr_auc checkpoint selection from
+  configs/downstream.py; the loader applies the released REVE scale_factor
+  (microvolt / 100, no clipping) and supplies released electrode positions (16
+  channels). The released lp -> ft warm start, mixup, StableAdamW, LoRA and
+  model souping are not applied (documented deviation). Validation-selected
+  checkpoint, one final test per seed, seeds 42-46, population std. Published
+  reference pr_auc 0.9281 +/- 0.0009 (delta -0.0448). Replaces the v1
+  matched-pipeline record (pr_auc 0.8901 +/- 0.0114). See
+  experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/reve/seed{seed}
-  log_root: experiments/logs/foundation_rerun/reve/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}

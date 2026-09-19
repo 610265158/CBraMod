@@ -8,7 +8,7 @@ training:
   min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
   num_workers: 4
   optimizer: AdamW
@@ -46,49 +46,51 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.72788
-    std: 0.00379
+    mean: 0.72868
+    std: 0.00228
   kappa:
-    mean: 0.67575
-    std: 0.00265
+    mean: 0.6752
+    std: 0.00225
   f1:
-    mean: 0.74571
-    std: 0.00307
+    mean: 0.74643
+    std: 0.00193
   per_seed:
     42:
-      epoch: 5
-      ba: 0.72177
-      kappa: 0.67142
-      f1: 0.74019
+      epoch: 9
+      ba: 0.7294
+      kappa: 0.67392
+      f1: 0.7469
     43:
-      epoch: 6
-      ba: 0.72874
-      kappa: 0.67675
-      f1: 0.74707
-    44:
       epoch: 7
-      ba: 0.73367
-      kappa: 0.67919
-      f1: 0.74932
+      ba: 0.72515
+      kappa: 0.67295
+      f1: 0.74415
+    44:
+      epoch: 6
+      ba: 0.73173
+      kappa: 0.67845
+      f1: 0.74809
     45:
-      epoch: 5
-      ba: 0.72794
-      kappa: 0.67702
-      f1: 0.74689
+      epoch: 7
+      ba: 0.72992
+      kappa: 0.67736
+      f1: 0.74878
     46:
-      epoch: 5
-      ba: 0.72726
-      kappa: 0.67438
-      f1: 0.74509
+      epoch: 7
+      ba: 0.7272
+      kappa: 0.67334
+      f1: 0.74422
 notes: >-
-  Matched-pipeline CBraMod rerun on HMC (supplementary; CBraMod does not report
-  HMC). The per-dataset recipe from configs/downstream.py is used unchanged;
-  the only adapted hyperparameter is the learning rate (1e-4). The loader
-  normalizes inputs with the released CBraMod convention (microvolt / 100, no
-  clipping). The HMC head uses the released two-layer variant because the
-  three-layer S*P hidden width would be 6,000. Validation-selected checkpoint,
-  one final test per seed, seeds 42-46, population std. No published reference.
-  See experiments/reports/foundation_rerun_appendix.md.
+  Foundation rerun v2 record for CBraMod on HMC (5-class sleep staging).
+  Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at factor 0.1, EMA
+  0.995, weight decay 5e-4, gradient clipping 1.0, early stop 10) with 30
+  epochs and kappa checkpoint selection from configs/downstream.py; the loader
+  applies the released CBraMod normalization (microvolt / 100, no clipping).
+  The released multi-LR schedule is not used; the whole network trains with a
+  single 1e-4 learning rate (documented deviation). Validation-selected
+  checkpoint, one final test per seed, seeds 42-46, population std. Replaces
+  the v1 matched-pipeline record (kappa 0.6757 +/- 0.0027). See
+  experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/cbramod/seed{seed}
-  log_root: experiments/logs/foundation_rerun/cbramod/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}

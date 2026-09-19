@@ -4,13 +4,13 @@ training:
   lr: 0.0001
   batch_size: 32
   epochs: 30
-  weight_decay: 0.005
+  weight_decay: 0.0005
   min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
-  num_workers: 4
+  num_workers: 0
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 1.0
@@ -46,49 +46,52 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.62417
-    std: 0.00797
+    mean: 0.61829
+    std: 0.00705
   kappa:
-    mean: 0.4988
-    std: 0.01064
+    mean: 0.49096
+    std: 0.00941
   f1:
-    mean: 0.62316
-    std: 0.00786
+    mean: 0.61812
+    std: 0.00719
   per_seed:
     42:
-      epoch: 5
-      ba: 0.6246
-      kappa: 0.49939
-      f1: 0.62398
+      epoch: 6
+      ba: 0.63181
+      kappa: 0.509
+      f1: 0.63196
     43:
-      epoch: 4
-      ba: 0.61907
-      kappa: 0.492
-      f1: 0.61691
+      epoch: 6
+      ba: 0.61742
+      kappa: 0.48978
+      f1: 0.61711
     44:
-      epoch: 4
-      ba: 0.6379
-      kappa: 0.51713
-      f1: 0.6365
+      epoch: 6
+      ba: 0.61683
+      kappa: 0.48904
+      f1: 0.61647
     45:
-      epoch: 5
-      ba: 0.6252
-      kappa: 0.50014
-      f1: 0.62466
+      epoch: 6
+      ba: 0.61239
+      kappa: 0.48311
+      f1: 0.61329
     46:
       epoch: 5
-      ba: 0.61409
-      kappa: 0.48534
-      f1: 0.61373
+      ba: 0.61302
+      kappa: 0.48387
+      f1: 0.61178
 notes: >-
-  Matched-pipeline CBraMod rerun on PhysioNet-MI (64-channel, four-class motor
-  imagery). The per-dataset recipe from configs/downstream.py is used unchanged;
-  the only adapted hyperparameter is the learning rate (1e-4). The loader
-  normalizes inputs with the released CBraMod convention (microvolt / 100, no
-  clipping), configured by finetune_main from configs/foundation.py.
-  Validation-selected checkpoint (validation kappa), one final test per seed,
-  seeds 42-46, population std. Published reference kappa 0.5222 +/- 0.0169
-  (delta -0.0234). See experiments/reports/foundation_rerun_appendix.md.
+  Foundation rerun v2 record for CBraMod on PhysioNet-MI (4-class motor
+  imagery). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at factor
+  0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop 10)
+  with 30 epochs and kappa checkpoint selection from configs/downstream.py;
+  the loader applies the released CBraMod normalization (microvolt / 100, no
+  clipping). The released multi-LR schedule is not used; the whole network
+  trains with a single 1e-4 learning rate (documented deviation).
+  Validation-selected checkpoint, one final test per seed, seeds 42-46,
+  population std. Published reference kappa 0.5222 +/- 0.0169 (delta -0.0312).
+  Replaces the v1 matched-pipeline record (kappa 0.4988 +/- 0.0106). See
+  experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/cbramod/seed{seed}
-  log_root: experiments/logs/foundation_rerun/cbramod/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}

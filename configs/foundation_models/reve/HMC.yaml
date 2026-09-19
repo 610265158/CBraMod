@@ -8,7 +8,7 @@ training:
   min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
   num_workers: 4
   optimizer: AdamW
@@ -46,50 +46,52 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.73373
-    std: 0.00313
+    mean: 0.73433
+    std: 0.00213
   kappa:
-    mean: 0.68305
-    std: 0.00461
+    mean: 0.6813
+    std: 0.00346
   f1:
-    mean: 0.75074
-    std: 0.00324
+    mean: 0.74985
+    std: 0.00264
   per_seed:
     42:
       epoch: 4
-      ba: 0.73493
-      kappa: 0.6834
-      f1: 0.75153
+      ba: 0.73388
+      kappa: 0.68039
+      f1: 0.74974
     43:
       epoch: 4
-      ba: 0.73118
-      kappa: 0.67935
-      f1: 0.74759
+      ba: 0.7351
+      kappa: 0.6791
+      f1: 0.7481
     44:
-      epoch: 5
-      ba: 0.73101
-      kappa: 0.6775
-      f1: 0.7474
+      epoch: 4
+      ba: 0.73042
+      kappa: 0.6766
+      f1: 0.74609
     45:
-      epoch: 3
-      ba: 0.73933
-      kappa: 0.69082
-      f1: 0.75629
+      epoch: 4
+      ba: 0.73621
+      kappa: 0.6844
+      f1: 0.75167
     46:
-      epoch: 6
-      ba: 0.7322
-      kappa: 0.6842
-      f1: 0.75091
+      epoch: 3
+      ba: 0.73606
+      kappa: 0.68603
+      f1: 0.75363
 notes: >-
-  Matched-pipeline REVE-Base rerun on HMC. The per-dataset recipe from
-  configs/downstream.py is used unchanged; the only adapted hyperparameter is
-  the learning rate (1e-4). The loader normalizes inputs with the released
-  REVE scale_factor (microvolt / 10, no clipping) and supplies released
-  electrode positions (F4/C4/O2/C3). The REVE paper's lp -> ft warm start,
-  mixup, StableAdamW, LoRA and model souping are not applied (documented
-  deviation). Validation-selected checkpoint, one final test per seed, seeds
-  42-46, population std. Published reference kappa 0.6982 +/- 0.0078 (delta
-  -0.0151; intervals overlap). See experiments/reports/foundation_rerun_appendix.md.
+  Foundation rerun v2 record for REVE-Base on HMC (5-class sleep staging).
+  Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at factor 0.1, EMA
+  0.995, weight decay 5e-4, gradient clipping 1.0, early stop 10) with 30
+  epochs and kappa checkpoint selection from configs/downstream.py; the loader
+  applies the released REVE scale_factor (microvolt / 10, no clipping) and
+  supplies released electrode positions (4 channels). The released lp -> ft
+  warm start, mixup, StableAdamW, LoRA and model souping are not applied
+  (documented deviation). Validation-selected checkpoint, one final test per
+  seed, seeds 42-46, population std. Published reference kappa 0.6982 +/-
+  0.0078 (delta -0.0169). Replaces the v1 matched-pipeline record (kappa
+  0.6831 +/- 0.0046). See experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/reve/seed{seed}
-  log_root: experiments/logs/foundation_rerun/reve/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}

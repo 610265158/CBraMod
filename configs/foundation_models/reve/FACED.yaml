@@ -4,13 +4,13 @@ training:
   lr: 0.0001
   batch_size: 32
   epochs: 50
-  weight_decay: 0.005
+  weight_decay: 0.0005
   min_lr: 1.0e-06
-  warmup_epochs: 0
+  warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
-  ema_decay: 0.0
-  num_workers: 4
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 0
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 1.0
@@ -46,51 +46,53 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.48497
-    std: 0.00617
+    mean: 0.51272
+    std: 0.0249
   kappa:
-    mean: 0.41898
-    std: 0.00626
+    mean: 0.45051
+    std: 0.02738
   f1:
-    mean: 0.48549
-    std: 0.00699
+    mean: 0.51393
+    std: 0.02381
   per_seed:
     42:
-      epoch: 7
-      ba: 0.49302
-      kappa: 0.42587
-      f1: 0.48916
+      epoch: 9
+      ba: 0.48376
+      kappa: 0.41888
+      f1: 0.48575
     43:
-      epoch: 12
-      ba: 0.48564
-      kappa: 0.42025
-      f1: 0.48693
+      epoch: 21
+      ba: 0.54804
+      kappa: 0.48978
+      f1: 0.54774
     44:
-      epoch: 36
-      ba: 0.47598
-      kappa: 0.41036
-      f1: 0.47894
+      epoch: 4
+      ba: 0.49235
+      kappa: 0.42855
+      f1: 0.49551
     45:
-      epoch: 12
-      ba: 0.4898
-      kappa: 0.42524
-      f1: 0.49581
+      epoch: 21
+      ba: 0.53556
+      kappa: 0.47528
+      f1: 0.53576
     46:
-      epoch: 24
-      ba: 0.48041
-      kappa: 0.41319
-      f1: 0.47659
+      epoch: 6
+      ba: 0.50389
+      kappa: 0.44006
+      f1: 0.5049
 notes: >-
-  Matched-pipeline REVE-Base rerun on FACED. The per-dataset recipe from
-  configs/downstream.py is used unchanged; the only adapted hyperparameter is
-  the learning rate (1e-4). The loader normalizes inputs with the released
-  REVE scale_factor (microvolt / 1000, no clipping) and supplies released
-  electrode positions (32 channels), configured by finetune_main from
-  configs/foundation.py. The REVE paper's lp -> ft warm start, mixup,
-  StableAdamW, LoRA and model souping are not applied (documented deviation).
+  Foundation rerun v2 record for REVE-Base on FACED (9-class emotion
+  recognition). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at
+  factor 0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop
+  10) with 50 epochs and kappa checkpoint selection from
+  configs/downstream.py; the loader applies the released REVE scale_factor
+  (microvolt / 1000, no clipping) and supplies released electrode positions
+  (32 channels). The released lp -> ft warm start, mixup, StableAdamW, LoRA
+  and model souping are not applied (documented deviation).
   Validation-selected checkpoint, one final test per seed, seeds 42-46,
-  population std. Published reference kappa 0.5080 +/- 0.0191 (delta -0.0890;
-  no interval overlap). See experiments/reports/foundation_rerun_appendix.md.
+  population std. Published reference kappa 0.5080 +/- 0.0191 (delta -0.0575).
+  Replaces the v1 matched-pipeline record (kappa 0.4190 +/- 0.0063). See
+  experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/reve/seed{seed}
-  log_root: experiments/logs/foundation_rerun/reve/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}

@@ -4,13 +4,13 @@ training:
   lr: 0.0001
   batch_size: 32
   epochs: 30
-  weight_decay: 0.005
+  weight_decay: 0.0005
   min_lr: 1.0e-06
   warmup_epochs: 3
   warmup_start_factor: 0.1
-  clip_value: -1.0
+  clip_value: 1.0
   ema_decay: 0.995
-  num_workers: 4
+  num_workers: 0
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 1.0
@@ -46,52 +46,53 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.69162
-    std: 0.00368
+    mean: 0.69158
+    std: 0.00572
   kappa:
-    mean: 0.58883
-    std: 0.00489
+    mean: 0.58881
+    std: 0.00763
   f1:
-    mean: 0.69245
-    std: 0.00389
+    mean: 0.69171
+    std: 0.00621
   per_seed:
     42:
-      epoch: 4
-      ba: 0.69107
-      kappa: 0.58808
-      f1: 0.69165
+      epoch: 16
+      ba: 0.69767
+      kappa: 0.59695
+      f1: 0.69808
     43:
-      epoch: 3
-      ba: 0.69167
-      kappa: 0.58885
-      f1: 0.69445
+      epoch: 4
+      ba: 0.69549
+      kappa: 0.594
+      f1: 0.69571
     44:
-      epoch: 8
-      ba: 0.69828
-      kappa: 0.5977
-      f1: 0.69842
+      epoch: 20
+      ba: 0.69547
+      kappa: 0.59399
+      f1: 0.69638
     45:
-      epoch: 7
-      ba: 0.68713
-      kappa: 0.5829
-      f1: 0.68666
+      epoch: 10
+      ba: 0.68491
+      kappa: 0.57993
+      f1: 0.68491
     46:
-      epoch: 3
-      ba: 0.68995
-      kappa: 0.58661
-      f1: 0.69105
+      epoch: 6
+      ba: 0.68438
+      kappa: 0.5792
+      f1: 0.68347
 notes: >-
-  Matched-pipeline REVE-Base rerun on PhysioNet-MI (64-channel, four-class motor
-  imagery). The per-dataset recipe from configs/downstream.py is used unchanged;
-  the only adapted hyperparameter is the learning rate (1e-4). The loader
-  normalizes inputs with the released REVE scale_factor (microvolt / 100, no
-  clipping) and supplies released electrode positions (64 channels, the released
-  physio montage), configured by finetune_main from configs/foundation.py. The
-  REVE paper's lp -> ft warm start, mixup, StableAdamW, LoRA and model souping
-  are not applied (documented deviation). Validation-selected checkpoint
-  (validation kappa), one final test per seed, seeds 42-46, population std.
-  Published reference kappa 0.5306 +/- 0.0187 (delta +0.0582; the rerun exceeds
-  the published value). See experiments/reports/foundation_rerun_appendix.md.
+  Foundation rerun v2 record for REVE-Base on PhysioNet-MI (4-class motor
+  imagery). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at factor
+  0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop 10)
+  with 30 epochs and kappa checkpoint selection from configs/downstream.py;
+  the loader applies the released REVE scale_factor (microvolt / 100, no
+  clipping) and supplies released electrode positions (64 channels). The
+  released lp -> ft warm start, mixup, StableAdamW, LoRA and model souping are
+  not applied (documented deviation). Validation-selected checkpoint, one
+  final test per seed, seeds 42-46, population std. Published reference kappa
+  0.5306 +/- 0.0187 (delta +0.0582). Replaces the v1 matched-pipeline record
+  (kappa 0.5888 +/- 0.0049). See
+  experiments/reports/foundation_rerun_v2_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun/reve/seed{seed}
-  log_root: experiments/logs/foundation_rerun/reve/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}

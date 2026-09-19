@@ -61,17 +61,19 @@ standard deviation.
 
 We compare against published task-specific models and EEG foundation models
 under the inherited benchmark partitions. For CBraMod on TUAB and TUEV, we
-use variants whose pretraining excludes the target corpus. We additionally
-rerun released CBraMod and REVE models on TUAB, FACED, HMC, Mumtaz2016, and
-PhysioNet-MI as a supplementary fairness check; full protocols and results are
-provided in Appendix~\ref{app:foundation-rerun}.
+use variants whose pretraining excludes the target corpus. The main-text
+comparison uses these published reference values. As a robustness check, we
+also reran CBraMod and REVE under a matched downstream
+protocol; the main text only summarizes this check, while the complete
+protocol and results are given in Appendix~\ref{app:foundation-rerun}.
 
 \subsection{Models and training}
 
 We use ImageNet-pretrained EfficientNet-B0 and DINOv3-pretrained
 ConvNeXt-Tiny and ViT-Small with one-channel inputs. Their original
 implementations and pretrained-weight loading are provided through the
-PyTorch Image Models library (timm)~\citep{rw2019timm}. The original
+PyTorch Image Models library (timm)~\citep{rw2019timm}; DINOv3 is cited as
+\citet{oquab2025dinov3}. The original
 classification layers are replaced by task-specific prediction heads, and the
 encoder and head are fine-tuned jointly. Frozen-transfer experiments keep the
 encoder fixed and train only the prediction head. Backbone-specific feature

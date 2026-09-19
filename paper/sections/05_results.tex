@@ -46,9 +46,11 @@ BCIC2020-3$^*$ & .3650/.4917 & .3800/.5054 & .4216/.5383 & .4543/.5633 & \underl
 \tablenote{Published baselines are transcribed from \cbramod{} and \reve{} under the shared benchmark splits; local vision rows are five-seed means.}
 \end{table*}
 
-The unified table shows a heterogeneous but systematic pattern. At least one
-visual backbone exceeds every displayed EEG foundation-model reference on both
-main metrics in eight datasets. The result is not tied to one encoder:
+The unified table shows a heterogeneous but systematic pattern. ConvNeXt-Tiny
+alone exceeds every displayed EEG foundation-model reference on both main
+metrics in eight datasets; taking the best of the three visual backbones per
+dataset gives the same count. Thus the result is not merely a best-of-three
+model-family selection. The result is not tied to one encoder:
 ViT-Small is strongest on CHB-MIT, TUEV,
 and BCIC2020-3; ConvNeXt-Tiny on ISRUC, HMC, FACED, and PhysioNet-MI; and
 EfficientNet-B0 on MentalArithmetic. Thus the interface transfers across both
@@ -59,9 +61,10 @@ Mumtaz2016, while CBraMod leads on SEED-V and on the SHU-MI PR-AUC. Visual
 transfer is therefore competitive but not a replacement. PhysioNet-MI further
 shows that competitive transfer can occur at $P=1$, without folding. The TUEV release difference leaves the held-out test
 set unchanged. Published foundation-model rows are contextual references
-rather than local reruns, while matched-pipeline reruns of the released
-CBraMod and REVE checkpoints under our protocol are reported in
-Appendix~\ref{app:foundation-rerun}.
+rather than local reruns. As a robustness check, we also reran CBraMod and
+REVE under the matched pipeline; these runs show that visual backbones remain
+competitive on five datasets. Complete results and the
+protocol caveats are reported in Appendix~\ref{app:foundation-rerun}.
 
 \subsection{Matched initialization ablation}
 \label{sec:pretraining-ablation}

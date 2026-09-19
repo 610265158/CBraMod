@@ -119,7 +119,7 @@ $P=4$, matching $\Delta t=P\Delta w+\Delta p$.}
 \section{Matched Foundation-Model Reruns}
 \label{app:foundation-rerun}
 
-We reran the released CBraMod and REVE-Base checkpoints on TUAB, FACED, HMC,
+We also reran CBraMod and REVE on TUAB, FACED, HMC,
 Mumtaz2016, and PhysioNet-MI using the inherited partitions, seeds 42--46,
 validation-selected checkpoints, and one final test evaluation per seed.
 Table~\ref{tab:foundation-reruns}
@@ -141,8 +141,8 @@ replacing the original references.
 
 \begin{table*}[t]
 \centering\scriptsize
-\caption{Protocol-matched comparison on the five rerun datasets. Released
-CBraMod and REVE-Base checkpoints are rerun under our downstream pipeline
+\caption{Protocol-matched comparison on the five rerun datasets. CBraMod and
+REVE-Base are rerun under our downstream pipeline
 (inherited partitions, seeds 42--46, validation-selected checkpoints, one final
 test per seed) and are listed together with our finalized vision models, which
 follow the same protocol. Values are five-seed means $\pm$ population standard
@@ -306,6 +306,31 @@ HMC & 16 & $64\times375$ & 30 & $10^{-4}$ & $5\cdot10^{-3}$ & $\kappa$ \\
 ConvNeXt-Tiny uses flatten aggregation except for TUEV, ISRUC, and HMC, which
 use GAP.}
 \end{table*}
+
+\subsection{timm input-channel adaptation and pretrained checkpoints}
+\label{app:timm-input-adaptation}
+
+All vision backbones are instantiated through the timm compatibility layer with
+\texttt{timm.create\_model(backbone\_name, pretrained=..., in\_chans=1)}.
+Thus the folded EEG tensor is passed as a genuine single-channel image; it is
+not copied into three identical channels at the data-loader level. For models
+whose released visual checkpoint has a three-channel stem, timm adapts the
+first convolution or patch-embedding projection to one input channel when
+loading the pretrained weights, using timm's input-channel conversion rule.
+All subsequent pretrained parameters are loaded unchanged. Random-
+initialization controls use the same \texttt{in\_chans=1} model construction
+with \texttt{pretrained=False}, so the input-channel convention is identical
+in both conditions.
+
+The EfficientNet-B0 experiments use the ImageNet-1k pretrained timm model
+\texttt{efficientnet\_b0}. The ConvNeXt-Tiny experiments use
+\texttt{convnext\_tiny.dinov3\_lvd1689m}, and the ViT-Small experiments use
+\texttt{vit\_small\_patch16\_dinov3.lvd1689m}. The latter two checkpoints are
+the DINOv3 LVD-1689M weights distributed through timm's Hugging Face model
+hub integration. We use the public DINOv3 release described by
+\citet{oquab2025dinov3}; the checkpoint names above identify the exact timm
+variants used by the configurations. No EEG data are used to initialize these
+visual weights.
 
 \section{Data and Code Reproducibility Statement}
 

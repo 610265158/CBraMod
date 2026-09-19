@@ -38,6 +38,12 @@ FACED_ELECTRODES = ['FP1', 'FP2', 'FZ', 'F3', 'F4', 'F7', 'F8', 'FC1', 'FC2', 'F
 TUAB_ELECTRODES = ['FP1-F7', 'F7-T3', 'T3-T5', 'T5-O1', 'FP2-F8', 'F8-T4', 'T4-T6', 'T6-O2',
                    'FP1-F3', 'F3-C3', 'C3-P3', 'P3-O1', 'FP2-F4', 'F4-C4', 'C4-P4', 'P4-O2']
 
+PHYSIO_ELECTRODES = ['FC5', 'FC3', 'FC1', 'FCz', 'FC2', 'FC4', 'FC6', 'C5', 'C3', 'C1', 'CZ', 'C2',
+                     'C4', 'C6', 'CP5', 'CP3', 'CP1', 'CPz', 'CP2', 'CP4', 'CP6', 'FP1', 'Fpz', 'FP2',
+                     'AF7', 'AF3', 'AFz', 'AF4', 'AF8', 'F7', 'F5', 'F3', 'F1', 'FZ', 'F2', 'F4', 'F6',
+                     'F8', 'FT7', 'FT8', 'T3', 'T4', 'T9', 'T10', 'TP7', 'TP8', 'T5', 'P5', 'P3', 'P1',
+                     'PZ', 'P2', 'P4', 'P6', 'T6', 'PO7', 'PO3', 'POz', 'PO4', 'PO8', 'O1', 'OZ', 'O2', 'Iz']
+
 
 FOUNDATION_SPECS = {
     'FACED': {
@@ -73,6 +79,15 @@ FOUNDATION_SPECS = {
             'input_scale': 100.0,
             'electrodes': MUMTAZ_ELECTRODES,
             'pooling': 'last',
+            'dropout': 0.5,
+        },
+    },
+    'PhysioNet-MI': {
+        'cbramod': {'input_scale': 100.0},
+        'reve': {
+            'input_scale': 100.0,
+            'electrodes': PHYSIO_ELECTRODES,
+            'pooling': 'no',
             'dropout': 0.5,
         },
     },

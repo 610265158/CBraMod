@@ -7,6 +7,7 @@ training:
   warmup_start_factor: 0.1
   ema_decay: 0.995
   weight_decay: 0.0005
+  clip_value: 1.0
   early_stop: 10
   epochs: 10
 protocol:
@@ -19,7 +20,8 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 notes: >-
   TUAB variant of the foundation rerun v2 recipe: same overrides as
-  v2_warm3_ema995_wd5e4.yaml plus 10 epochs (5 in configs/downstream.py).
+  v2_warm3_ema995_wd5e4.yaml (including gradient clipping at 1.0) plus 10
+  epochs (5 in configs/downstream.py).
   Requires the node that holds the TUAB data. Run with
   `bash experiments/run_downstream.sh --config <this file>`; seeds 42-46 come
   from the protocol section.

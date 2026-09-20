@@ -6,9 +6,8 @@
 # 0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop 10,
 # validation-selected checkpoint and one final test per seed (42-46).
 # Per-dataset epochs, batch size and selection metric come from
-# configs/downstream.py.  Input conventions and the REVE fallback specs for
-# CHB-MIT/SEED-V/SHU-MI are recorded in
-# configs/foundation_models/<model>/v2_warm3_ema995_wd5e4_remaining.yaml.
+# configs/downstream.py; input conventions live in configs/foundation.py and
+# the resolved per-dataset records under configs/foundation_models/<model>/.
 #
 # Usage:
 #   bash experiments/run_foundation_rerun_v2_remaining.sh

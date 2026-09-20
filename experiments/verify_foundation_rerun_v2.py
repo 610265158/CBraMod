@@ -10,10 +10,10 @@ Part B - run records: for each completed run, cross-check the log command line
 single final test), the printed normalization scale, the test metrics against
 the results CSV, and the selected-epoch checkpoint.
 
-Part C - config records: the ten per-dataset record files
+Part C - config records: the per-dataset record files
 (configs/foundation_models/<model>/<DATASET>.yaml) carry the v2 training block,
-results and output roots and match the CSV; the four multi-dataset v2_*.yaml
-runnable configs carry the v2 recipe but intentionally NO results block.
+results and output roots and match the CSV. Each record is also a complete
+runnable config, so the multi-dataset launcher YAMLs were removed.
 
 Part D - queue integrity: chain log present, no FAILED runs, finished marker,
 and 50 .done sentinels.
@@ -43,8 +43,6 @@ DEFAULT_CSV = 'experiments/reports/foundation_rerun_v2_results.csv'
 QUEUE_LOG = V2_LOGS + '/chain_v2_main.log'
 EXPECTED_RUNS = 50
 EXPECTED_SEEDS_PER_GROUP = 5
-V2_MAIN_FILE = 'v2_warm3_ema995_wd5e4.yaml'
-V2_TUAB_FILE = 'v2_warm3_ema995_wd5e4_tuab.yaml'
 TUAB_ONLY = {'TUAB'}
 
 CHECKS = []
@@ -258,33 +256,6 @@ def run_checks(csv_path):
     return rows
 
 
-def config_checks(yaml_root):
-    for model in ('cbramod', 'reve'):
-        for filename, expected in ((V2_MAIN_FILE, ('FACED', 'HMC', 'Mumtaz2016', 'PhysioNet-MI')),
-                                   (V2_TUAB_FILE, ('TUAB',))):
-            path = yaml_root / model / filename
-            tag = 'config {}-{}'.format(model, filename)
-            check(tag + ' exists', path.is_file(), str(path))
-            if not path.is_file():
-                continue
-            cfg = yaml.safe_load(path.read_text(encoding='utf-8'))
-            training = cfg.get('training') or {}
-            check(tag + ' lr', float(training.get('lr', -1.0)) == 0.0001)
-            check(tag + ' warmup', int(training.get('warmup_epochs', -1)) == 3)
-            check(tag + ' ema', float(training.get('ema_decay', -1.0)) == 0.995)
-            check(tag + ' weight decay', float(training.get('weight_decay', -1.0)) == 0.0005)
-            check(tag + ' clip', float(training.get('clip_value', -1.0)) == 1.0)
-            check(tag + ' early stop', int(training.get('early_stop', -1)) == 10)
-            check(tag + ' no results block', 'results' not in cfg)
-            dataset_field = cfg.get('dataset')
-            if isinstance(dataset_field, list):
-                check(tag + ' dataset scope', sorted(dataset_field) == sorted(expected), str(dataset_field))
-            else:
-                check(tag + ' dataset scope', [dataset_field] == list(expected), str(dataset_field))
-            check(tag + ' protocol seeds',
-                  list((cfg.get('protocol') or {}).get('seeds') or []) == [42, 43, 44, 45, 46])
-
-
 def dataset_file_checks(rows, yaml_root):
     for model in ('cbramod', 'reve'):
         for dataset in ('FACED', 'HMC', 'Mumtaz2016', 'PhysioNet-MI', 'TUAB'):
@@ -349,7 +320,6 @@ def main():
 
     data_checks()
     rows = run_checks(args.csv)
-    config_checks(yaml_root)
     dataset_file_checks(rows, yaml_root)
 
     print('verification checks: {}/{} passed'.format(len(CHECKS) - len(FAILURES), len(CHECKS)))

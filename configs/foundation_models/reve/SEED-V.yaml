@@ -46,40 +46,40 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.26172
-    std: 0.06142
+    mean: 0.37981
+    std: 0.0546
   kappa:
-    mean: 0.07835
-    std: 0.07701
+    mean: 0.22546
+    std: 0.06843
   f1:
-    mean: 0.22957
-    std: 0.09877
+    mean: 0.3791
+    std: 0.07002
   per_seed:
     42:
-      epoch: 48
-      ba: 0.20612
-      kappa: 0.01061
-      f1: 0.14949
+      epoch: 6
+      ba: 0.40558
+      kappa: 0.25779
+      f1: 0.41278
     43:
-      epoch: 15
-      ba: 0.36979
-      kappa: 0.21462
-      f1: 0.37749
+      epoch: 3
+      ba: 0.40126
+      kappa: 0.25094
+      f1: 0.40585
     44:
-      epoch: 25
-      ba: 0.27947
-      kappa: 0.0996
-      f1: 0.28843
+      epoch: 16
+      ba: 0.41139
+      kappa: 0.26601
+      f1: 0.41951
     45:
-      epoch: 4
-      ba: 0.25221
-      kappa: 0.06517
-      f1: 0.23326
+      epoch: 7
+      ba: 0.40997
+      kappa: 0.26357
+      f1: 0.41798
     46:
       epoch: 1
-      ba: 0.20103
-      kappa: 0.00176
-      f1: 0.09917
+      ba: 0.27083
+      kappa: 0.08899
+      f1: 0.23938
 notes: >-
   Foundation rerun v2 record for REVE-Base on SEED-V (5-class emotion
   recognition). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at
@@ -92,9 +92,11 @@ notes: >-
   (documented deviation). Validation-selected checkpoint, one final test per
   seed, seeds 42-46, population std. SEED-V is not part of the released REVE
   benchmark; the input scale (microvolt / 100) is a fallback setting and this
-  record is reference-only. CB1/CB2 map to the inferior occipital OI1h/OI2h
-  positions because the released position bank has no cerebellar entries. See
+  record is reference-only. The pooled-token readout stays at chance here
+  (five-seed kappa 0.078), so the non-pooling readout is used. CB1/CB2 map to
+  the inferior occipital OI1h/OI2h positions because the released position
+  bank has no cerebellar entries. See
   experiments/reports/foundation_rerun_v2_remaining_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
-  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed{seed}

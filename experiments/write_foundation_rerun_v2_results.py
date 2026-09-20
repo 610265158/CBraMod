@@ -64,8 +64,9 @@ RECORD_NOTES = {
                          'record is reference-only.',
     ('reve', 'SEED-V'): 'SEED-V is not part of the released REVE benchmark; the input scale '
                         '(microvolt / 100) is a fallback setting and this record is reference-only. '
-                        'CB1/CB2 map to the inferior occipital OI1h/OI2h positions because the released '
-                        'position bank has no cerebellar entries.',
+                        'The pooled-token readout stays at chance here (five-seed kappa 0.078), so the '
+                        'non-pooling readout is used. CB1/CB2 map to the inferior occipital OI1h/OI2h '
+                        'positions because the released position bank has no cerebellar entries.',
     ('reve', 'SHU-MI'): 'SHU-MI is not part of the released REVE benchmark; the input scale '
                         '(microvolt / 100) and the pooled-token readout are fallback settings and this '
                         'record is reference-only.',

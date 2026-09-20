@@ -207,9 +207,10 @@ def write_appendix(path, records, summaries, recipe='v1'):
                        if record['model'] == 'reve' and record['dataset'] in REVE_FALLBACK_DATASETS})
     if fallback:
         lines.append('- REVE fallback specs: {} are not part of the released REVE benchmark, so their REVE '
-                     'runs use microvolt / 100, pooling=last and dropout 0.5 and are reported as reference-only. '
-                     'SEED-V maps CB1/CB2 to the inferior occipital OI1h/OI2h positions because the released '
-                     'position bank has no cerebellar entries.'.format(', '.join(fallback)))
+                     'runs use the CBraMod-equivalent microvolt / 100 scale and are reported as reference-only. '
+                     'The non-pooling readout is used on SEED-V because the pooled-token readout stays at chance '
+                     'there; SEED-V also maps CB1/CB2 to the inferior occipital OI1h/OI2h positions because the '
+                     'released position bank has no cerebellar entries.'.format(', '.join(fallback)))
     if any(record['model'] == 'reve' and record['dataset'] == 'ISRUC' for record in records):
         lines.append('- REVE ISRUC runs at batch 8 instead of the configured batch size 16 because the '
                      '22-layer encoder exceeds the GPU memory at batch 16 (CUDA OOM); this is the only '
@@ -275,10 +276,20 @@ def write_appendix(path, records, summaries, recipe='v1'):
     path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
 
+def campaign_roots(log_root, checkpoint_root, extra_run_roots):
+    roots = [(Path(log_root), Path(checkpoint_root))]
+    for name in extra_run_roots:
+        roots.append((ROOT / 'experiments/logs' / name, ROOT / 'experiments/checkpoints' / name))
+    return roots
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log_root', default='experiments/logs/foundation_rerun')
     parser.add_argument('--checkpoint_root', default='experiments/checkpoints/foundation_rerun')
+    parser.add_argument('--extra_run_root', action='append', default=[],
+                        help='additional campaign root name under experiments/logs and '
+                             'experiments/checkpoints whose runs override older ones')
     parser.add_argument('--out', default='experiments/reports/foundation_rerun_results.csv')
     parser.add_argument('--appendix_out', default='experiments/reports/foundation_rerun_appendix.md')
     parser.add_argument('--recipe', choices=['v1', 'v2'], default='v1',
@@ -287,18 +298,20 @@ def main():
 
     log_root = ROOT / args.log_root
     checkpoint_root = ROOT / args.checkpoint_root
+    roots = campaign_roots(log_root, checkpoint_root, args.extra_run_root)
     latest = {}
-    for log_path in log_root.glob('*/seed*/vision/*/*.log'):
-        parts = log_path.parts
-        model = parts[-5]
-        seed = parts[-4]
-        dataset = SAFE_TO_DATASET.get(parts[-2], parts[-2])
-        key = (model, dataset, seed)
-        if key not in latest or log_path.name > latest[key].name:
-            latest[key] = log_path
+    for log_root, checkpoint_root in roots:
+        for log_path in log_root.glob('*/seed*/vision/*/*.log'):
+            parts = log_path.parts
+            model = parts[-5]
+            seed = parts[-4]
+            dataset = SAFE_TO_DATASET.get(parts[-2], parts[-2])
+            key = (model, dataset, seed)
+            if key not in latest or log_path.name > latest[key][0].name:
+                latest[key] = (log_path, checkpoint_root)
 
     records = []
-    for (model, dataset, seed), log_path in sorted(latest.items()):
+    for (model, dataset, seed), (log_path, checkpoint_root) in sorted(latest.items()):
         parsed = parse_run(log_path)
         safe_dataset = log_path.parts[-2]
         checkpoint = checkpoint_root / model / seed / safe_dataset / 'best.pth'

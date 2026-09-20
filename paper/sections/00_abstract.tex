@@ -7,9 +7,9 @@ channel--time EEG segment into a two-dimensional tensor without discarding
 samples. This representation allows standard convolutional and Transformer
 vision backbones to process EEG directly. Across 12 downstream benchmarks,
 ImageNet- and DINOv3-initialized EfficientNet-B0, ConvNeXt-Tiny, and ViT-Small
-models. ConvNeXt-Tiny alone exceeds the strongest EEG foundation reference on
-both main metrics in 8 of the 12 tasks; taking the best of the three visual
-backbones gives the same count.
+models provide a strong cross-domain baseline. ConvNeXt-Tiny alone exceeds the strongest included EEG foundation
+baseline on
+both main metrics in 8 of the 12 tasks.
 Matched random-initialization controls further show
 that pretrained visual weights contribute substantially to these gains. Our results establish lossless folding with visual pretraining as a strong and
 reproducible EEG baseline, while leaving open the advantages of EEG-specific

@@ -13,11 +13,7 @@ are provided in Appendix~\ref{app:detailed-results}.
 \begin{table*}[t]
 \centering
 \caption{Unified comparison across 12 downstream datasets. Binary tasks report
-PR-AUC / ROC-AUC; multiclass tasks report Cohen's $\kappa$ / weighted F1.
-Bold and underlined values indicate the best and second-best results. A
-superscript $^*$ marks datasets where at least one visual backbone exceeds all
-available EEG foundation-model references on both main metrics; missing
-entries are excluded.}
+PR-AUC / ROC-AUC; multiclass tasks report Cohen's $\kappa$ / weighted F1.}
 \label{tab:unified-results}
 \tiny
 \renewcommand{\arraystretch}{1.12}
@@ -43,37 +39,35 @@ PhysioNet-MI$^*$ & .4875/.6158 & .4912/.6177 & .5222/.6427 & .5306/.6484 & \unde
 BCIC2020-3$^*$ & .3650/.4917 & .3800/.5054 & .4216/.5383 & .4543/.5633 & \underline{.5673}/\underline{.6539} & .5560/.6447 & \textbf{.5773}/\textbf{.6618} \\
 \bottomrule
 \end{tabularx}
-\tablenote{Published baselines are transcribed from \cbramod{} and \reve{} under the shared benchmark splits; local vision rows are five-seed means.}
+\tablenote{Bold and underlined values indicate the best and second-best results, respectively; missing entries are excluded from ranking. A superscript $^*$ marks datasets where at least one visual backbone exceeds all available EEG foundation-model references on both main metrics. Published baselines are transcribed from \cbramod{} and \reve{} under the shared benchmark splits; local vision rows are five-seed means.}
 \end{table*}
 
 The unified table shows a heterogeneous but systematic pattern. ConvNeXt-Tiny
-alone exceeds every displayed EEG foundation-model reference on both main
-metrics in eight datasets; taking the best of the three visual backbones per
-dataset gives the same count. Thus the result is not merely a best-of-three
-model-family selection. The result is not tied to one encoder:
-ViT-Small is strongest on CHB-MIT, TUEV,
-and BCIC2020-3; ConvNeXt-Tiny on ISRUC, HMC, FACED, and PhysioNet-MI; and
-EfficientNet-B0 on MentalArithmetic. Thus the interface transfers across both
-CNN and Transformer backbones, although backbone choice remains task-dependent.
+exceeds every included EEG foundation-model reference on both main metrics in
+8 datasets. The strongest visual backbone varies across tasks: ViT-Small
+leads on CHB-MIT, TUEV, and BCIC2020-3; ConvNeXt-Tiny leads on ISRUC, HMC,
+FACED, and PhysioNet-MI; and EfficientNet-B0 leads on MentalArithmetic.
+These results show that the interface transfers across both CNN and Transformer
+backbones, while backbone choice remains task-dependent.
 
-The comparison also defines clear limits. REVE remains strongest on TUAB and
+The comparison also defines clear limits. Among the included references, REVE remains strongest on TUAB and
 Mumtaz2016, while CBraMod leads on SEED-V and on the SHU-MI PR-AUC. Visual
 transfer is therefore competitive but not a replacement. PhysioNet-MI further
 shows that competitive transfer can occur at $P=1$, without folding. The TUEV release difference leaves the held-out test
 set unchanged. Published foundation-model rows are contextual references
 rather than local reruns. As a robustness check, we also reran CBraMod and
 REVE under the matched pipeline on all twelve datasets; under this common
-protocol the best vision backbone exceeds both reruns on both main metrics in
-nine, the exceptions being SHU-MI, Mumtaz2016, and PhysioNet-MI, where
-REVE-Base leads. Complete results, the three reruns reserved for a follow-up
-tuning pass, and the
-protocol caveats are reported in Appendix~\ref{app:foundation-rerun}.
+protocol at least one vision backbone exceeds both reruns on balanced
+accuracy and the selection metric in
+eight, the exceptions being SHU-MI, Mumtaz2016, PhysioNet-MI, and SEED-V,
+where REVE-Base leads. Complete five-seed results for all
+24 model--dataset pairs and the protocol caveats are reported in Appendix~\ref{app:foundation-rerun}.
 
 \subsection{Matched initialization ablation}
 \label{sec:pretraining-ablation}
 
-The random-initialization controls test whether the visual weights themselves
-transfer to EEG. Each comparison keeps the architecture, folding, optimizer,
+The random-initialization controls test the contribution of visual
+initialization to EEG transfer under a fixed downstream compute budget. Each comparison keeps the architecture, folding, optimizer,
 epoch budget, checkpoint selection, and five-seed test protocol fixed; only
 the backbone initialization changes. Table~\ref{tab:vision-pretraining-ablation}
 reports the four representative datasets TUEV, PhysioNet-MI, ISRUC, and SHU-MI;
@@ -81,34 +75,26 @@ the full 12-dataset by 3-backbone sweep is given in Appendix~\ref{app:complete-a
 Balanced accuracy serves as the common scale in these controls.
 
 \begin{table*}[t]
-\centering
-\caption{Matched visual-pretraining ablation on representative datasets.
-Values are balanced-accuracy mean$\pm$population standard deviation; $\Delta$
-is pretrained minus random, reported in percentage points.}
+\centering\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Matched visual-pretraining ablation: balanced accuracy (mean $\pm$ std).}
 \label{tab:vision-pretraining-ablation}
-\small
-\setlength{\tabcolsep}{7pt}
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular}{@{}llrrr@{}}
+\begin{tabular}{@{}l*{3}{cr}@{}}
 \toprule
-Backbone & Dataset & Pretrained & Random & $\Delta$ (pp) \\
+ & \multicolumn{2}{c}{EffNet-B0} & \multicolumn{2}{c}{ConvNeXt-T} & \multicolumn{2}{c}{ViT-S} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
+Dataset & Pretr. / Random & $\Delta$ (pp) & Pretr. / Random & $\Delta$ (pp) & Pretr. / Random & $\Delta$ (pp) \\
 \midrule
-EfficientNet-B0 & TUEV & .6423$\pm$.0164 & .5328$\pm$.0357 & +10.95 \\
- & PhysioNet-MI & .6491$\pm$.0125 & .5931$\pm$.0138 & +5.60 \\
- & ISRUC & .8025$\pm$.0027 & .7989$\pm$.0030 & +0.37 \\
- & SHU-MI & .6273$\pm$.0085 & .5005$\pm$.0004 & +12.68 \\
-\midrule
-ConvNeXt-Tiny & TUEV & .6763$\pm$.0122 & .4302$\pm$.0300 & +24.60 \\
- & PhysioNet-MI & .6609$\pm$.0079 & .4523$\pm$.0089 & +20.86 \\
- & ISRUC & .8142$\pm$.0009 & .6807$\pm$.0207 & +13.34 \\
- & SHU-MI & .6358$\pm$.0075 & .5775$\pm$.0093 & +5.83 \\
-\midrule
-ViT-Small & TUEV & .7261$\pm$.0135 & .4902$\pm$.0154 & +23.59 \\
- & PhysioNet-MI & .6377$\pm$.0042 & .5774$\pm$.0060 & +6.03 \\
- & ISRUC & .8130$\pm$.0027 & .7675$\pm$.0036 & +4.55 \\
- & SHU-MI & .6302$\pm$.0331 & .5864$\pm$.0115 & +4.38 \\
+TUEV & \shortstack{0.6423$\pm$0.0164\\0.5328$\pm$0.0357} & $10.95$ & \shortstack{0.6763$\pm$0.0122\\0.4302$\pm$0.0300} & $24.60$ & \shortstack{0.7261$\pm$0.0135\\0.4902$\pm$0.0154} & $23.59$ \\
+\cmidrule(lr){1-7}
+PhysioNet-MI & \shortstack{0.6491$\pm$0.0125\\0.5931$\pm$0.0138} & $5.60$ & \shortstack{0.6609$\pm$0.0079\\0.4523$\pm$0.0089} & $20.86$ & \shortstack{0.6377$\pm$0.0042\\0.5774$\pm$0.0060} & $6.03$ \\
+\cmidrule(lr){1-7}
+ISRUC & \shortstack{0.8025$\pm$0.0027\\0.7989$\pm$0.0030} & $0.37$ & \shortstack{0.8142$\pm$0.0009\\0.6807$\pm$0.0207} & $13.34$ & \shortstack{0.8130$\pm$0.0027\\0.7675$\pm$0.0036} & $4.55$ \\
+\cmidrule(lr){1-7}
+SHU-MI & \shortstack{0.6273$\pm$0.0085\\0.5005$\pm$0.0004} & $12.68$ & \shortstack{0.6358$\pm$0.0075\\0.5775$\pm$0.0093} & $5.83$ & \shortstack{0.6302$\pm$0.0331\\0.5864$\pm$0.0115} & $4.38$ \\
 \bottomrule
 \end{tabular}
+
 \end{table*}
 
 Across the complete 36 matched backbone--dataset comparisons, pretraining
@@ -120,9 +106,8 @@ they are EfficientNet-B0 on SEED-V and Mumtaz2016 and ConvNeXt-Tiny on TUAB. The
 representative rows show large gains on TUEV and PhysioNet-MI, a small gain on
 ISRUC, and a
 backbone-dependent result on SHU-MI. The magnitude is therefore task- and
-backbone-dependent. The smallest gains occur on
-large or easy datasets, whereas the
-largest gains occur on FACED, BCIC2020-3, and MentalArithmetic. Thus generic visual
+backbone-dependent. The magnitude of the gain varies substantially across datasets, with the
+largest improvements appearing on FACED, BCIC2020-3, and MentalArithmetic. Thus generic visual
 representations provide a reusable initialization for EEG fine-tuning after
 geometry alignment. This is evidence for transfer from visual pretraining to
 EEG, not evidence that EEG pretraining is unnecessary in frozen, few-shot, or
@@ -150,10 +135,10 @@ does not isolate the contribution of pretraining from architecture; the
 matched initialization controls in Section~\ref{sec:pretraining-ablation}
 address that question under full fine-tuning.
 
-\begin{table}[tbp]
-\centering\scriptsize
+\begin{table}[t]
+\centering\small
 \setlength{\tabcolsep}{4pt}
-\caption{Representative frozen linear-probe balanced accuracy. The six tasks include favorable, backbone-sensitive, and weaker visual-transfer outcomes; complete results are in Appendix~\ref{app:linear-probe}.}
+\caption{Representative frozen linear-probe results (balanced accuracy).}
 \label{tab:linear-probe-representative}
 \begin{tabular}{@{}lcccc@{}}\toprule
 Dataset & CBraMod$^\dagger$ & REVE-Base$^\dagger$ & ConvNeXt-Tiny & ViT-Small \\ \midrule
@@ -164,7 +149,7 @@ SEED-V & -- & -- & $0.2824\pm0.0036$ & $0.3020\pm0.0016$ \\
 FACED & $0.261\pm0.013$ & $0.422\pm0.028$ & $0.2774\pm0.0017$ & $0.1953\pm0.0013$ \\
 BCIC2020-3 & $0.374\pm0.007$ & $0.390\pm0.017$ & $0.2243\pm0.0136$ & $0.3099\pm0.0149$ \\
 \bottomrule\end{tabular}
-\tablenote{$^\dagger$Published non-pooling linear-probe columns from Table 4 of \citet{elouahidi2025reve}, including their CBraMod reproduction. Visual results are five-seed means $\pm$ population standard deviations. Shared benchmark partitions do not equalize readout or optimization protocols; these are contextual comparisons. Missing entries are unreported.}
+\tablenote{$^\dagger$Published non-pooling linear-probe columns from Table 4 of \citet{elouahidi2025reve}, including their CBraMod reproduction. Visual results are five-seed means $\pm$ population standard deviations. Missing entries are unreported.}
 \end{table}
 
 \subsection{Temporal folding versus contiguous reshape}
@@ -175,37 +160,39 @@ temporal folding with a contiguous-chunk reshape. Both produce the
 same $CP\times(T/P)$ tensor and retain the same samples; only their time-to-row
 mapping differs. The control applies to the nine datasets with $P>1$ (folding
 reduces to the identity for the other three), i.e., 27 of the 36
-backbone--dataset pairs: temporal folding is favored in 25 of them (17 of 18
+backbone--dataset pairs: temporal folding is favored by the selection metric in 25 of them (17 of 18
 for the two CNN backbones and 8 of 9 for ViT-Small), with small reversals on
-SHU-MI for EfficientNet-B0 and on CHB-MIT for ViT-Small. The clearest gains
+SHU-MI for EfficientNet-B0 and on CHB-MIT for ViT-Small. Across these 27 pairs,
+balanced accuracy improves by an average of 4.64 percentage points (median: 3.89 points;
+range: $-4.09$ to $+22.85$ points). The clearest gains
 occur on FACED and MentalArithmetic, with smaller but consistent advantages on
 the clinical and sleep tasks; ViT-Small shows its largest gains on SHU-MI and
-HMC. Table~\ref{tab:fold-representative} shows representative selection-metric
+HMC. Table~\ref{tab:fold-representative} shows representative balanced-accuracy
 values for the two CNN backbones; complete results are in
 Appendix~\ref{app:fold-reshape}. Thus the control isolates sample ordering,
 not merely the increase in input height.
 
 \begin{table}[tbp]
-\centering\small
-\caption{Representative temporal-folding gains. Values are selection-metric means
-$\pm$ population standard deviation to four decimal places; $\Delta$ is temporal fold minus contiguous reshape in
-percentage points.}
+\centering\footnotesize
+\setlength{\tabcolsep}{3pt}
+\caption{Representative folding ablation: balanced accuracy (mean $\pm$ std).}
 \label{tab:fold-representative}
-\begin{tabular}{@{}llrrr@{}}
+\begin{tabular}{@{}l*{3}{cr}@{}}
 \toprule
-Backbone & Dataset / metric & Temporal fold & Contiguous reshape & $\Delta$ (pp) \\
+ & \multicolumn{2}{c}{EffNet-B0} & \multicolumn{2}{c}{ConvNeXt-T} & \multicolumn{2}{c}{ViT-S} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
+Dataset & Fold / Contig. & $\Delta$ (pp) & Fold / Contig. & $\Delta$ (pp) & Fold / Contig. & $\Delta$ (pp) \\
 \midrule
-EffNet-B0 & FACED / $\kappa$ & .4953$\pm$.0197 & .3198$\pm$.0649 & +17.55 \\
- & MentalArithmetic / PR-AUC & .7903$\pm$.0536 & .5849$\pm$.0734 & +20.54 \\
- & HMC / $\kappa$ & .7070$\pm$.0023 & .6379$\pm$.0046 & +6.91 \\
- & SHU-MI / PR-AUC & .6982$\pm$.0178 & .7009$\pm$.0138 & $-0.28$ \\
-\midrule
-ConvNeXt-T & FACED / $\kappa$ & .5890$\pm$.0032 & .3321$\pm$.1694 & +25.69 \\
- & MentalArithmetic / PR-AUC & .7598$\pm$.0436 & .6198$\pm$.1237 & +14.01 \\
- & HMC / $\kappa$ & .7111$\pm$.0063 & .6700$\pm$.0050 & +4.11 \\
- & SHU-MI / PR-AUC & .6910$\pm$.0129 & .6822$\pm$.0333 & +0.88 \\
+FACED & \shortstack{0.5516$\pm$0.0179\\0.3958$\pm$0.0579} & $15.58$ & \shortstack{0.6363$\pm$0.0027\\0.4079$\pm$0.1514} & $22.85$ & \shortstack{0.4464$\pm$0.0102\\0.4438$\pm$0.0146} & $0.27$ \\
+\cmidrule(lr){1-7}
+MentalArithmetic & \shortstack{0.6910$\pm$0.0418\\0.6104$\pm$0.0123} & $8.06$ & \shortstack{0.7667$\pm$0.0234\\0.7097$\pm$0.0656} & $5.69$ & \shortstack{0.7507$\pm$0.0464\\0.7118$\pm$0.0655} & $3.89$ \\
+\cmidrule(lr){1-7}
+HMC & \shortstack{0.7557$\pm$0.0019\\0.7056$\pm$0.0039} & $5.01$ & \shortstack{0.7581$\pm$0.0055\\0.7244$\pm$0.0039} & $3.37$ & \shortstack{0.7476$\pm$0.0032\\0.6751$\pm$0.0060} & $7.26$ \\
+\cmidrule(lr){1-7}
+SHU-MI & \shortstack{0.6273$\pm$0.0085\\0.6313$\pm$0.0046} & $-0.40$ & \shortstack{0.6358$\pm$0.0075\\0.6004$\pm$0.0523} & $3.54$ & \shortstack{0.6302$\pm$0.0331\\0.5519$\pm$0.0652} & $7.83$ \\
 \bottomrule
 \end{tabular}
+
 \end{table}
 
 \subsection{Fold-factor sensitivity}

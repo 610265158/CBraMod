@@ -1,15 +1,16 @@
 \section{Conclusion}
 
 We introduced phase-interleaved, lossless temporal folding as a parameter-free
-interface between EEG and generic vision backbones. Across 12 benchmarks,
-ConvNeXt-Tiny alone makes mature visual representations competitive under full
-fine-tuning on eight tasks, and the
-matched controls show where that competitiveness comes from: visual pretraining
-improves the selection metric in 34 of 36 backbone--dataset comparisons (BA: 33
-of 36), and folding beats a contiguous reshape in 25 of 27 selection-metric
-comparisons. The gain therefore requires both the visual weights and the
-geometry. EEG-specific models nonetheless remain stronger on some tasks.
+interface between EEG and generic vision backbones. Across 12 heterogeneous
+benchmarks, a ConvNeXt-Tiny model trained without EEG-specific pretraining
+exceeds the strongest included published EEG foundation reference on both main
+metrics in 8 tasks. This result spans clinical, sleep, affective, motor-
+imagery, and cognitive EEG settings, although EEG-specific models remain
+stronger on several tasks.
 
-The practical principle is to align signal geometry and measure the value of
-existing representations before assuming that larger EEG-specific pretraining
-is necessary for downstream gains.
+Our results show that publicly available visual representations, when paired
+with a suitable interface for EEG, can provide a strong and reproducible
+starting point for EEG decoding. This offers the community a practical
+alternative to building a new EEG-specific pretraining pipeline for every
+setting, while providing a necessary baseline for measuring the incremental
+value of EEG-specific pretraining.

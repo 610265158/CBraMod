@@ -29,7 +29,9 @@ the visual backbone:
 
 Temporal folding is the only method-specific component in this pipeline. It
 changes the two-dimensional layout presented to the visual encoder while
-preserving every EEG sample exactly.
+preserving every preprocessed EEG sample exactly. Here, \emph{lossless}
+refers to this folding operator; dataset-specific clipping, scaling, and
+backbone padding are separate pipeline operations.
 
 \subsection{Lossless phase-interleaved temporal folding}
 
@@ -108,8 +110,7 @@ explicit.) (c) Sixteen consecutive samples from channel C3--P3, numbered locally
 phase rows: numbers retain the indices in (c). The gold outline encloses a
 $3\times3$ kernel centered on sample 5, covering samples 0--2, 4--6,
 and 8--10; the small square marks its center. Heatmaps in (b) and (d) share a color
-scale. The local window is selected by signal energy for illustration;
-folding itself preserves all preprocessed values exactly.}
+scale.}
 \label{fig:folding-overview}
 \end{figure*}
 \FloatBarrier
@@ -125,7 +126,7 @@ height and temporal-offset diversity but can make these boundaries less local.
 \subsection{Geometry-based fold-factor selection}
 \label{sec:p-selection}
 
-The fold factor controls this trade-off. We define a reproducible default from
+The fold factor controls this trade-off. For the evaluated sequence lengths, we define a reproducible default from
 the input shape and the stride of a standard hierarchical vision backbone:
 
 \begin{equation}

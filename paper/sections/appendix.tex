@@ -39,6 +39,32 @@ backbone. The examples below visualize this change of coordinates; they are
 not claims that the highlighted patterns are uniquely physiological or
 causal.
 
+\paragraph{Implicit electrode-position information.}
+Folding does not provide physical electrode coordinates or learn a separate
+electrode embedding. It does, however, preserve the dataset's channel order:
+electrode $c$ occupies the row block $[cP,(c+1)P)$, so its block location is
+available to the vision backbone through the folded tensor geometry. Convolution
+can use this information through boundary effects and progressively larger
+receptive fields, while Transformer backbones can additionally use their
+standard spatial positional mechanism after patchification. Thus electrode
+position is encoded implicitly by ordered channel blocks and backbone
+position-sensitive computation, rather than by explicit montage coordinates.
+Changing the channel order changes these induced neighborhoods; robustness to
+such permutations or to missing channels is therefore a separate question
+addressed only in future work.
+
+\paragraph{Patch geometry for Vision Transformers.}
+The same folded coordinates determine the input patches of ViT-Small. With
+the $16\times16$ patch projection used here, a patch covers 16 consecutive
+folded rows and 16 consecutive folded columns before tokenization. For example,
+when $P=4$ and the patch lies within a channel-block region, those rows span
+four complete electrodes and the columns span 16 groups of four samples,
+corresponding to 64 original time steps per electrode. If a patch crosses a
+channel-block boundary, it contains samples from adjacent electrodes in the
+preserved dataset order. Thus the patch embedding is also a deterministic
+function of the folding index map; it does not require a separate EEG-specific
+positional encoding.
+
 \subsection{Visual interpretation and examples}
 \label{app:folding-visuals}
 
@@ -126,39 +152,31 @@ lists these reruns next to our finalized vision models, which follow the
 identical protocol, so that the two families can be compared under one
 pipeline. The downstream pipeline
 and optimizer match our local experiments, while each model retains its
-released input normalization. These are matched-protocol reruns rather than
+released input normalization (e.g., CBraMod divides the stored microvolt
+samples by 100, whereas REVE scales them by each task's released factor: 1000
+for FACED, 100 for TUAB, and 10 for HMC). These are matched-protocol reruns rather than
 exact reproductions of every original training stage. All 24 model--dataset
 pairs have five completed seeds. CBraMod on TUEV selects the first epoch for
 every seed because validation $\kappa$ peaks there; we report these selected
-checkpoints rather than omit this result. On BCIC2020-3
-and SEED-V the released pooled-token readout does not converge on these
-arrays, so those reruns use the non-pooling readout (flattened patch tokens
-plus the context token) that the released paper employs for its probe columns.
-SEED-V additionally runs at a lower learning rate (2e-5), because at the
-campaign rate one of five seeds stays in the chance basin ($\kappa$ 0.089
-versus 0.25 at 2e-5).
+checkpoints rather than omit this result. Two REVE runs additionally change
+their readout, and one its learning rate, for the convergence reasons detailed
+below.
 
-The reruns use AdamW with a uniform learning rate of $10^{-4}$, three
-warmup epochs starting at 0.1 times that rate, EMA decay 0.995, weight decay
-$5\times10^{-4}$, gradient clipping at 1.0, and early-stopping patience 10.
-Dataset-specific epoch budgets and complete per-seed records are given in
-\texttt{configs/foundation\_models/}. CBraMod's released multi-learning-rate
-recipe is replaced by this uniform learning rate. REVE's published linear-probe warm start, mixup, StableAdamW,
-LoRA, and model souping are not applied. For TUAB and TUEV, REVE receives the
-same 16-channel bipolar arrays used by CBraMod rather than the released
-21-channel memmap, at the equivalent microvolt/100 scale; ISRUC keeps the
-released loader scale, and BCIC2020-3 and MentalArithmetic use their released
-scale factors. REVE on ISRUC additionally runs at batch size 8 rather than the
-configured 16 so that the 20-epoch 4D batches fit in memory. CHB-MIT, SEED-V,
-and SHU-MI are not part of the released REVE benchmark, so their REVE runs use
-fallback specifications (microvolt/100 input scale, pooled-token readout)
-and are reported as reference-only. BCIC2020-3 and SEED-V switch to the
-non-pooling readout because the released pooled-token readout stays at chance
-on these arrays, and SEED-V runs at a per-dataset learning rate of 2e-5
-because one of five seeds otherwise stays in the chance basin. These
-deviations can lower
-rerun values relative to published results, so the experiment quantifies
-protocol sensitivity rather than replacing the original references.
+The reruns use AdamW with a shared base learning rate of $10^{-4}$, three
+warmup epochs starting at $0.1$ times that rate, EMA decay $0.995$, weight decay
+$5\times10^{-4}$, gradient clipping at $1.0$, and early-stopping patience $10$.
+CBraMod's released multi-learning-rate recipe is replaced by this single
+learning rate, and REVE's published linear-probe warm start, mixup,
+StableAdamW, LoRA, and model souping are not applied. Input scales follow each model's released convention where one exists,
+with fallback specifications for the three datasets outside the released REVE
+benchmark (CHB-MIT, SEED-V, SHU-MI), which are reported as reference-only;
+both models consume the same stored arrays. Four
+per-dataset convergence adjustments are recorded with the results: the
+non-pooling readout for BCIC2020-3 and SEED-V, batch size 8 for ISRUC's
+20-epoch 4D batches, and a learning rate of $2\times10^{-5}$ for SEED-V. These
+deviations can lower rerun values relative to published results, so the
+experiment quantifies protocol sensitivity rather than replacing the original
+references.
 
 \begin{table*}[t]
 \centering\scriptsize
@@ -215,8 +233,8 @@ Dataset & Method & BA & Selection metric & Published \\
   & ViT-Small & $0.6377\pm0.0042$ & $0.5169\pm0.0056$ ($\kappa$) & -- \\
 \midrule
 \multirow{5}{*}{CHB-MIT}
-  & CBraMod (rerun) & $0.7418\pm0.0197$ & $0.3686\pm0.0522$ (PR-AUC) & $0.3689$ \\
-  & REVE-Base (rerun) & $0.7316\pm0.0307$ & $0.4623\pm0.0265$ (PR-AUC) & -- \\
+  & CBraMod (rerun) & $0.7418\pm0.0197$ & $0.3686\pm0.0521$ (PR-AUC) & $0.3689$ \\
+  & REVE-Base (rerun) & $0.7316\pm0.0307$ & $0.4623\pm0.0264$ (PR-AUC) & -- \\
 \cmidrule(lr){2-5}
   & EfficientNet-B0 & $0.7552\pm0.0599$ & $0.4092\pm0.0536$ (PR-AUC) & -- \\
   & ConvNeXt-Tiny & \bestcell{0.7842\pm0.0658} & \bestcell{0.5095\pm0.0143} (PR-AUC) & -- \\
@@ -239,7 +257,7 @@ Dataset & Method & BA & Selection metric & Published \\
   & ViT-Small & $0.7507\pm0.0464$ & $0.7249\pm0.0625$ (PR-AUC) & -- \\
 \midrule
 \multirow{5}{*}{TUEV}
-  & CBraMod (rerun) & -- & -- & $0.6744$ \\
+  & CBraMod (rerun) & $0.5030\pm0.0178$ & $0.5694\pm0.0217$ ($\kappa$) & $0.6744$ \\
   & REVE-Base (rerun) & $0.6587\pm0.0276$ & $0.6724\pm0.0215$ ($\kappa$) & $0.6783$ \\
 \cmidrule(lr){2-5}
   & EfficientNet-B0 & $0.6423\pm0.0164$ & $0.6901\pm0.0190$ ($\kappa$) & -- \\
@@ -271,29 +289,32 @@ Dataset & Method & BA & Selection metric & Published \\
   & ViT-Small & \bestcell{0.6619\pm0.0090} & \bestcell{0.5773\pm0.0113} ($\kappa$) & -- \\
 \bottomrule
 \end{tabular}
-\tablenote{Published values are transcribed from the CBraMod and REVE
-benchmark tables; HMC is not reported by CBraMod and CHB-MIT, SEED-V, and
-SHU-MI are not reported by REVE. Dashes mark runs reserved for a follow-up
-tuning pass. The reruns use a common
-downstream protocol and are not strict replications of all original training
-stages.}
+\tablenote{Values are five-seed means $\pm$ population standard deviations. The
+selection metric is PR-AUC for binary tasks and $\kappa$ for multiclass tasks.
+Bold marks the best matched-protocol value in each column; published values are
+transcribed from the original benchmark tables and are not ranked. Dashes in
+the published column indicate unavailable references. HMC is not reported by
+CBraMod, and CHB-MIT, SEED-V, and SHU-MI are not reported by REVE. The reruns
+use a common downstream protocol and are not strict replications of all
+original training stages.}
 \end{table*}
 
 Under this matched protocol the two foundation models fall below their
-published values in 15 of the 19 published comparisons, which quantifies
-how much those numbers depend on the original training recipes; the exceptions
+published values in 16 of the 20 published comparisons, illustrating
+sensitivity to the changed downstream recipes and input conventions; the exceptions
 are REVE-Base on ISRUC ($\kappa$ $0.7766$ versus $0.7500$) and PhysioNet-MI
-($0.5888$ versus $0.5306$), where the rerun also leads every vision backbone in
-both columns, and CBraMod and REVE-Base on BCIC2020-3 ($0.4940$ and $0.4833$
+($0.5888$ versus $0.5306$), and CBraMod and REVE-Base on BCIC2020-3 ($0.4940$ and $0.4833$
 versus $0.4216$ and $0.4543$).
 Across the twelve datasets the best vision backbone exceeds both reruns on
-both balanced accuracy and the selection metric in nine; the three exceptions
-are SHU-MI, Mumtaz2016, and PhysioNet-MI, where REVE-Base leads.
+both balanced accuracy and the selection metric in eight; the four exceptions
+are SHU-MI, Mumtaz2016, PhysioNet-MI, and SEED-V: REVE-Base leads the selection
+metric on all four and also balanced accuracy on the latter three.
 EfficientNet-B0 leads all five methods on TUAB and HMC in both columns,
-ConvNeXt-Tiny on FACED and CHB-MIT, and ViT-Small on ISRUC, SEED-V, and
+ConvNeXt-Tiny on FACED and CHB-MIT, and ViT-Small on ISRUC and
 BCIC2020-3; TUEV and MentalArithmetic split between backbones across the two
 columns. The closest comparisons are ISRUC, where ViT-Small leads REVE-Base by
-$0.0109$ $\kappa$, and Mumtaz2016, where REVE-Base edges out the best vision
+$0.0109$ $\kappa$, SEED-V, where REVE-Base leads ViT-Small by $0.0136$
+$\kappa$, and Mumtaz2016, where REVE-Base edges out the best vision
 backbone by $0.0100$
 balanced accuracy and $0.0048$ PR-AUC. We therefore read this table as a
 protocol-controlled comparison and keep the published values as the external
@@ -323,21 +344,21 @@ $O(CT)$ memory movement.
 
 \begin{table*}[tbp]
 \centering
-\caption{Conceptual scope of the model families discussed in the paper.}
+\caption{Conceptual scope and computational scale of the model families discussed in the paper.}
 \label{tab:model-scale}
-\small
+\scriptsize
 \renewcommand{\arraystretch}{1.06}
-\begin{tabularx}{\textwidth}{@{}lXXX@{}}
+\begin{tabularx}{\textwidth}{@{}lXXXXX@{}}
 \toprule
- & \method{} (B0) & \cbramod{} & \reve{}-Base \\
+ & \method{} (B0) & \method{} (ConvNeXt-T) & \method{} (ViT-S) & \cbramod{} & \reve{}-Base \\
 \midrule
-Input & phase-folded raw waveform & raw patches + FFT magnitude & raw waveform patches \\
-Encoder & EfficientNet-B0 & criss-cross transformer & coordinate-aware transformer \\
-EEG pretraining & none & TUH EEG & 92 EEG datasets \\
-Encoder parameters & 4.01M & 4.92M & 69.19M \\
-Forward compute @$32\times1000$ & 0.25 GFLOPs & 0.79 GFLOPs & 11.07 GFLOPs \\
-Spatial identity & row order & learned fixed-order encoding & physical coordinates \\
-Main target & full fine-tuning & compact EEG transfer & montage-flexible transfer \\
+Input & phase-folded raw waveform & phase-folded raw waveform & phase-folded raw waveform & raw patches + FFT magnitude & raw waveform patches \\
+Encoder & EfficientNet-B0 & ConvNeXt-Tiny & ViT-Small & criss-cross transformer & coordinate-aware transformer \\
+EEG pretraining & none & none & none & TUH EEG & 92 EEG datasets \\
+Encoder parameters & 4.01M & 27.82M & 21.39M & 4.92M & 69.19M \\
+Forward compute @$32\times1000$ & 0.25 GFLOPs & 2.903 GFLOPs & 3.000 GFLOPs & 0.79 GFLOPs & 11.07 GFLOPs \\
+Spatial identity & row order & row order & folded patch positions & learned fixed-order encoding & physical coordinates \\
+Main target & full fine-tuning & full fine-tuning & full fine-tuning & compact EEG transfer & montage-flexible transfer \\
 \bottomrule
 \end{tabularx}
 \tablenote{The B0 encoder count excludes its unused ImageNet classifier and
@@ -352,7 +373,9 @@ whereas its released checkpoint contains 4.92M.}
 
 Table~\ref{tab:recipes} summarizes one representative ConvNeXt-Tiny training
 recipe for each dataset. ``Folded'' denotes the non-padded image shape; zero
-padding is appended only at the bottom and right. All runs use DINOv3
+padding is appended only at the bottom and right. EfficientNet-B0 uses
+ImageNet initialization, whereas ConvNeXt-Tiny and ViT-Small use DINOv3
+initialization. The ConvNeXt-Tiny recipes summarized here use DINOv3
 initialization, AdamW, cosine decay, dropout .1, bfloat16 mixed precision, and
 a dataset-specific linear head. Learning rates, epoch budgets, fold factors,
 and validation metrics are selected before the final test evaluation.
@@ -361,7 +384,7 @@ and validation metrics are selected before the final test evaluation.
 \centering
 \caption{Finalized phase-interleaved downstream recipes.}
 \label{tab:recipes}
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.06}
 \begin{tabularx}{\textwidth}{@{}lccrccc@{}}

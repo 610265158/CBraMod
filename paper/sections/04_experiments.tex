@@ -3,16 +3,21 @@
 
 \subsection{Datasets and splits}
 
-We evaluate on 12 datasets spanning clinical detection, sleep staging,
+We evaluate on 12 public datasets spanning clinical detection, sleep staging,
 affective computing, motor imagery, imagined speech, depression detection,
-and mental workload. Table~\ref{tab:datasets} summarizes their task families,
-input shapes, and label spaces. All recordings are represented at 200\,Hz.
-Regular inputs follow the $[B,C,T]$ convention; ISRUC retains a sequence of 20
-labelled epochs per record.
+and mental workload. The suite comprises CHB-MIT, TUAB, and TUEV
+\citep{shoeb2009application,obeid2016temple}; ISRUC-Sleep and HMC
+\citep{khalighi2016isruc,alvarez2022hmc}; FACED and SEED-V
+\citep{chen2023large,liu2022comparing}; PhysioNet-MI, SHU-MI, and
+BCIC2020-3 \citep{schalk2004bci2000,ma2022large,jeong20222020}; and
+Mumtaz2016 and MentalArithmetic \citep{mumtaz2016mdd,zyma2019mental}.
+Table~\ref{tab:datasets} summarizes their task families, input shapes, and
+label spaces. All recordings are represented at 200\,Hz, and inputs follow the
+$[B,C,T]$ convention.
 
 \begin{table*}[t]
 \centering
-\caption{The 12-dataset evaluation suite. Exact split counts and partition rules are given in Table~\ref{tab:splits} (Appendix~\ref{app:detailed-results}) and the released configurations.}
+\caption{Overview of the 12-dataset evaluation suite.}
 \label{tab:datasets}
 \small
 \setlength{\tabcolsep}{3pt}
@@ -24,7 +29,7 @@ Dataset & Task family & Input shape & Classes \\
 CHB-MIT & Clinical detection & $16\times2000$ & 2 \\
 TUAB & Clinical detection & $16\times2000$ & 2 \\
 TUEV & Clinical detection & $16\times1000$ & 6 \\
-ISRUC & Sleep staging & $20\times6\times6000$ & 5 \\
+ISRUC & Sleep staging & $6\times6000$ & 5 \\
 HMC & Sleep staging & $4\times6000$ & 5 \\
 FACED & Affective computing & $32\times2000$ & 9 \\
 SEED-V & Affective computing & $62\times200$ & 5 \\
@@ -35,8 +40,6 @@ Mumtaz2016 & Clinical/cognitive & $19\times1000$ & 2 \\
 MentalArithmetic & Clinical/cognitive & $20\times1000$ & 2 \\
 \bottomrule
 \end{tabular*}
-\tablenote{Shapes omit the batch dimension; ISRUC retains 20 labelled epochs
-per record.}
 \end{table*}
 
 For all datasets, we inherit the record construction, preprocessing order, and
@@ -69,11 +72,10 @@ protocol and results are given in Appendix~\ref{app:foundation-rerun}.
 
 \subsection{Models and training}
 
-We use ImageNet-pretrained EfficientNet-B0 and DINOv3-pretrained
-ConvNeXt-Tiny and ViT-Small with one-channel inputs. Their original
+We use ImageNet-pretrained EfficientNet-B0~\citep{tan2019efficientnet} and DINOv3-pretrained
+ConvNeXt-Tiny and ViT-Small~\citep{oquab2025dinov3} with one-channel inputs. Their original
 implementations and pretrained-weight loading are provided through the
-PyTorch Image Models library (timm)~\citep{rw2019timm}; DINOv3 is cited as
-\citet{oquab2025dinov3}. The original
+PyTorch Image Models library (timm)~\citep{rw2019timm}. The original
 classification layers are replaced by task-specific prediction heads, and the
 encoder and head are fine-tuned jointly. Frozen-transfer experiments keep the
 encoder fixed and train only the prediction head. Backbone-specific feature

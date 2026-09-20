@@ -1,51 +1,9 @@
 \section{Discussion and Limitations}
 
-We revisit our three contributions in light of the matched controls and the
-benchmark comparison. For the
-lossless interface, the folding-layout controls show that the reindexing itself
-matters: temporal folding beats a contiguous reshape of the same samples in 25
-of 27 selection-metric comparisons, so ordering, not height alone, carries part
-of the gain, and the fold-factor rule remains a reproducible prior, not a
-universal optimum.
+The results support three conclusions. First, the folding-layout control shows that the sample ordering matters beyond the increase in input height: phase-interleaved folding beats a contiguous reshape in 25 of 27 selection-metric comparisons. The geometry rule is therefore a reproducible prior, not a claim that one fold factor is optimal for every task. Second, visual initialization contributes substantially under the matched downstream budget: the selection metric improves over random initialization in 34 of 36 backbone--dataset comparisons (balanced accuracy improves in 33). Third, the effect transfers across CNN and Transformer backbones, although the strongest backbone depends on the task.
 
-For the transfer evidence, the gains hold across convolutional and Transformer
-backbones alike. Two controls show that the pretrained representation itself
-matters: with random initialization, the selection metric falls in 34 of 36
-backbone--dataset comparisons (BA: 33 of 36); and a linear probe on frozen
-DINOv3 features still matches the published non-pooling CBraMod probe on
-several tasks, though not REVE-Base.
+The benchmark comparison gives the same qualified picture. ConvNeXt-Tiny exceeds the strongest included published EEG foundation reference on both main metrics in 8 of 12 tasks. Under the matched downstream reruns, at least one visual backbone exceeds both CBraMod and REVE-Base on balanced accuracy and the selection metric in 8 of 12 datasets. The exceptions are SHU-MI, Mumtaz2016, PhysioNet-MI, and SEED-V, where REVE-Base remains stronger on at least one metric. These reruns use five seeds for every model--dataset pair, but they do not reproduce every original training stage: CBraMod uses a uniform learning rate, REVE omits its published warm start and additional training procedures, and a few datasets require documented fallback input, readout, or learning-rate settings. They should therefore be read as protocol-controlled comparisons; the published values remain the external benchmark references.
 
-For the benchmark comparison, ConvNeXt-Tiny alone exceeds the strongest EEG
-foundation reference on both main metrics in 8 of the 12 tasks; taking the
-best of the three visual backbones gives the same count. Thus this is not only
-a best-of-three model-family count; under the matched-protocol reruns of
-Appendix~\ref{app:foundation-rerun} the corresponding count is nine of twelve.
-Published references remain ahead on TUAB and Mumtaz2016
-(REVE) and on SEED-V and the SHU-MI PR-AUC (CBraMod); visual transfer is
-therefore competitive but not a replacement.
+Taken together, the findings establish visual pretraining with geometry alignment as a strong and reproducible EEG baseline that does not require an EEG-specific pretraining stage. This is useful when EEG pretraining data or compute are limited and provides a necessary control for attributing downstream gains to EEG-specific pretraining. The result is conditional on the evaluated full fine-tuning setting: EEG-specific models remain stronger on several tasks, and these experiments do not establish advantages for few-shot, frozen, or cross-montage transfer.
 
-Taken together, vision pretraining is a \emph{conditional} free lunch: a
-broadly reusable prior that wins or stays closely competitive on most
-benchmarks without any EEG-specific pretraining. This matters practically in EEG, where
-pretraining corpora, hardware, and compute are expensive; a compact ImageNet-
-or DINOv3-initialized backbone with a parameter-free adapter already provides a
-strong and reproducible baseline, although benchmark accuracy is not clinical
-readiness. It also offers a new perspective on EEG foundation models: gains
-attributed to EEG-specific pretraining should be measured against a
-geometry-aligned visual control that shares the data, splits, and protocol.
-This does not mean that EEG pretraining is unnecessary; our frozen probes still
-trail REVE-Base on several tasks, and few-shot or cross-montage transfer may
-favor EEG-specific representations.
-
-Several limitations qualify these conclusions. Most EEG baselines remain
-contextual published references rather than paired local reruns;
-Appendix~\ref{app:foundation-rerun} adds matched-pipeline reruns for all twelve
-datasets, in which the best vision backbone leads both reruns on both main
-metrics in nine, but these do not reproduce every original training stage,
-three runs are reserved for a follow-up tuning pass, and the
-headline counts select the best of three backbones.
-Frozen probing covers two visual backbones, and channel count is confounded
-with montage and task. Future work should therefore address automatic
-fold-factor selection (validation-based or learned), channel-order and
-missing-channel robustness, few-shot and cross-montage transfer,
-pretraining-efficiency comparisons, and paired significance tests.
+Several limitations remain. Most task-specific EEG baselines and the main-table foundation-model numbers are published references rather than paired local reruns, despite the additional matched CBraMod and REVE reruns in the appendix. The folding adapter preserves stored channel order but does not use physical electrode coordinates; robustness to channel permutation, missing electrodes, and cross-montage transfer is untested. Finally, fold factor selection is fixed by a geometry rule, and the study does not report paired significance tests or pretraining-efficiency comparisons. These limitations define directions for future work.

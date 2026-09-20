@@ -11,13 +11,20 @@ their target tasks, they are typically trained from scratch and assume a fixed
 channel layout, which limits transfer across datasets, montages, and label
 spaces.
 
-EEG foundation models address this limitation by scaling self-supervised
-pretraining. BIOT maps heterogeneous biosignals to frequency-domain tokens
-\citep{yang2023biot}; LaBraM applies masked EEG modeling at scale
-\citep{jiang2024labram}; CBraMod combines time-domain patches, Fourier
-magnitude, and criss--cross attention in a compact encoder
-\citep{wang2025cbramod}; and REVE incorporates physical electrode coordinates
-for large-scale pretraining and unseen montages \citep{elouahidi2025reve}.
+EEG foundation models have evolved from contrastive representation learning
+toward increasingly large-scale masked, generative, and autoregressive
+pretraining. BENDR demonstrated transformer-based representation learning from
+raw EEG with a contrastive self-supervised objective
+\citep{kostas2021bendr}. BIOT extended large-scale pretraining to heterogeneous
+biosignals through frequency-domain tokens \citep{yang2023biot}, while LaBraM
+applied masked EEG modeling at scale \citep{jiang2024labram}. Recent
+generative and autoregressive efforts, including BrainGPT and Neuro-GPT,
+further broadened the design space of EEG foundation models
+\citep{yue2024braingpt,cui2024neurogpt}. CBraMod combines time-domain patches,
+Fourier magnitude, and criss--cross attention in a compact encoder
+\citep{wang2025cbramod}, whereas REVE incorporates physical electrode
+coordinates to support large-scale pretraining and unseen montages
+\citep{elouahidi2025reve}.
 
 However, EEG foundation models typically require large pretraining corpora and
 substantial computational resources. Their architectures and self-supervised

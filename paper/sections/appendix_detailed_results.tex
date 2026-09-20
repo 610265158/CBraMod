@@ -7,6 +7,17 @@ applicable CBraMod or REVE benchmark and use the same subject- or trial-level
 train, validation, and test partitions as the corresponding reference rows;
 the remaining published rows are transcribed from these benchmark tables as
 contextual references.
+
+\paragraph{Channel ordering and montage preprocessing.}
+All local vision models receive channels in the order produced by the
+dataset-specific preprocessing pipeline. We do not reorder channels at runtime
+by 10--20 position, Euclidean electrode distance, or any other
+physical-coordinate rule, and the folding adapter does not insert or remove
+channels. Consequently, the row-block order in Eq.~\ref{eq:fold} is exactly
+the stored array order for each dataset. This convention makes the induced
+cross-channel neighborhoods reproducible, although their physical
+interpretation remains dataset-dependent. The channel lists and preprocessing
+choices are included in the released preprocessing configuration.
 Binary tasks report BA / PR-AUC / ROC-AUC;
 multiclass tasks report BA / Cohen's $\kappa$ / weighted F1. Published values
 are transcribed from the CBraMod and REVE tables, whereas local vision rows
@@ -34,7 +45,7 @@ fixed split code of the \cbramod{} and \reve{} benchmarks. TUEV uses v2.0.1
 training and validation counts with the unchanged official 29,421-sample test
 set.}
 \label{tab:splits}
-\footnotesize
+\scriptsize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.06}
 \begin{tabularx}{\textwidth}{@{}l l r r r X@{}}
@@ -152,7 +163,13 @@ ST-Transformer& $0.3984\pm0.0228$ & $0.3765\pm0.0306$ & $0.6823\pm0.0190$  \\
 ISRUC-Sleep provides overnight polysomnography for five-stage sleep classification \citep{khalighi2016isruc}. Each local epoch contains six channels and 6,000 time samples (30 seconds at 200\,Hz). Balanced accuracy, Cohen's $\kappa$, and weighted F1 are computed over epoch labels.
 ISRUC uses the published benchmark split (subjects 1--80/81--90/91--100 for
 train/validation/test), identical to the \reve{} protocol. The local loader
-retains 20 consecutive epochs per record during visual encoding.
+retains 20 consecutive 30-second epochs per record, but the vision path
+reshapes each $[20,C,T]$ sequence into 20 independent samples before folding.
+The backbone therefore sees one 30-second epoch at a time and does not
+aggregate features or predictions across the 20-epoch context window. Its
+outputs are reshaped back to $[20,K]$ so that the loss and reported metrics are
+computed against all 20 epoch labels. Thus the 20-epoch storage format does not
+give the visual models an additional temporal-context input.
 \begin{table}[t]\centering\caption{ISRUC five-class sleep staging.}\label{tab:detail-isruc}
 \detailhead{Balanced accuracy}{Cohen's $\kappa$}{Weighted F1}
 \multicolumn{4}{@{}l}{\textit{Supervised EEG models}} \\

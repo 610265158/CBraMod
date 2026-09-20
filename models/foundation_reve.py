@@ -6,7 +6,9 @@ options and an input adapter that consumes the repository's standard
 
 1. the dataset loader is configured by ``finetune_main`` to emit samples
    normalised with the per-dataset scale of the released REVE task configs
-   (1000 for FACED, 100 for TUAB/Mumtaz2016, 10 for HMC; no clipping);
+   (1000 for FACED, 100 for TUAB/Mumtaz2016, 10 for HMC; no clipping); a 4D
+   ``[B, S, C, T]`` batch (ISRUC) is flattened to ``[B * S, C, T]`` and the
+   logits are folded back to ``[B, S, classes]``;
 2. supply 3D electrode positions from the released position bank (bipolar
    channel names are averaged, following the released ``position_utils``);
 3. classify with the released head geometry: ``pooling=no`` concatenates the
@@ -29,6 +31,7 @@ import torch.nn as nn
 from einops.layers.torch import Rearrange
 
 from configs.downstream import get_dataset_config
+from configs.foundation import foundation_channels_and_time
 from configs.foundation import foundation_spec
 
 from .reve_backbone import RMSNorm
@@ -98,7 +101,7 @@ class Model(nn.Module):
         positions = load_positions(reve['electrodes'], getattr(param, 'reve_positions_dir', None))
         self.register_buffer('positions', positions, persistent=False)
 
-        channels, time_steps = dataset['input_shape']
+        channels, time_steps = foundation_channels_and_time(dataset['input_shape'], param.downstream_dataset)
         self.num_of_patches = num_patches(time_steps, config['patch_size'], config['patch_overlap'])
         self.pooling = reve.get('pooling', 'last')
         self.num_of_classes = int(param.num_of_classes)
@@ -117,11 +120,16 @@ class Model(nn.Module):
             self._freeze_backbone()
 
     def forward(self, eeg):
-        batch = eeg.shape[0]
-        pos = self.positions.unsqueeze(0).repeat(batch, 1, 1).to(eeg.device)
+        chunks = None
+        if eeg.ndim == 4:
+            batch, chunks = eeg.shape[0], eeg.shape[1]
+            eeg = eeg.reshape(batch * chunks, eeg.shape[2], eeg.shape[3])
+        else:
+            batch = eeg.shape[0]
+        pos = self.positions.unsqueeze(0).repeat(eeg.shape[0], 1, 1).to(eeg.device)
         features = self.backbone(eeg, pos)
 
-        query = self.cls_query_token.expand(batch, -1, -1)
+        query = self.cls_query_token.expand(eeg.shape[0], -1, -1)
         scores = torch.matmul(query, features.transpose(-1, -2)) / (features.shape[-1] ** 0.5)
         weights = torch.softmax(scores, dim=-1)
         context = torch.matmul(weights, features)
@@ -131,6 +139,8 @@ class Model(nn.Module):
             features = context.squeeze(1)
 
         logits = self.head(features)
+        if chunks is not None:
+            logits = logits.reshape(batch, chunks, -1)
         return logits[..., 0] if self.num_of_classes == 1 and logits.size(-1) == 1 else logits
 
     def train(self, mode=True):

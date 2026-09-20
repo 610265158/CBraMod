@@ -5,7 +5,9 @@ consumes the repository's standard ``[B, C, T]`` batches.  The dataset loader
 is configured by ``finetune_main`` to emit samples normalised with the released
 CBraMod convention (microvolt / 100, no clipping); the adapter then
 
-1. reshapes ``[B, C, T]`` to the ``[B, C, S, 200]`` patch layout;
+1. reshapes ``[B, C, T]`` to the ``[B, C, S, 200]`` patch layout; a 4D
+   ``[B, S, C, T]`` batch (ISRUC) is flattened to ``[B * S, C, T]`` first and
+   the logits are folded back to ``[B, S, classes]``;
 2. classifies with the released per-dataset head variants
    (``all_patch_reps``; the two-layer variant is used when the
    ``S * 200`` hidden width would exceed 2,000, as for HMC's 30 patches).
@@ -15,6 +17,7 @@ import torch.nn as nn
 from einops.layers.torch import Rearrange
 
 from configs.downstream import get_dataset_config
+from configs.foundation import foundation_channels_and_time
 from configs.foundation import foundation_spec
 
 from .cbramod import CBraMod
@@ -58,7 +61,7 @@ class Model(nn.Module):
             print('CBraMod foundation checkpoint disabled; backbone is randomly initialized')
         self.backbone.proj_out = nn.Identity()
 
-        channels, time_steps = dataset['input_shape']
+        channels, time_steps = foundation_channels_and_time(dataset['input_shape'], param.downstream_dataset)
         if time_steps % PATCH_SIZE:
             raise ValueError(
                 'CBraMod requires the time axis to be divisible by {}; dataset {} has {}'.format(
@@ -82,9 +85,15 @@ class Model(nn.Module):
             self._freeze_backbone()
 
     def forward(self, eeg):
+        chunks = None
+        if eeg.ndim == 4:
+            batch, chunks = eeg.shape[0], eeg.shape[1]
+            eeg = eeg.reshape(batch * chunks, eeg.shape[2], eeg.shape[3])
         x = eeg.reshape(eeg.shape[0], eeg.shape[1], self.patch_count, PATCH_SIZE)
         features = self.backbone(x)
         logits = self.head(features)
+        if chunks is not None:
+            logits = logits.reshape(batch, chunks, -1)
         return logits[..., 0] if self.num_of_classes == 1 and logits.size(-1) == 1 else logits
 
     def train(self, mode=True):

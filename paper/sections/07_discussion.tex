@@ -18,8 +18,9 @@ several tasks, though not REVE-Base.
 For the benchmark comparison, ConvNeXt-Tiny alone exceeds the strongest EEG
 foundation reference on both main metrics in 8 of the 12 tasks; taking the
 best of the three visual backbones gives the same count. Thus this is not only
-a best-of-three model-family count, while
-published references remain ahead on TUAB and Mumtaz2016
+a best-of-three model-family count; under the matched-protocol reruns of
+Appendix~\ref{app:foundation-rerun} the corresponding count is nine of twelve.
+Published references remain ahead on TUAB and Mumtaz2016
 (REVE) and on SEED-V and the SHU-MI PR-AUC (CBraMod); visual transfer is
 therefore competitive but not a replacement.
 
@@ -38,8 +39,10 @@ favor EEG-specific representations.
 
 Several limitations qualify these conclusions. Most EEG baselines remain
 contextual published references rather than paired local reruns;
-Appendix~\ref{app:foundation-rerun} adds matched-pipeline reruns for five
-datasets, but these do not reproduce every original training stage, and the
+Appendix~\ref{app:foundation-rerun} adds matched-pipeline reruns for all twelve
+datasets, in which the best vision backbone leads both reruns on both main
+metrics in nine, but these do not reproduce every original training stage,
+three runs are reserved for a follow-up tuning pass, and the
 headline counts select the best of three backbones.
 Frozen probing covers two visual backbones, and channel count is confounded
 with montage and task. Future work should therefore address automatic

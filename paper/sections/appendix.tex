@@ -119,40 +119,50 @@ $P=4$, matching $\Delta t=P\Delta w+\Delta p$.}
 \section{Matched Foundation-Model Reruns}
 \label{app:foundation-rerun}
 
-We also reran CBraMod and REVE on TUAB, FACED, HMC,
-Mumtaz2016, and PhysioNet-MI using the inherited partitions, seeds 42--46,
-validation-selected checkpoints, and one final test evaluation per seed.
-Table~\ref{tab:foundation-reruns}
+We also reran CBraMod and REVE on all twelve datasets using the inherited
+partitions, seeds 42--46, validation-selected checkpoints, and one final test
+evaluation per seed. Table~\ref{tab:foundation-reruns}
 lists these reruns next to our finalized vision models, which follow the
 identical protocol, so that the two families can be compared under one
 pipeline. The downstream pipeline
 and optimizer match our local experiments, while each model retains its
 released input normalization. These are matched-protocol reruns rather than
-exact reproductions of every original training stage.
+exact reproductions of every original training stage; three runs are left
+blank pending a follow-up tuning pass: REVE-Base on BCIC2020-3 and SEED-V does
+not converge under the matched budget, and CBraMod on TUEV selects the first
+epoch for every seed because validation $\kappa$ peaks there.
 
 CBraMod's released multi-learning-rate recipe is replaced by one uniform
 learning rate. REVE's published linear-probe warm start, mixup, StableAdamW,
-LoRA, and model souping are not applied. For TUAB, REVE receives the same
-16-channel bipolar arrays used by CBraMod rather than the released 21-channel
-memmap; on Mumtaz2016 and PhysioNet-MI it receives the released electrode
-positions. These deviations can lower rerun values relative to published
-results, so the experiment quantifies protocol sensitivity rather than
-replacing the original references.
+LoRA, and model souping are not applied. For TUAB and TUEV, REVE receives the
+same 16-channel bipolar arrays used by CBraMod rather than the released
+21-channel memmap, at the equivalent microvolt/100 scale; ISRUC keeps the
+released loader scale, and BCIC2020-3 and MentalArithmetic use their released
+scale factors. REVE on ISRUC additionally runs at batch size 8 rather than the
+configured 16 so that the 20-epoch 4D batches fit in memory. CHB-MIT, SEED-V,
+and SHU-MI are not part of the released REVE benchmark, so their REVE runs use
+fallback specifications (microvolt/100 input scale, pooled-token readout,
+dropout 0.5) and are reported as reference-only. These deviations can lower
+rerun values relative to published results, so the experiment quantifies
+protocol sensitivity rather than replacing the original references.
 
 \begin{table*}[t]
-\centering\scriptsize
-\caption{Protocol-matched comparison on the five rerun datasets. CBraMod and
+\centering\tiny
+\caption{Protocol-matched comparison on the twelve rerun datasets. CBraMod and
 REVE-Base are rerun under our downstream pipeline
 (inherited partitions, seeds 42--46, validation-selected checkpoints, one final
 test per seed) and are listed together with our finalized vision models, which
 follow the same protocol. Values are five-seed means $\pm$ population standard
-deviations; the selection metric is PR-AUC for TUAB and Mumtaz2016 and
-$\kappa$ for FACED, HMC, and PhysioNet-MI. Bold marks the
-best matched-protocol value in each column; published values are transcribed
-from the original benchmark tables and are not ranked.}
+deviations; the selection metric is PR-AUC for the binary tasks (TUAB,
+CHB-MIT, SHU-MI, Mumtaz2016, MentalArithmetic) and $\kappa$ for the remaining
+multiclass tasks. Bold marks the best matched-protocol value in each column;
+published values are transcribed from the original benchmark tables and are
+not ranked. Dashes mark reruns reserved for a follow-up tuning pass.}
 \label{tab:foundation-reruns}
-\setlength{\tabcolsep}{6pt}
-\renewcommand{\arraystretch}{1.08}
+\setlength{\tabcolsep}{5pt}
+\setlength{\aboverulesep}{0.25ex}
+\setlength{\belowrulesep}{0.4ex}
+\renewcommand{\arraystretch}{0.98}
 \begin{tabular}{@{}llccc@{}}
 \toprule
 Dataset & Method & BA & Selection metric & Published \\
@@ -196,25 +206,87 @@ Dataset & Method & BA & Selection metric & Published \\
   & EfficientNet-B0 & $0.6491\pm0.0125$ & $0.5322\pm0.0167$ ($\kappa$) & -- \\
   & ConvNeXt-Tiny & $0.6558\pm0.0057$ & $0.5411\pm0.0077$ ($\kappa$) & -- \\
   & ViT-Small & $0.6377\pm0.0042$ & $0.5169\pm0.0056$ ($\kappa$) & -- \\
+\midrule
+\multirow{5}{*}{CHB-MIT}
+  & CBraMod (rerun) & $0.7418\pm0.0197$ & $0.3686\pm0.0522$ (PR-AUC) & $0.3689$ \\
+  & REVE-Base (rerun) & $0.7316\pm0.0307$ & $0.4623\pm0.0265$ (PR-AUC) & -- \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.7552\pm0.0599$ & $0.4092\pm0.0536$ (PR-AUC) & -- \\
+  & ConvNeXt-Tiny & \bestcell{0.7842\pm0.0658} & \bestcell{0.5095\pm0.0143} (PR-AUC) & -- \\
+  & ViT-Small & $0.7204\pm0.0175$ & $0.4759\pm0.0118$ (PR-AUC) & -- \\
+\midrule
+\multirow{5}{*}{SHU-MI}
+  & CBraMod (rerun) & $0.6242\pm0.0050$ & $0.7021\pm0.0103$ (PR-AUC) & $0.7139$ \\
+  & REVE-Base (rerun) & $0.6356\pm0.0047$ & \bestcell{0.7187\pm0.0101} (PR-AUC) & -- \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.6273\pm0.0085$ & $0.6982\pm0.0178$ (PR-AUC) & -- \\
+  & ConvNeXt-Tiny & \bestcell{0.6398\pm0.0035} & $0.6963\pm0.0101$ (PR-AUC) & -- \\
+  & ViT-Small & $0.6302\pm0.0331$ & $0.6891\pm0.0457$ (PR-AUC) & -- \\
+\midrule
+\multirow{5}{*}{MentalArithmetic}
+  & CBraMod (rerun) & $0.7451\pm0.0232$ & $0.5180\pm0.0370$ (PR-AUC) & $0.6267$ \\
+  & REVE-Base (rerun) & $0.6736\pm0.0412$ & $0.6679\pm0.0822$ (PR-AUC) & $0.7470$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.6910\pm0.0418$ & \bestcell{0.7903\pm0.0536} (PR-AUC) & -- \\
+  & ConvNeXt-Tiny & \bestcell{0.7583\pm0.0242} & $0.7551\pm0.0251$ (PR-AUC) & -- \\
+  & ViT-Small & $0.7507\pm0.0464$ & $0.7249\pm0.0625$ (PR-AUC) & -- \\
+\midrule
+\multirow{5}{*}{TUEV}
+  & CBraMod (rerun) & -- & -- & $0.6744$ \\
+  & REVE-Base (rerun) & $0.6587\pm0.0276$ & $0.6724\pm0.0215$ ($\kappa$) & $0.6783$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.6423\pm0.0164$ & $0.6901\pm0.0190$ ($\kappa$) & -- \\
+  & ConvNeXt-Tiny & $0.7259\pm0.0155$ & \bestcell{0.7624\pm0.0085} ($\kappa$) & -- \\
+  & ViT-Small & \bestcell{0.7261\pm0.0135} & $0.7428\pm0.0127$ ($\kappa$) & -- \\
+\midrule
+\multirow{5}{*}{ISRUC}
+  & CBraMod (rerun) & $0.7671\pm0.0085$ & $0.7390\pm0.0100$ ($\kappa$) & $0.7442$ \\
+  & REVE-Base (rerun) & $0.8012\pm0.0037$ & $0.7766\pm0.0046$ ($\kappa$) & $0.7500$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.8025\pm0.0027$ & $0.7705\pm0.0032$ ($\kappa$) & -- \\
+  & ConvNeXt-Tiny & $0.8111\pm0.0013$ & $0.7864\pm0.0016$ ($\kappa$) & -- \\
+  & ViT-Small & \bestcell{0.8130\pm0.0027} & \bestcell{0.7875\pm0.0026} ($\kappa$) & -- \\
+\midrule
+\multirow{5}{*}{SEED-V}
+  & CBraMod (rerun) & $0.3812\pm0.0033$ & $0.2313\pm0.0045$ ($\kappa$) & $0.2569$ \\
+  & REVE-Base (rerun) & -- & -- & -- \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.3660\pm0.0062$ & $0.2056\pm0.0078$ ($\kappa$) & -- \\
+  & ConvNeXt-Tiny & $0.3832\pm0.0074$ & $0.2351\pm0.0098$ ($\kappa$) & -- \\
+  & ViT-Small & \bestcell{0.3930\pm0.0035} & \bestcell{0.2442\pm0.0045} ($\kappa$) & -- \\
+\midrule
+\multirow{5}{*}{BCIC2020-3}
+  & CBraMod (rerun) & $0.5952\pm0.0103$ & $0.4940\pm0.0129$ ($\kappa$) & $0.4216$ \\
+  & REVE-Base (rerun) & -- & -- & $0.4543$ \\
+\cmidrule(lr){2-5}
+  & EfficientNet-B0 & $0.6539\pm0.0128$ & $0.5673\pm0.0160$ ($\kappa$) & -- \\
+  & ConvNeXt-Tiny & $0.6387\pm0.0220$ & $0.5483\pm0.0275$ ($\kappa$) & -- \\
+  & ViT-Small & \bestcell{0.6619\pm0.0090} & \bestcell{0.5773\pm0.0113} ($\kappa$) & -- \\
 \bottomrule
 \end{tabular}
 \tablenote{Published values are transcribed from the CBraMod and REVE
-benchmark tables; HMC is not reported by CBraMod. The reruns use a common
+benchmark tables; HMC is not reported by CBraMod and CHB-MIT, SEED-V, and
+SHU-MI are not reported by REVE. Dashes mark runs reserved for a follow-up
+tuning pass. The reruns use a common
 downstream protocol and are not strict replications of all original training
 stages.}
 \end{table*}
 
 Under this matched protocol the two foundation models fall below their
-published values in eight of the nine published comparisons, which quantifies
-how much those numbers depend on the original training recipes; the exception
-is REVE-Base on PhysioNet-MI, where the rerun exceeds its published $\kappa$
-($0.5888$ versus $0.5306$) and leads every vision backbone in both columns.
-Our vision backbones are competitive under the same protocol: EfficientNet-B0
-leads all five methods on TUAB and HMC in both balanced accuracy and PR-AUC,
-and ConvNeXt-Tiny leads on FACED. The closest comparisons are on FACED,
-where EfficientNet-B0 matches the rerun CBraMod in both balanced accuracy
-($0.5516$ versus $0.5531$) and $\kappa$ ($0.4953$ versus $0.4939$), and on
-Mumtaz2016, where REVE-Base edges out the best vision backbone by $0.0100$
+published values in 15 of the 18 published comparisons, which quantifies
+how much those numbers depend on the original training recipes; the exceptions
+are REVE-Base on ISRUC ($\kappa$ $0.7766$ versus $0.7500$) and PhysioNet-MI
+($0.5888$ versus $0.5306$), where the rerun also leads every vision backbone in
+both columns, and CBraMod on BCIC2020-3 ($0.4940$ versus $0.4216$).
+Across the twelve datasets the best vision backbone exceeds both reruns on
+both balanced accuracy and the selection metric in nine; the three exceptions
+are SHU-MI, Mumtaz2016, and PhysioNet-MI, where REVE-Base leads.
+EfficientNet-B0 leads all five methods on TUAB and HMC in both columns,
+ConvNeXt-Tiny on FACED and CHB-MIT, and ViT-Small on ISRUC, SEED-V, and
+BCIC2020-3; TUEV and MentalArithmetic split between backbones across the two
+columns. The closest comparisons are ISRUC, where ViT-Small leads REVE-Base by
+$0.0109$ $\kappa$, and Mumtaz2016, where REVE-Base edges out the best vision
+backbone by $0.0100$
 balanced accuracy and $0.0048$ PR-AUC. We therefore read this table as a
 protocol-controlled comparison and keep the published values as the external
 reference in the main table.

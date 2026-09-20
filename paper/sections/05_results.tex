@@ -62,8 +62,11 @@ transfer is therefore competitive but not a replacement. PhysioNet-MI further
 shows that competitive transfer can occur at $P=1$, without folding. The TUEV release difference leaves the held-out test
 set unchanged. Published foundation-model rows are contextual references
 rather than local reruns. As a robustness check, we also reran CBraMod and
-REVE under the matched pipeline; these runs show that visual backbones remain
-competitive on five datasets. Complete results and the
+REVE under the matched pipeline on all twelve datasets; under this common
+protocol the best vision backbone exceeds both reruns on both main metrics in
+nine, the exceptions being SHU-MI, Mumtaz2016, and PhysioNet-MI, where
+REVE-Base leads. Complete results, the three reruns reserved for a follow-up
+tuning pass, and the
 protocol caveats are reported in Appendix~\ref{app:foundation-rerun}.
 
 \subsection{Matched initialization ablation}

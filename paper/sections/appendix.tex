@@ -127,10 +127,13 @@ identical protocol, so that the two families can be compared under one
 pipeline. The downstream pipeline
 and optimizer match our local experiments, while each model retains its
 released input normalization. These are matched-protocol reruns rather than
-exact reproductions of every original training stage; three runs are left
-blank pending a follow-up tuning pass: REVE-Base on BCIC2020-3 and SEED-V does
+exact reproductions of every original training stage; two runs are left
+blank pending a follow-up tuning pass: REVE-Base on SEED-V does
 not converge under the matched budget, and CBraMod on TUEV selects the first
-epoch for every seed because validation $\kappa$ peaks there.
+epoch for every seed because validation $\kappa$ peaks there. On BCIC2020-3
+the released pooled-token readout also does not converge on these arrays, so
+that rerun uses the non-pooling readout (flattened patch tokens plus the
+context token) that the released paper employs for its probe columns.
 
 CBraMod's released multi-learning-rate recipe is replaced by one uniform
 learning rate. REVE's published linear-probe warm start, mixup, StableAdamW,
@@ -141,8 +144,10 @@ released loader scale, and BCIC2020-3 and MentalArithmetic use their released
 scale factors. REVE on ISRUC additionally runs at batch size 8 rather than the
 configured 16 so that the 20-epoch 4D batches fit in memory. CHB-MIT, SEED-V,
 and SHU-MI are not part of the released REVE benchmark, so their REVE runs use
-fallback specifications (microvolt/100 input scale, pooled-token readout,
-dropout 0.5) and are reported as reference-only. These deviations can lower
+fallback specifications (microvolt/100 input scale, pooled-token readout)
+and are reported as reference-only. BCIC2020-3 additionally switches to the
+non-pooling readout because the released pooled-token readout stays at chance
+on these arrays. These deviations can lower
 rerun values relative to published results, so the experiment quantifies
 protocol sensitivity rather than replacing the original references.
 
@@ -257,7 +262,7 @@ Dataset & Method & BA & Selection metric & Published \\
 \midrule
 \multirow{5}{*}{BCIC2020-3}
   & CBraMod (rerun) & $0.5952\pm0.0103$ & $0.4940\pm0.0129$ ($\kappa$) & $0.4216$ \\
-  & REVE-Base (rerun) & -- & -- & $0.4543$ \\
+  & REVE-Base (rerun) & $0.5867\pm0.0970$ & $0.4833\pm0.1212$ ($\kappa$) & $0.4543$ \\
 \cmidrule(lr){2-5}
   & EfficientNet-B0 & $0.6539\pm0.0128$ & $0.5673\pm0.0160$ ($\kappa$) & -- \\
   & ConvNeXt-Tiny & $0.6387\pm0.0220$ & $0.5483\pm0.0275$ ($\kappa$) & -- \\
@@ -273,11 +278,12 @@ stages.}
 \end{table*}
 
 Under this matched protocol the two foundation models fall below their
-published values in 15 of the 18 published comparisons, which quantifies
+published values in 15 of the 19 published comparisons, which quantifies
 how much those numbers depend on the original training recipes; the exceptions
 are REVE-Base on ISRUC ($\kappa$ $0.7766$ versus $0.7500$) and PhysioNet-MI
 ($0.5888$ versus $0.5306$), where the rerun also leads every vision backbone in
-both columns, and CBraMod on BCIC2020-3 ($0.4940$ versus $0.4216$).
+both columns, and CBraMod and REVE-Base on BCIC2020-3 ($0.4940$ and $0.4833$
+versus $0.4216$ and $0.4543$).
 Across the twelve datasets the best vision backbone exceeds both reruns on
 both balanced accuracy and the selection metric in nine; the three exceptions
 are SHU-MI, Mumtaz2016, and PhysioNet-MI, where REVE-Base leads.

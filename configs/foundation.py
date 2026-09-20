@@ -33,8 +33,10 @@ before.  The extension added on 2026-09-19 covers the remaining seven tasks:
   of 1000.
 * CHB-MIT, SEED-V and SHU-MI are NOT part of the released REVE benchmark, so
   their REVE specs are fallbacks: microvolt / 100 (the CBraMod-equivalent
-  scale), ``pooling='last'`` and dropout 0.5.  They are reference-only runs and
-  must be reported as such.
+  scale) and ``pooling='last'``.  They are reference-only runs and must be
+  reported as such.  The ``dropout`` field of every REVE spec is informational:
+  ``finetune_main`` resolves the classifier dropout from the per-dataset
+  training block in ``configs/downstream.py`` before the model is built.
 * The REVE position bank has no cerebellar electrodes; SEED-V's CB1/CB2 are
   mapped to the inferior occipital positions OI1h/OI2h, the closest available
   coordinates.
@@ -203,9 +205,13 @@ FOUNDATION_SPECS = {
     'BCIC2020-3': {
         'cbramod': {'input_scale': 100.0},
         'reve': {
+            # The released Speech config selects the pooled-token readout, but on
+            # these arrays it stays at chance (five-seed kappa 0.107 under the
+            # campaign recipe); the non-pooling readout converges above the
+            # published value, so it is used here (see the dataset record notes).
             'input_scale': 1000.0,
             'electrodes': BCIC2020_3_ELECTRODES,
-            'pooling': 'last',
+            'pooling': 'no',
             'dropout': 0.5,
         },
     },

@@ -91,7 +91,7 @@ notes: >-
   warm start, mixup, StableAdamW, LoRA and model souping are not applied
   (documented deviation). Validation-selected checkpoint, one final test per
   seed, seeds 42-46, population std. CHB-MIT is not part of the released REVE
-  benchmark; the input scale (microvolt / 100), pooling=last and dropout 0.5
+  benchmark; the input scale (microvolt / 100) and the pooled-token readout
   are fallback settings and this record is reference-only. See
   experiments/reports/foundation_rerun_v2_remaining_appendix.md.
 output:

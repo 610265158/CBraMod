@@ -103,7 +103,7 @@ class Model(nn.Module):
 
         channels, time_steps = foundation_channels_and_time(dataset['input_shape'], param.downstream_dataset)
         self.num_of_patches = num_patches(time_steps, config['patch_size'], config['patch_overlap'])
-        self.pooling = reve.get('pooling', 'last')
+        self.pooling = getattr(param, 'reve_pooling', None) or reve.get('pooling', 'last')
         self.num_of_classes = int(param.num_of_classes)
         dropout = float(getattr(param, 'dropout', reve.get('dropout', 0.1)))
         print(

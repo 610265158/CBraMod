@@ -198,6 +198,11 @@ def main():
                         help='load one training batch and run one forward pass without training')
     parser.add_argument('--evaluate_checkpoint', type=str, default=None,
                         help='load a saved model state and evaluate only on the test split')
+    parser.add_argument('--init_checkpoint', type=str, default=None,
+                        help='load a saved model state before training (two-stage warm start)')
+    parser.add_argument('--reve_pooling', type=str, default=None,
+                        choices=['no', 'last'],
+                        help='override the REVE classifier readout for tuning experiments')
     params = parser.parse_args()
     apply_downstream_defaults(params)
     configure_data_normalization(params)
@@ -215,6 +220,13 @@ def main():
     load_dataset = dataset_module.LoadDataset(params)
     data_loader = load_dataset.get_data_loader()
     model = model_module.Model(params)
+
+    if params.init_checkpoint:
+        state = torch.load(params.init_checkpoint, map_location='cpu')
+        if isinstance(state, dict) and 'model_state_dict' in state:
+            state = state['model_state_dict']
+        model.load_state_dict(state, strict=True)
+        print('Initialised model weights from {}'.format(params.init_checkpoint))
 
     if params.dry_run:
         dry_run(params, data_loader, model)

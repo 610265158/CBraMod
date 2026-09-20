@@ -46,40 +46,40 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.2856
-    std: 0.09706
+    mean: 0.58667
+    std: 0.09699
   kappa:
-    mean: 0.107
-    std: 0.12133
+    mean: 0.48333
+    std: 0.12124
   f1:
-    mean: 0.25043
-    std: 0.12436
+    mean: 0.58657
+    std: 0.0969
   per_seed:
     42:
-      epoch: 2
-      ba: 0.21733
-      kappa: 0.02167
-      f1: 0.15704
+      epoch: 29
+      ba: 0.624
+      kappa: 0.53
+      f1: 0.62394
     43:
-      epoch: 27
-      ba: 0.472
-      kappa: 0.34
-      f1: 0.47228
-    44:
       epoch: 30
-      ba: 0.288
-      kappa: 0.11
-      f1: 0.28442
+      ba: 0.39467
+      kappa: 0.24333
+      f1: 0.3947
+    44:
+      epoch: 25
+      ba: 0.66133
+      kappa: 0.57667
+      f1: 0.6609
     45:
-      epoch: 1
-      ba: 0.21067
-      kappa: 0.01333
-      f1: 0.11904
+      epoch: 27
+      ba: 0.628
+      kappa: 0.535
+      f1: 0.62784
     46:
-      epoch: 6
-      ba: 0.24
-      kappa: 0.05
-      f1: 0.21938
+      epoch: 23
+      ba: 0.62533
+      kappa: 0.53167
+      f1: 0.62547
 notes: >-
   Foundation rerun v2 record for REVE-Base on BCIC2020-3 (5-class imagined
   speech). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at factor
@@ -89,11 +89,13 @@ notes: >-
   clipping) and supplies released electrode positions (64 channels). The
   released lp -> ft warm start, mixup, StableAdamW, LoRA and model souping are
   not applied (documented deviation). Validation-selected checkpoint, one
-  final test per seed, seeds 42-46, population std. Four of the five seeds
-  stop at the chance-level plateau before the encoder escapes it (early stop
-  10), so this record documents the matched-budget non-convergence rather than
-  a converged rerun. Published reference kappa 0.4543 +/- 0.0154 (delta
-  -0.3473). See experiments/reports/foundation_rerun_v2_remaining_appendix.md.
+  final test per seed, seeds 42-46, population std. The released Speech config
+  selects the pooled-token (last) readout, but on the stored arrays that
+  readout stays at chance under the campaign recipe (five-seed kappa 0.107);
+  this record uses the non-pooling readout instead (flatten all patch tokens
+  together with the context token), which the released REVE paper also uses
+  for its probe columns. Published reference kappa 0.4543 +/- 0.0154 (delta
+  +0.0290). See experiments/reports/foundation_rerun_v2_remaining_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
-  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_bcic_poolno_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_bcic_poolno_v1/reve/seed{seed}

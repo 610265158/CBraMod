@@ -33,6 +33,13 @@ CBRA_MOD_CHECKPOINT="${CBRA_MOD_CHECKPOINT:-experiments/.third_party/cbramod/pre
 # configured batch size 16 (CUDA OOM at ~23.5 GiB); REVE ISRUC therefore runs
 # at batch 8.  This is the only per-run batch-size deviation.
 REVE_ISRUC_BATCH="${REVE_ISRUC_BATCH:-8}"
+# Optional budget overrides for a single (model, dataset) tuning run; empty
+# values keep the per-dataset epochs and the v2 early-stop of 10.
+EPOCHS_OVERRIDE="${EPOCHS_OVERRIDE:-}"
+# Optional REVE readout override ('' keeps the per-dataset spec, 'no' flattens
+# all tokens with the context token, 'last' uses the pooled context token).
+REVE_POOLING="${REVE_POOLING:-}"
+EARLY_STOP_OVERRIDE="${EARLY_STOP_OVERRIDE:-}"
 # LMDB-backed datasets run with num_workers=0: fork-shared LMDB handles are a
 # known crash source in this pipeline (Pin memory thread / Memo value errors).
 LMDB_DATASETS="${LMDB_DATASETS:-SEED-V SHU-MI BCIC2020-3 MentalArithmetic}"
@@ -67,6 +74,19 @@ for model in $MODELS; do
         batch_args=(--batch_size "$REVE_ISRUC_BATCH")
       fi
 
+      pooling_args=()
+      if [ -n "$REVE_POOLING" ] && [ "$model" = "reve" ]; then
+        pooling_args=(--reve_pooling "$REVE_POOLING")
+      fi
+
+      budget_args=()
+      if [ -n "$EPOCHS_OVERRIDE" ]; then
+        budget_args+=(--epochs "$EPOCHS_OVERRIDE")
+      fi
+      if [ -n "$EARLY_STOP_OVERRIDE" ]; then
+        budget_args+=(--early_stop "$EARLY_STOP_OVERRIDE")
+      fi
+
       attempt=0
       status=1
       while [ "$attempt" -le "$RETRIES" ]; do
@@ -90,7 +110,9 @@ for model in $MODELS; do
             --model_root "$model_root" \
             --log_root "$log_root" \
             "${foundation_args[@]}" \
-            "${batch_args[@]}"; then
+            "${batch_args[@]}" \
+            "${pooling_args[@]}" \
+            "${budget_args[@]}"; then
           status=0
           break
         fi

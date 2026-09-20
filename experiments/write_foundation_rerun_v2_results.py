@@ -60,23 +60,25 @@ DEVIATIONS = {
 }
 RECORD_NOTES = {
     ('reve', 'CHB-MIT'): 'CHB-MIT is not part of the released REVE benchmark; the input scale '
-                         '(microvolt / 100), pooling=last and dropout 0.5 are fallback settings and this '
+                         '(microvolt / 100) and the pooled-token readout are fallback settings and this '
                          'record is reference-only.',
     ('reve', 'SEED-V'): 'SEED-V is not part of the released REVE benchmark; the input scale '
-                        '(microvolt / 100), pooling=last and dropout 0.5 are fallback settings and this '
-                        'record is reference-only. CB1/CB2 map to the inferior occipital OI1h/OI2h '
-                        'positions because the released position bank has no cerebellar entries.',
+                        '(microvolt / 100) is a fallback setting and this record is reference-only. '
+                        'CB1/CB2 map to the inferior occipital OI1h/OI2h positions because the released '
+                        'position bank has no cerebellar entries.',
     ('reve', 'SHU-MI'): 'SHU-MI is not part of the released REVE benchmark; the input scale '
-                        '(microvolt / 100), pooling=last and dropout 0.5 are fallback settings and this '
+                        '(microvolt / 100) and the pooled-token readout are fallback settings and this '
                         'record is reference-only.',
     ('reve', 'TUEV'): 'The TUEV loader keeps microvolt / 100, the stored-array equivalent of the released '
                       'volt-scale memmap factor x1e4 already documented for TUAB.',
     ('reve', 'ISRUC'): 'REVE ISRUC runs at batch 8 instead of the configured batch size 16 because the '
                        '22-layer encoder exceeds the GPU memory at batch 16 (CUDA OOM); this is the only '
                        'batch-size deviation in the sweep.',
-    ('reve', 'BCIC2020-3'): 'Four of the five seeds stop at the chance-level plateau before the encoder '
-                            'escapes it (early stop 10), so this record documents the matched-budget '
-                            'non-convergence rather than a converged rerun.',
+    ('reve', 'BCIC2020-3'): 'The released Speech config selects the pooled-token (last) readout, but on the '
+                            'stored arrays that readout stays at chance under the campaign recipe (five-seed '
+                            'kappa 0.107); this record uses the non-pooling readout instead (flatten all patch '
+                            'tokens together with the context token), which the released REVE paper also uses for '
+                            'its probe columns.',
     ('cbramod', 'TUEV'): 'TUEV validation kappa peaks at the first epoch for every seed (the validation '
                          'split is about 89% majority class), so all selected checkpoints are epoch 1.',
 }
@@ -162,7 +164,7 @@ def read_previous_record(snapshot_path, target_path, primary):
     return None
 
 
-def render_dataset_record(model, dataset, entries, training, previous):
+def render_dataset_record(model, dataset, entries, training, previous, run_root):
     seeds = sorted(entries)
     metric_names = [name for name in entries[seeds[0]] if name != 'epoch']
     primary = metric_names[1]
@@ -218,8 +220,8 @@ def render_dataset_record(model, dataset, entries, training, previous):
     lines.extend(textwrap.fill(' '.join(notes), width=78, initial_indent='  ', subsequent_indent='  ',
                                break_on_hyphens=False).split('\n'))
     lines.append('output:')
-    lines.append('  model_root: experiments/checkpoints/' + V2_RUN_ROOT + '/' + model + '/seed{seed}')
-    lines.append('  log_root: experiments/logs/' + V2_RUN_ROOT + '/' + model + '/seed{seed}')
+    lines.append('  model_root: experiments/checkpoints/' + run_root + '/' + model + '/seed{seed}')
+    lines.append('  log_root: experiments/logs/' + run_root + '/' + model + '/seed{seed}')
     return '\n'.join(lines) + '\n'
 
 
@@ -255,6 +257,8 @@ def main():
     parser.add_argument('--log_root', default=DEFAULT_LOG_ROOT)
     parser.add_argument('--checkpoint_root', default=DEFAULT_CHECKPOINT_ROOT)
     parser.add_argument('--yaml_root', default=DEFAULT_YAML_ROOT)
+    parser.add_argument('--run_root', default=V2_RUN_ROOT,
+                        help='campaign run root recorded in the output block')
     parser.add_argument('--write_datasets', action='store_true',
                         help='rewrite the per-dataset record files under <yaml_root>/<model>/<DATASET>.yaml')
     args = parser.parse_args()
@@ -283,7 +287,7 @@ def main():
             model=model, dataset=dataset, n=len(seeds), primary=primary,
             mean=statistics.mean(values), std=statistics.pstdev(values), previous=previous_text))
         if args.write_datasets:
-            record = render_dataset_record(model, dataset, entries, trainings.get((model, dataset)), previous)
+            record = render_dataset_record(model, dataset, entries, trainings.get((model, dataset)), previous, args.run_root)
             path.write_text(record, encoding='utf-8')
             print('    -> dataset record written')
 

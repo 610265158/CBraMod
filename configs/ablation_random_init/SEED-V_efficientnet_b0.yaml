@@ -1,4 +1,5 @@
 dataset: SEED-V
+source: configs/backbones/efficientnet_b0/SEED-V.yaml
 backbone_name: efficientnet_b0
 vision:
   adapter: {fold_factor: 1}
@@ -15,7 +16,7 @@ training:
   warmup_start_factor: 0.1
   clip_value: -1.0
   ema_decay: 0.0
-  num_workers: 4
+  num_workers: 0
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 1.0
@@ -51,17 +52,14 @@ protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.37845, std: 0.01288}
-  kappa: {mean: 0.22657, std: 0.01700}
-  f1: {mean: 0.38679, std: 0.01502}
-results:
-  ba: {mean: 0.37845, std: 0.01288}
-  kappa: {mean: 0.22657, std: 0.01700}
-  f1: {mean: 0.38679, std: 0.01502}
+  ba: {mean: 0.37165, std: 0.01270}
+  kappa: {mean: 0.21796, std: 0.01595}
+  f1: {mean: 0.37980, std: 0.01227}
 notes: >-
-  Pretrain-vs-random ablation: efficientnet_b0 architecture with random initialization
-  (use_pretrained_weights=false). Matches the SEED-V pretrained recipe; only
-  the initialization differs.
+  Matched-initialization control for configs/backbones/efficientnet_b0/SEED-V.yaml: identical recipe with
+  use_pretrained_weights=false. Rerun (v2) with the current code (LMDB fork-safety fix,
+  cls_token aggregation) and the profile aligned to early_stop 10 / num_workers 0.
+  Five seeds 42--46, validation-selected checkpoint, one final test per seed.
 output:
-  model_root: experiments/checkpoints/pretrain_vs_random/SEED-V_random_init/{seed}
-  log_root: experiments/logs/pretrain_vs_random/SEED-V_random_init/{seed}
+  model_root: experiments/checkpoints/pretrain_vs_random/efficientnet_b0_seed_v_random_init_v2/{seed}
+  log_root: experiments/logs/pretrain_vs_random/efficientnet_b0_seed_v_random_init_v2/{seed}

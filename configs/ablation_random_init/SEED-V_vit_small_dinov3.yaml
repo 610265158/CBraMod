@@ -1,4 +1,5 @@
 dataset: SEED-V
+source: configs/backbones/vit_small_dinov3/SEED-V.yaml
 backbone_name: vit_small_patch16_dinov3.lvd1689m
 vision:
   adapter: {fold_factor: 1}
@@ -37,14 +38,11 @@ results:
   ba: {mean: 0.25651, std: 0.00293}
   kappa: {mean: 0.07203, std: 0.00385}
   f1: {mean: 0.26430, std: 0.00294}
-results:
-  ba: {mean: 0.25651, std: 0.00293}
-  kappa: {mean: 0.07203, std: 0.00385}
-  f1: {mean: 0.26430, std: 0.00294}
 notes: >-
-  Pretrain-vs-random ablation: vit_small_dinov3 architecture with random initialization
-  (use_pretrained_weights=false). Matches the SEED-V pretrained recipe; only
-  the initialization differs.
+  Matched-initialization control for configs/backbones/vit_small_dinov3/SEED-V.yaml: identical recipe with
+  use_pretrained_weights=false. Rerun (v2) with the current code (LMDB fork-safety fix,
+  cls_token aggregation) and the profile aligned to early_stop 10 / num_workers 0.
+  Five seeds 42--46, validation-selected checkpoint, one final test per seed.
 output:
-  model_root: experiments/checkpoints/pretrain_vs_random/vit_small_dinov3_SEED-V_random_init/{seed}
-  log_root: experiments/logs/pretrain_vs_random/vit_small_dinov3_SEED-V_random_init/{seed}
+  model_root: experiments/checkpoints/pretrain_vs_random/vit_small_dinov3_seed_v_random_init_v2/{seed}
+  log_root: experiments/logs/pretrain_vs_random/vit_small_dinov3_seed_v_random_init_v2/{seed}

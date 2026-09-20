@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / 'experiments'))
 
-from collect_foundation_results import PUBLISHED, SAFE_TO_DATASET, parse_run, read_text  # noqa: E402
+from collect_foundation_results import PUBLISHED, REVE_FALLBACK_DATASETS, SAFE_TO_DATASET, parse_run, read_text  # noqa: E402
 from configs.foundation import FOUNDATION_SPECS  # noqa: E402
 
 DEFAULT_LOG_ROOT = 'experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1'
@@ -44,12 +44,46 @@ TASK_DESC = {
     'HMC': '5-class sleep staging',
     'Mumtaz2016': 'binary MDD detection',
     'PhysioNet-MI': '4-class motor imagery',
+    'CHB-MIT': 'binary seizure detection',
+    'TUEV': '6-class event type classification',
+    'ISRUC': '5-class sleep staging',
+    'SEED-V': '5-class emotion recognition',
+    'SHU-MI': 'binary motor imagery',
+    'BCIC2020-3': '5-class imagined speech',
+    'MentalArithmetic': 'binary mental workload',
 }
 DEVIATIONS = {
     'cbramod': 'The released multi-LR schedule is not used; the whole network '
                'trains with a single 1e-4 learning rate (documented deviation).',
     'reve': 'The released lp -> ft warm start, mixup, StableAdamW, LoRA and '
             'model souping are not applied (documented deviation).',
+}
+RECORD_NOTES = {
+    ('reve', 'CHB-MIT'): 'CHB-MIT is not part of the released REVE benchmark; the input scale '
+                         '(microvolt / 100), pooling=last and dropout 0.5 are fallback settings and this '
+                         'record is reference-only.',
+    ('reve', 'SEED-V'): 'SEED-V is not part of the released REVE benchmark; the input scale '
+                        '(microvolt / 100), pooling=last and dropout 0.5 are fallback settings and this '
+                        'record is reference-only. CB1/CB2 map to the inferior occipital OI1h/OI2h '
+                        'positions because the released position bank has no cerebellar entries.',
+    ('reve', 'SHU-MI'): 'SHU-MI is not part of the released REVE benchmark; the input scale '
+                        '(microvolt / 100), pooling=last and dropout 0.5 are fallback settings and this '
+                        'record is reference-only.',
+    ('reve', 'TUEV'): 'The TUEV loader keeps microvolt / 100, the stored-array equivalent of the released '
+                      'volt-scale memmap factor x1e4 already documented for TUAB.',
+    ('reve', 'ISRUC'): 'REVE ISRUC runs at batch 8 instead of the configured batch size 16 because the '
+                       '22-layer encoder exceeds the GPU memory at batch 16 (CUDA OOM); this is the only '
+                       'batch-size deviation in the sweep.',
+    ('reve', 'BCIC2020-3'): 'Four of the five seeds stop at the chance-level plateau before the encoder '
+                            'escapes it (early stop 10), so this record documents the matched-budget '
+                            'non-convergence rather than a converged rerun.',
+    ('cbramod', 'TUEV'): 'TUEV validation kappa peaks at the first epoch for every seed (the validation '
+                         'split is about 89% majority class), so all selected checkpoints are epoch 1.',
+}
+REMAINING_DATASETS = {'CHB-MIT', 'TUEV', 'ISRUC', 'SEED-V', 'SHU-MI', 'BCIC2020-3', 'MentalArithmetic'}
+APPENDIX_POINTERS = {
+    'remaining': 'experiments/reports/foundation_rerun_v2_remaining_appendix.md',
+    'main': 'experiments/reports/foundation_rerun_v2_appendix.md',
 }
 
 TRAINING_KEYS = (
@@ -106,6 +140,10 @@ def loader_description(model, dataset):
     if model == 'cbramod':
         return 'the loader applies the released CBraMod normalization (microvolt / 100, no clipping)'
     spec = FOUNDATION_SPECS[dataset]['reve']
+    if dataset in REVE_FALLBACK_DATASETS:
+        return ('the loader applies a fallback microvolt / {:g} without clipping (this dataset is not part '
+                'of the released REVE benchmark) and supplies position-bank coordinates for {} channels').format(
+                    spec['input_scale'], len(spec['electrodes']))
     return ('the loader applies the released REVE scale_factor (microvolt / {:g}, no clipping) '
             'and supplies released electrode positions ({} channels)').format(
                 spec['input_scale'], len(spec['electrodes']))
@@ -161,6 +199,9 @@ def render_dataset_record(model, dataset, entries, training, previous):
         DEVIATIONS[model],
         'Validation-selected checkpoint, one final test per seed, seeds 42-46, population std.',
     ]
+    record_note = RECORD_NOTES.get((model, dataset))
+    if record_note:
+        notes.append(record_note)
     published = PUBLISHED.get((dataset, model), {}).get('PR_AUC' if primary == 'pr_auc' else primary)
     if published:
         published_text = '{:.4f}'.format(published[0])
@@ -171,7 +212,8 @@ def render_dataset_record(model, dataset, entries, training, previous):
     if previous:
         notes.append('Replaces the v1 matched-pipeline record ({} {:.4f} +/- {:.4f}).'.format(
             primary, previous[0], previous[1]))
-    notes.append('See experiments/reports/foundation_rerun_v2_appendix.md.')
+    notes.append('See {}.'.format(
+        APPENDIX_POINTERS['remaining'] if dataset in REMAINING_DATASETS else APPENDIX_POINTERS['main']))
     lines.append('notes: >-')
     lines.extend(textwrap.fill(' '.join(notes), width=78, initial_indent='  ', subsequent_indent='  ',
                                break_on_hyphens=False).split('\n'))

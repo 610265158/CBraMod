@@ -1,0 +1,96 @@
+dataset: CHB-MIT
+model_arch: cbramod
+training:
+  lr: 0.0001
+  batch_size: 32
+  epochs: 10
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: true
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 10.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: pr_auc
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba:
+    mean: 0.74183
+    std: 0.01968
+  pr_auc:
+    mean: 0.36856
+    std: 0.05215
+  roc_auc:
+    mean: 0.90157
+    std: 0.00638
+  per_seed:
+    42:
+      epoch: 8
+      ba: 0.71697
+      pr_auc: 0.34979
+      roc_auc: 0.89502
+    43:
+      epoch: 10
+      ba: 0.73308
+      pr_auc: 0.42292
+      roc_auc: 0.9033
+    44:
+      epoch: 8
+      ba: 0.7392
+      pr_auc: 0.31415
+      roc_auc: 0.89968
+    45:
+      epoch: 8
+      ba: 0.74294
+      pr_auc: 0.31816
+      roc_auc: 0.8968
+    46:
+      epoch: 10
+      ba: 0.77696
+      pr_auc: 0.43776
+      roc_auc: 0.91303
+notes: >-
+  Foundation rerun v2 record for CBraMod on CHB-MIT (binary seizure
+  detection). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at
+  factor 0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop
+  10) with 10 epochs and pr_auc checkpoint selection from
+  configs/downstream.py; the loader applies the released CBraMod normalization
+  (microvolt / 100, no clipping). The released multi-LR schedule is not used;
+  the whole network trains with a single 1e-4 learning rate (documented
+  deviation). Validation-selected checkpoint, one final test per seed, seeds
+  42-46, population std. Published reference pr_auc 0.3689 +/- 0.0382 (delta
+  -0.0003). See experiments/reports/foundation_rerun_v2_remaining_appendix.md.
+output:
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/cbramod/seed{seed}

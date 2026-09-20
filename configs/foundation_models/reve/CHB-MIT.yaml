@@ -1,0 +1,99 @@
+dataset: CHB-MIT
+model_arch: reve
+training:
+  lr: 0.0001
+  batch_size: 32
+  epochs: 10
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 4
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: true
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 10.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: false
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: pr_auc
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba:
+    mean: 0.73155
+    std: 0.0307
+  pr_auc:
+    mean: 0.46228
+    std: 0.02645
+  roc_auc:
+    mean: 0.90629
+    std: 0.01031
+  per_seed:
+    42:
+      epoch: 2
+      ba: 0.68853
+      pr_auc: 0.42664
+      roc_auc: 0.90872
+    43:
+      epoch: 1
+      ba: 0.74153
+      pr_auc: 0.44038
+      roc_auc: 0.90658
+    44:
+      epoch: 1
+      ba: 0.76156
+      pr_auc: 0.47182
+      roc_auc: 0.9013
+    45:
+      epoch: 2
+      ba: 0.7026
+      pr_auc: 0.47039
+      roc_auc: 0.89164
+    46:
+      epoch: 2
+      ba: 0.76354
+      pr_auc: 0.50217
+      roc_auc: 0.92321
+notes: >-
+  Foundation rerun v2 record for REVE-Base on CHB-MIT (binary seizure
+  detection). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at
+  factor 0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop
+  10) with 10 epochs and pr_auc checkpoint selection from
+  configs/downstream.py; the loader applies a fallback microvolt / 100 without
+  clipping (this dataset is not part of the released REVE benchmark) and
+  supplies position-bank coordinates for 16 channels. The released lp -> ft
+  warm start, mixup, StableAdamW, LoRA and model souping are not applied
+  (documented deviation). Validation-selected checkpoint, one final test per
+  seed, seeds 42-46, population std. CHB-MIT is not part of the released REVE
+  benchmark; the input scale (microvolt / 100), pooling=last and dropout 0.5
+  are fallback settings and this record is reference-only. See
+  experiments/reports/foundation_rerun_v2_remaining_appendix.md.
+output:
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}

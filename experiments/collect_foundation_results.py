@@ -34,12 +34,31 @@ PUBLISHED = {
     ('Mumtaz2016', 'reve'): {'BA': (0.9644, 0.0097), 'PR_AUC': (0.9961, 0.0013), 'ROC_AUC': (0.9957, 0.0015)},
     ('PhysioNet-MI', 'cbramod'): {'BA': (0.6417, None), 'kappa': (0.5222, 0.0169), 'f1': (0.6427, None)},
     ('PhysioNet-MI', 'reve'): {'BA': (0.6480, None), 'kappa': (0.5306, 0.0187), 'f1': (0.6484, None)},
+    ('CHB-MIT', 'cbramod'): {'BA': (0.7398, 0.0284), 'PR_AUC': (0.3689, 0.0382), 'ROC_AUC': (0.8892, 0.0154)},
+    ('TUEV', 'cbramod'): {'BA': (0.6659, 0.0124), 'kappa': (0.6744, 0.0121), 'f1': (0.8331, 0.0071)},
+    ('TUEV', 'reve'): {'BA': (0.6759, 0.0229), 'kappa': (0.6783, 0.0199), 'f1': (0.8451, 0.0129)},
+    ('ISRUC', 'cbramod'): {'BA': (0.7865, 0.0110), 'kappa': (0.7442, 0.0152), 'f1': (0.8011, 0.0099)},
+    ('ISRUC', 'reve'): {'BA': (0.7819, 0.0078), 'kappa': (0.7500, 0.0156), 'f1': (0.8005, 0.0135)},
+    ('SEED-V', 'cbramod'): {'BA': (0.4091, 0.0097), 'kappa': (0.2569, 0.0143), 'f1': (0.4101, 0.0108)},
+    ('SHU-MI', 'cbramod'): {'BA': (0.6370, 0.0151), 'PR_AUC': (0.7139, 0.0088), 'ROC_AUC': (0.6988, 0.0068)},
+    ('BCIC2020-3', 'cbramod'): {'BA': (0.5373, 0.0108), 'kappa': (0.4216, 0.0163), 'f1': (0.5383, 0.0096)},
+    ('BCIC2020-3', 'reve'): {'BA': (0.5635, 0.0123), 'kappa': (0.4543, 0.0154), 'f1': (0.5633, 0.0124)},
+    ('MentalArithmetic', 'cbramod'): {'BA': (0.7256, 0.0132), 'PR_AUC': (0.6267, 0.0099), 'ROC_AUC': (0.7905, 0.0073)},
+    ('MentalArithmetic', 'reve'): {'BA': (0.7660, 0.0355), 'PR_AUC': (0.7470, 0.0807), 'ROC_AUC': (0.8450, 0.0514)},
 }
 
 SAFE_TO_DATASET = {
     'faced': 'FACED', 'tuab': 'TUAB', 'hmc': 'HMC', 'mumtaz2016': 'Mumtaz2016',
     'physionet_mi': 'PhysioNet-MI',
+    'chb_mit': 'CHB-MIT', 'tuev': 'TUEV', 'isruc': 'ISRUC', 'seed_v': 'SEED-V',
+    'shu_mi': 'SHU-MI', 'bcic2020_3': 'BCIC2020-3', 'mentalarithmetic': 'MentalArithmetic',
 }
+
+REVE_FALLBACK_DATASETS = {'CHB-MIT', 'SEED-V', 'SHU-MI'}
+
+NUMBER_WORDS = {index: word for index, word in enumerate(
+    ('zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+     'eleven', 'twelve'))}
 
 
 def read_text(path):
@@ -184,10 +203,22 @@ def write_appendix(path, records, summaries, recipe='v1'):
                  'no clipping). REVE\'s released TUAB pipeline uses a 21-channel memmap; this rerun feeds it the same '
                  '16-channel bipolar TUAB arrays as CBraMod.')
     lines.append('- Protocol: validation-selected checkpoint, one final test per seed, seeds 42-46, population std.')
+    fallback = sorted({record['dataset'] for record in records
+                       if record['model'] == 'reve' and record['dataset'] in REVE_FALLBACK_DATASETS})
+    if fallback:
+        lines.append('- REVE fallback specs: {} are not part of the released REVE benchmark, so their REVE '
+                     'runs use microvolt / 100, pooling=last and dropout 0.5 and are reported as reference-only. '
+                     'SEED-V maps CB1/CB2 to the inferior occipital OI1h/OI2h positions because the released '
+                     'position bank has no cerebellar entries.'.format(', '.join(fallback)))
+    if any(record['model'] == 'reve' and record['dataset'] == 'ISRUC' for record in records):
+        lines.append('- REVE ISRUC runs at batch 8 instead of the configured batch size 16 because the '
+                     '22-layer encoder exceeds the GPU memory at batch 16 (CUDA OOM); this is the only '
+                     'batch-size deviation.')
     lines.append('')
     lines.append('## Suggested main-text sentence')
     lines.append('')
-    dataset_phrase = 'five datasets' if recipe == 'v2' else 'three representative datasets'
+    dataset_count = len({record['dataset'] for record in records})
+    dataset_phrase = '{} datasets'.format(NUMBER_WORDS.get(dataset_count, dataset_count))
     lines.append('> To assess the comparability of published foundation-model references, we additionally reran '
                  'CBraMod and REVE on {} under the inherited partitions and final-test '
                  'protocol. The rerun results and deviations from published values are reported in Appendix X.'.format(dataset_phrase))

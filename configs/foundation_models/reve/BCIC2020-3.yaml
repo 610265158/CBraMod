@@ -1,0 +1,99 @@
+dataset: BCIC2020-3
+model_arch: reve
+training:
+  lr: 0.0001
+  batch_size: 32
+  epochs: 30
+  weight_decay: 0.0005
+  min_lr: 1.0e-06
+  warmup_epochs: 3
+  warmup_start_factor: 0.1
+  clip_value: 1.0
+  ema_decay: 0.995
+  num_workers: 0
+  optimizer: AdamW
+  label_smoothing: 0.1
+  binary_pos_weight: 1.0
+  dropout: 0.1
+  drop_path_rate: 0.0
+  early_stop: 10
+  frozen: false
+  multi_lr: false
+  use_pretrained_weights: true
+  balanced_sampling: false
+  balanced_sampling_power: 1.0
+  balanced_sampling_min_share: 0.0
+  balanced_sampling_negative_ratio: 0.0
+  mirror_augmentation: false
+  mirror_prob: 0.5
+  time_roll_augmentation: true
+  time_roll_prob: 1.0
+  time_roll_max_fraction: 0.5
+  amplitude_scale_augmentation: false
+  mixup_augmentation: false
+  amp: true
+  amp_dtype: bfloat16
+  test_each_epoch: false
+  run_final_test: true
+  selection_metric: kappa
+protocol:
+  seeds:
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  selection: validation_selected_checkpoint_once_on_test
+results:
+  ba:
+    mean: 0.2856
+    std: 0.09706
+  kappa:
+    mean: 0.107
+    std: 0.12133
+  f1:
+    mean: 0.25043
+    std: 0.12436
+  per_seed:
+    42:
+      epoch: 2
+      ba: 0.21733
+      kappa: 0.02167
+      f1: 0.15704
+    43:
+      epoch: 27
+      ba: 0.472
+      kappa: 0.34
+      f1: 0.47228
+    44:
+      epoch: 30
+      ba: 0.288
+      kappa: 0.11
+      f1: 0.28442
+    45:
+      epoch: 1
+      ba: 0.21067
+      kappa: 0.01333
+      f1: 0.11904
+    46:
+      epoch: 6
+      ba: 0.24
+      kappa: 0.05
+      f1: 0.21938
+notes: >-
+  Foundation rerun v2 record for REVE-Base on BCIC2020-3 (5-class imagined
+  speech). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at factor
+  0.1, EMA 0.995, weight decay 5e-4, gradient clipping 1.0, early stop 10)
+  with 30 epochs and kappa checkpoint selection from configs/downstream.py;
+  the loader applies the released REVE scale_factor (microvolt / 1000, no
+  clipping) and supplies released electrode positions (64 channels). The
+  released lp -> ft warm start, mixup, StableAdamW, LoRA and model souping are
+  not applied (documented deviation). Validation-selected checkpoint, one
+  final test per seed, seeds 42-46, population std. Four of the five seeds
+  stop at the chance-level plateau before the encoder escapes it (early stop
+  10), so this record documents the matched-budget non-convergence rather than
+  a converged rerun. Published reference kappa 0.4543 +/- 0.0154 (delta
+  -0.3473). See experiments/reports/foundation_rerun_v2_remaining_appendix.md.
+output:
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed{seed}

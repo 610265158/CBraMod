@@ -127,15 +127,23 @@ identical protocol, so that the two families can be compared under one
 pipeline. The downstream pipeline
 and optimizer match our local experiments, while each model retains its
 released input normalization. These are matched-protocol reruns rather than
-exact reproductions of every original training stage; one run is left
-blank pending a follow-up tuning pass: CBraMod on TUEV selects the first
-epoch for every seed because validation $\kappa$ peaks there. On BCIC2020-3
+exact reproductions of every original training stage. All 24 model--dataset
+pairs have five completed seeds. CBraMod on TUEV selects the first epoch for
+every seed because validation $\kappa$ peaks there; we report these selected
+checkpoints rather than omit this result. On BCIC2020-3
 and SEED-V the released pooled-token readout does not converge on these
 arrays, so those reruns use the non-pooling readout (flattened patch tokens
 plus the context token) that the released paper employs for its probe columns.
+SEED-V additionally runs at a lower learning rate (2e-5), because at the
+campaign rate one of five seeds stays in the chance basin ($\kappa$ 0.089
+versus 0.25 at 2e-5).
 
-CBraMod's released multi-learning-rate recipe is replaced by one uniform
-learning rate. REVE's published linear-probe warm start, mixup, StableAdamW,
+The reruns use AdamW with a uniform learning rate of $10^{-4}$, three
+warmup epochs starting at 0.1 times that rate, EMA decay 0.995, weight decay
+$5\times10^{-4}$, gradient clipping at 1.0, and early-stopping patience 10.
+Dataset-specific epoch budgets and complete per-seed records are given in
+\texttt{configs/foundation\_models/}. CBraMod's released multi-learning-rate
+recipe is replaced by this uniform learning rate. REVE's published linear-probe warm start, mixup, StableAdamW,
 LoRA, and model souping are not applied. For TUAB and TUEV, REVE receives the
 same 16-channel bipolar arrays used by CBraMod rather than the released
 21-channel memmap, at the equivalent microvolt/100 scale; ISRUC keeps the
@@ -146,22 +154,17 @@ and SHU-MI are not part of the released REVE benchmark, so their REVE runs use
 fallback specifications (microvolt/100 input scale, pooled-token readout)
 and are reported as reference-only. BCIC2020-3 and SEED-V switch to the
 non-pooling readout because the released pooled-token readout stays at chance
-on these arrays. These deviations can lower
+on these arrays, and SEED-V runs at a per-dataset learning rate of 2e-5
+because one of five seeds otherwise stays in the chance basin. These
+deviations can lower
 rerun values relative to published results, so the experiment quantifies
 protocol sensitivity rather than replacing the original references.
 
 \begin{table*}[t]
-\centering\tiny
-\caption{Protocol-matched comparison on the twelve rerun datasets. CBraMod and
-REVE-Base are rerun under our downstream pipeline
-(inherited partitions, seeds 42--46, validation-selected checkpoints, one final
-test per seed) and are listed together with our finalized vision models, which
-follow the same protocol. Values are five-seed means $\pm$ population standard
-deviations; the selection metric is PR-AUC for the binary tasks (TUAB,
-CHB-MIT, SHU-MI, Mumtaz2016, MentalArithmetic) and $\kappa$ for the remaining
-multiclass tasks. Bold marks the best matched-protocol value in each column;
-published values are transcribed from the original benchmark tables and are
-not ranked. Dashes mark reruns reserved for a follow-up tuning pass.}
+\centering\scriptsize
+\caption{Protocol-matched comparison on the twelve rerun datasets. CBraMod,
+REVE-Base, and the vision models use the inherited partitions, seeds 42--46,
+validation-selected checkpoints, and one final test evaluation per seed.}
 \label{tab:foundation-reruns}
 \setlength{\tabcolsep}{5pt}
 \setlength{\aboverulesep}{0.25ex}
@@ -252,12 +255,12 @@ Dataset & Method & BA & Selection metric & Published \\
   & ViT-Small & \bestcell{0.8130\pm0.0027} & \bestcell{0.7875\pm0.0026} ($\kappa$) & -- \\
 \midrule
 \multirow{5}{*}{SEED-V}
-  & CBraMod (rerun) & $0.3812\pm0.0033$ & $0.2313\pm0.0045$ ($\kappa$) & $0.2569$ \\
-  & REVE-Base (rerun) & $0.3798\pm0.0546$ & $0.2255\pm0.0684$ ($\kappa$) & -- \\
+  & CBraMod (rerun) & $0.3812\pm0.0033$ & $0.2312\pm0.0045$ ($\kappa$) & $0.2569$ \\
+  & REVE-Base (rerun) & \bestcell{0.4066\pm0.0051} & \bestcell{0.2578\pm0.0062} ($\kappa$) & -- \\
 \cmidrule(lr){2-5}
   & EfficientNet-B0 & $0.3660\pm0.0062$ & $0.2056\pm0.0078$ ($\kappa$) & -- \\
   & ConvNeXt-Tiny & $0.3832\pm0.0074$ & $0.2351\pm0.0098$ ($\kappa$) & -- \\
-  & ViT-Small & \bestcell{0.3930\pm0.0035} & \bestcell{0.2442\pm0.0045} ($\kappa$) & -- \\
+  & ViT-Small & $0.3930\pm0.0035$ & $0.2442\pm0.0045$ ($\kappa$) & -- \\
 \midrule
 \multirow{5}{*}{BCIC2020-3}
   & CBraMod (rerun) & $0.5952\pm0.0103$ & $0.4940\pm0.0129$ ($\kappa$) & $0.4216$ \\

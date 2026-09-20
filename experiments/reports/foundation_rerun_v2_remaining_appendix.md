@@ -31,7 +31,7 @@ Models: CBraMod (4.92M parameters, full fine-tuning of the released checkpoint) 
 | MentalArithmetic | cbramod | 5 | 0.7451 +/- 0.0232 | 0.5180 +/- 0.0370 (pr_auc) | 0.6267 +/- 0.0099 | -0.1087 |
 | MentalArithmetic | reve | 5 | 0.6736 +/- 0.0412 | 0.6679 +/- 0.0822 (pr_auc) | 0.7470 +/- 0.0807 | -0.0791 |
 | SEED-V | cbramod | 5 | 0.3812 +/- 0.0033 | 0.2312 +/- 0.0045 (kappa) | 0.2569 +/- 0.0143 | -0.0257 |
-| SEED-V | reve | 5 | 0.3798 +/- 0.0546 | 0.2255 +/- 0.0684 (kappa) | -- | -- |
+| SEED-V | reve | 5 | 0.4066 +/- 0.0051 | 0.2578 +/- 0.0062 (kappa) | -- | -- |
 | SHU-MI | cbramod | 5 | 0.6242 +/- 0.0050 | 0.7021 +/- 0.0103 (pr_auc) | 0.7139 +/- 0.0088 | -0.0118 |
 | SHU-MI | reve | 5 | 0.6356 +/- 0.0047 | 0.7187 +/- 0.0101 (pr_auc) | -- | -- |
 | TUEV | cbramod | 5 | 0.5030 +/- 0.0178 | 0.5694 +/- 0.0217 (kappa) | 0.6744 +/- 0.0121 | -0.1050 |
@@ -96,11 +96,11 @@ Models: CBraMod (4.92M parameters, full fine-tuning of the released checkpoint) 
 | MentalArithmetic | reve | seed44 | done | 0.0001 | 64 | 30 | 30 | pr_auc | 0.6148 | 0.6632 | 0.5792 | 0.6101 | 0.7470 | -0.1678 | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed44/mentalarithmetic/best.pth |
 | MentalArithmetic | reve | seed45 | done | 0.0001 | 64 | 30 | 28 | pr_auc | 0.6820 | 0.7535 | 0.8200 | 0.9077 | 0.7470 | 0.0730 | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed45/mentalarithmetic/best.pth |
 | MentalArithmetic | reve | seed46 | done | 0.0001 | 64 | 23 | 13 | pr_auc | 0.5399 | 0.6528 | 0.6155 | 0.7486 | 0.7470 | -0.1315 | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed46/mentalarithmetic/best.pth |
-| SEED-V | reve | seed42 | done | 0.0001 | 32 | 16 | 6 | kappa | 0.2185 | 0.4056 | 0.2578 | 0.4128 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed42/seed_v/best.pth |
-| SEED-V | reve | seed43 | done | 0.0001 | 32 | 13 | 3 | kappa | 0.2258 | 0.4013 | 0.2509 | 0.4058 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed43/seed_v/best.pth |
-| SEED-V | reve | seed44 | done | 0.0001 | 32 | 26 | 16 | kappa | 0.2211 | 0.4114 | 0.2660 | 0.4195 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed44/seed_v/best.pth |
-| SEED-V | reve | seed45 | done | 0.0001 | 32 | 17 | 7 | kappa | 0.2117 | 0.4100 | 0.2636 | 0.4180 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed45/seed_v/best.pth |
-| SEED-V | reve | seed46 | done | 0.0001 | 32 | 11 | 1 | kappa | 0.0938 | 0.2708 | 0.0890 | 0.2394 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed46/seed_v/best.pth |
+| SEED-V | reve | seed42 | done | 2e-05 | 32 | 17 | 7 | kappa | 0.2247 | 0.4147 | 0.2678 | 0.4195 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_lr2e5_v1/reve/seed42/seed_v/best.pth |
+| SEED-V | reve | seed43 | done | 2e-05 | 32 | 14 | 4 | kappa | 0.2366 | 0.4072 | 0.2586 | 0.4116 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_lr2e5_v1/reve/seed43/seed_v/best.pth |
+| SEED-V | reve | seed44 | done | 2e-05 | 32 | 21 | 11 | kappa | 0.2258 | 0.4079 | 0.2594 | 0.4134 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_lr2e5_v1/reve/seed44/seed_v/best.pth |
+| SEED-V | reve | seed45 | done | 2e-05 | 32 | 16 | 6 | kappa | 0.2221 | 0.3994 | 0.2494 | 0.4051 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_lr2e5_v1/reve/seed45/seed_v/best.pth |
+| SEED-V | reve | seed46 | done | 2e-05 | 32 | 15 | 5 | kappa | 0.2170 | 0.4036 | 0.2537 | 0.4071 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_lr2e5_v1/reve/seed46/seed_v/best.pth |
 | SHU-MI | reve | seed42 | done | 0.0001 | 32 | 10 | 3 | pr_auc | 0.7695 | 0.6405 | 0.7268 | 0.7280 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed42/shu_mi/best.pth |
 | SHU-MI | reve | seed43 | done | 0.0001 | 32 | 10 | 6 | pr_auc | 0.7538 | 0.6421 | 0.7181 | 0.7143 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed43/shu_mi/best.pth |
 | SHU-MI | reve | seed44 | done | 0.0001 | 32 | 10 | 6 | pr_auc | 0.7584 | 0.6325 | 0.7032 | 0.7029 | -- | -- | experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1/reve/seed44/shu_mi/best.pth |

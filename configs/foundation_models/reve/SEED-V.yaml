@@ -1,7 +1,7 @@
 dataset: SEED-V
 model_arch: reve
 training:
-  lr: 0.0001
+  lr: 2.0e-05
   batch_size: 32
   epochs: 50
   weight_decay: 0.0005
@@ -46,40 +46,40 @@ protocol:
   selection: validation_selected_checkpoint_once_on_test
 results:
   ba:
-    mean: 0.37981
-    std: 0.0546
+    mean: 0.40656
+    std: 0.00506
   kappa:
-    mean: 0.22546
-    std: 0.06843
+    mean: 0.25778
+    std: 0.00619
   f1:
-    mean: 0.3791
-    std: 0.07002
+    mean: 0.41135
+    std: 0.00506
   per_seed:
     42:
-      epoch: 6
-      ba: 0.40558
-      kappa: 0.25779
-      f1: 0.41278
-    43:
-      epoch: 3
-      ba: 0.40126
-      kappa: 0.25094
-      f1: 0.40585
-    44:
-      epoch: 16
-      ba: 0.41139
-      kappa: 0.26601
-      f1: 0.41951
-    45:
       epoch: 7
-      ba: 0.40997
-      kappa: 0.26357
-      f1: 0.41798
+      ba: 0.4147
+      kappa: 0.26784
+      f1: 0.41954
+    43:
+      epoch: 4
+      ba: 0.40723
+      kappa: 0.25862
+      f1: 0.41158
+    44:
+      epoch: 11
+      ba: 0.40787
+      kappa: 0.25938
+      f1: 0.41341
+    45:
+      epoch: 6
+      ba: 0.39943
+      kappa: 0.24942
+      f1: 0.40512
     46:
-      epoch: 1
-      ba: 0.27083
-      kappa: 0.08899
-      f1: 0.23938
+      epoch: 5
+      ba: 0.40357
+      kappa: 0.25366
+      f1: 0.40711
 notes: >-
   Foundation rerun v2 record for REVE-Base on SEED-V (5-class emotion
   recognition). Recipe: the v2 unified recipe (lr 1e-4, warmup 3 epochs at
@@ -93,10 +93,12 @@ notes: >-
   seed, seeds 42-46, population std. SEED-V is not part of the released REVE
   benchmark; the input scale (microvolt / 100) is a fallback setting and this
   record is reference-only. The pooled-token readout stays at chance here
-  (five-seed kappa 0.078), so the non-pooling readout is used. CB1/CB2 map to
-  the inferior occipital OI1h/OI2h positions because the released position
-  bank has no cerebellar entries. See
+  (five-seed kappa 0.078), so the non-pooling readout is used, and the run
+  uses a per-dataset learning rate of 2e-5 because at the campaign rate one of
+  five seeds stays in the chance basin (kappa 0.089 versus 0.25 at 2e-5).
+  CB1/CB2 map to the inferior occipital OI1h/OI2h positions because the
+  released position bank has no cerebellar entries. See
   experiments/reports/foundation_rerun_v2_remaining_appendix.md.
 output:
-  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed{seed}
-  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_v1/reve/seed{seed}
+  model_root: experiments/checkpoints/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_lr2e5_v1/reve/seed{seed}
+  log_root: experiments/logs/foundation_rerun_v2_warm3_ema995_wd5e4_5seed_v1_seedv_poolno_lr2e5_v1/reve/seed{seed}

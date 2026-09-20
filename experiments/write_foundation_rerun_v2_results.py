@@ -65,8 +65,10 @@ RECORD_NOTES = {
     ('reve', 'SEED-V'): 'SEED-V is not part of the released REVE benchmark; the input scale '
                         '(microvolt / 100) is a fallback setting and this record is reference-only. '
                         'The pooled-token readout stays at chance here (five-seed kappa 0.078), so the '
-                        'non-pooling readout is used. CB1/CB2 map to the inferior occipital OI1h/OI2h '
-                        'positions because the released position bank has no cerebellar entries.',
+                        'non-pooling readout is used, and the run uses a per-dataset learning rate of '
+                        '2e-5 because at the campaign rate one of five seeds stays in the chance basin '
+                        '(kappa 0.089 versus 0.25 at 2e-5). CB1/CB2 map to the inferior occipital '
+                        'OI1h/OI2h positions because the released position bank has no cerebellar entries.',
     ('reve', 'SHU-MI'): 'SHU-MI is not part of the released REVE benchmark; the input scale '
                         '(microvolt / 100) and the pooled-token readout are fallback settings and this '
                         'record is reference-only.',

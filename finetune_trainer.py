@@ -10,6 +10,7 @@ from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 from timm.utils import ModelEmaV2
 from tqdm import tqdm
 
+from datasets.sampling import apply_train_augmentations
 from finetune_evaluator import Evaluator
 
 import torch.nn as nn
@@ -218,6 +219,7 @@ class Trainer(object):
             start_time = timer()
             loss_sum = torch.zeros((), device=self.device)
             for batch_index, (x, y) in enumerate(tqdm(self.data_loader['train'], mininterval=10)):
+                x, y = apply_train_augmentations(x, y, self.params)
                 self.optimizer.zero_grad(set_to_none=True)
                 x = x.to(self.device, non_blocking=self.use_amp)
                 y = y.to(self.device, non_blocking=self.use_amp)
@@ -351,6 +353,7 @@ class Trainer(object):
             start_time = timer()
             loss_sum = torch.zeros((), device=self.device)
             for batch_index, (x, y) in enumerate(tqdm(self.data_loader['train'], mininterval=10)):
+                x, y = apply_train_augmentations(x, y, self.params)
                 self.optimizer.zero_grad(set_to_none=True)
                 x = x.to(self.device, non_blocking=self.use_amp)
                 y = y.to(self.device, non_blocking=self.use_amp)

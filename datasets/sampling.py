@@ -79,23 +79,19 @@ def make_train_collate_fn(collate_fn, params):
                 )
             )
 
-    if not mirror_enabled and not time_roll_enabled and not amplitude_scale_enabled:
-        return collate_fn
+    return collate_fn
 
-    def wrapped_collate(batch):
-        x, y = collate_fn(batch)
-        if mirror_enabled:
-            if dataset_name == 'SHU-MI':
-                x, y = maybe_apply_channel_mirror_with_label_swap(x, y, params)
-            else:
-                x = maybe_apply_channel_mirror(x, params)
-        if time_roll_enabled:
-            x = maybe_apply_time_roll(x, params)
-        if amplitude_scale_enabled:
-            x = maybe_apply_amplitude_scale(x, params)
-        return x, y
 
-    return wrapped_collate
+def apply_train_augmentations(x, y, params):
+    dataset_name = getattr(params, 'downstream_dataset', None)
+    if getattr(params, 'mirror_augmentation', False):
+        if dataset_name == 'SHU-MI':
+            x, y = maybe_apply_channel_mirror_with_label_swap(x, y, params)
+        else:
+            x = maybe_apply_channel_mirror(x, params)
+    x = maybe_apply_time_roll(x, params)
+    x = maybe_apply_amplitude_scale(x, params)
+    return x, y
 
 
 def make_eval_loader(dataset, params, collate_fn, batch_size=None):
@@ -117,10 +113,9 @@ def loader_runtime_kwargs(params):
         'pin_memory': device.startswith('cuda'),
     }
     if num_workers > 0:
-        # Avoid paying worker startup and dataset/LMDB initialization on every
-        # epoch. Two prefetched batches per worker is PyTorch's conservative
-        # default and keeps host-memory growth bounded.
-        kwargs['persistent_workers'] = True
+        # Persistent workers shift the per-epoch RNG stream, so the shuffle
+        # order (and thus the results) would depend on the worker count.
+        kwargs['persistent_workers'] = False
         kwargs['prefetch_factor'] = 2
     return kwargs
 

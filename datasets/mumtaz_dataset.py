@@ -21,6 +21,7 @@ class CustomDataset(Dataset):
             sampling_rate=200.0,
     ):
         super(CustomDataset, self).__init__()
+        self.data_dir = data_dir
         self.db = open_lmdb(data_dir)
         self.lowpass_sos = None
         if lowpass_hz is not None:
@@ -48,7 +49,8 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, idx):
         key = self.keys[idx]
-        with self.db.begin(write=False) as txn:
+        db = open_lmdb(self.data_dir)
+        with db.begin(write=False) as txn:
             pair = pickle.loads(txn.get(key.encode()))
         data = pair['sample']
         label = pair['label']

@@ -17,7 +17,7 @@ training:
   warmup_start_factor: 0.1
   clip_value: 1.0
   ema_decay: 0.999
-  num_workers: 0
+  num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 3.0
@@ -58,14 +58,22 @@ protocol:
   - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.52292, std: 0.03363}
-  pr_auc: {mean: 0.30539, std: 0.03989}
-  roc_auc: {mean: 0.53663, std: 0.03743}
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds: [42, 43, 44, 45, 46]
+  per_seed:
+    42: {epoch: 50, ba: 0.51736, pr_auc: 0.31764, roc_auc: 0.55020}
+    43: {epoch: 50, ba: 0.47917, pr_auc: 0.27233, roc_auc: 0.49711}
+    44: {epoch: 50, ba: 0.55208, pr_auc: 0.37499, roc_auc: 0.58854}
+    45: {epoch: 50, ba: 0.56944, pr_auc: 0.29797, roc_auc: 0.55729}
+    46: {epoch: 50, ba: 0.49653, pr_auc: 0.26338, roc_auc: 0.49045}
+  mean: {ba: 0.52292, pr_auc: 0.30526, roc_auc: 0.53672}
+  std_population: {ba: 0.03363, pr_auc: 0.03977, roc_auc: 0.03742}
 notes: >-
   Matched-initialization control for configs/backbones/convnext_tiny_dinov3_unified/MentalArithmetic.yaml.yaml:
   the recipe is identical (only use_pretrained_weights=false differs). Five seeds 42--46,
   validation-selected checkpoint, one final test evaluation per seed; std is the population
-  standard deviation. Primary metric delta (pretrained minus random): +44.97 pp.
+  standard deviation. Primary metric delta (pretrained minus random): +44.99 pp.
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 output:
   model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_unified_mentalarithmetic_random_init/{seed}
   log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_unified_mentalarithmetic_random_init/{seed}

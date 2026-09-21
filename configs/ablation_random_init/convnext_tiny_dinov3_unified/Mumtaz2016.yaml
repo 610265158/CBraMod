@@ -17,7 +17,7 @@ training:
   warmup_start_factor: 0.1
   clip_value: 1.0
   ema_decay: 0.995
-  num_workers: 0
+  num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.0
   binary_pos_weight: 1.0
@@ -58,14 +58,22 @@ protocol:
   - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.89948, std: 0.00370}
-  pr_auc: {mean: 0.96520, std: 0.00478}
-  roc_auc: {mean: 0.95727, std: 0.00739}
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds: [42, 43, 44, 45, 46]
+  per_seed:
+    42: {epoch: 30, ba: 0.90491, pr_auc: 0.96836, roc_auc: 0.96192}
+    43: {epoch: 8, ba: 0.89893, pr_auc: 0.95865, roc_auc: 0.94657}
+    44: {epoch: 11, ba: 0.89341, pr_auc: 0.96133, roc_auc: 0.95211}
+    45: {epoch: 21, ba: 0.90083, pr_auc: 0.96564, roc_auc: 0.95799}
+    46: {epoch: 13, ba: 0.89932, pr_auc: 0.97201, roc_auc: 0.96774}
+  mean: {ba: 0.89948, pr_auc: 0.96520, roc_auc: 0.95727}
+  std_population: {ba: 0.00370, pr_auc: 0.00478, roc_auc: 0.00739}
 notes: >-
   Matched-initialization control for configs/backbones/convnext_tiny_dinov3_unified/Mumtaz2016.yaml.yaml:
   the recipe is identical (only use_pretrained_weights=false differs). Five seeds 42--46,
   validation-selected checkpoint, one final test evaluation per seed; std is the population
   standard deviation. Primary metric delta (pretrained minus random): +1.37 pp.
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 output:
   model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_unified_mumtaz2016_random_init/{seed}
   log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_unified_mumtaz2016_random_init/{seed}

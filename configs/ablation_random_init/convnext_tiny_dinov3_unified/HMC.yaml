@@ -57,14 +57,22 @@ protocol:
   - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.70567, std: 0.00295}
-  kappa: {mean: 0.64872, std: 0.00254}
-  f1: {mean: 0.72517, std: 0.00206}
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds: [42, 43, 44, 45, 46]
+  per_seed:
+    42: {epoch: 8, ba: 0.70670, kappa: 0.65148, f1: 0.72723}
+    43: {epoch: 9, ba: 0.71838, kappa: 0.66258, f1: 0.73699}
+    44: {epoch: 8, ba: 0.70449, kappa: 0.64818, f1: 0.72469}
+    45: {epoch: 7, ba: 0.70693, kappa: 0.64915, f1: 0.72708}
+    46: {epoch: 7, ba: 0.71280, kappa: 0.65641, f1: 0.73196}
+  mean: {ba: 0.70986, kappa: 0.65356, f1: 0.72959}
+  std_population: {ba: 0.00507, kappa: 0.00533, f1: 0.00439}
 notes: >-
   Matched-initialization control for configs/backbones/convnext_tiny_dinov3_unified/HMC.yaml.yaml:
   the recipe is identical (only use_pretrained_weights=false differs). Five seeds 42--46,
   validation-selected checkpoint, one final test evaluation per seed; std is the population
-  standard deviation. Primary metric delta (pretrained minus random): +5.73 pp.
+  standard deviation. Primary metric delta (pretrained minus random): +5.25 pp.
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 output:
   model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_unified_hmc_random_init/{seed}
   log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_unified_hmc_random_init/{seed}

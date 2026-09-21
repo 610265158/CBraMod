@@ -16,7 +16,7 @@ training:
   warmup_start_factor: 0.1
   clip_value: 1.0
   ema_decay: 0.995
-  num_workers: 0
+  num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 1.0
@@ -52,14 +52,22 @@ protocol:
   seeds: [42, 43, 44, 45, 46]
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.53548, std: 0.00748}
-  kappa: {mean: 0.38058, std: 0.00998}
-  f1: {mean: 0.53352, std: 0.00736}
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds: [42, 43, 44, 45, 46]
+  per_seed:
+    42: {epoch: 4, ba: 0.52579, kappa: 0.36770, f1: 0.52512}
+    43: {epoch: 2, ba: 0.52976, kappa: 0.37291, f1: 0.52696}
+    44: {epoch: 3, ba: 0.53470, kappa: 0.37954, f1: 0.53214}
+    45: {epoch: 3, ba: 0.54026, kappa: 0.38694, f1: 0.53839}
+    46: {epoch: 3, ba: 0.54688, kappa: 0.39580, f1: 0.54500}
+  mean: {ba: 0.53548, kappa: 0.38058, f1: 0.53352}
+  std_population: {ba: 0.00748, kappa: 0.00998, f1: 0.00736}
 notes: >-
   Matched-initialization control for configs/backbones/convnext_tiny_dinov3_unified/PhysioNet-MI.yaml.yaml:
   the recipe is identical (only use_pretrained_weights=false differs). Five seeds 42--46,
   validation-selected checkpoint, one final test evaluation per seed; std is the population
   standard deviation. Primary metric delta (pretrained minus random): +16.05 pp.
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 output:
   model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_unified_physionet_mi_random_init/{seed}
   log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_unified_physionet_mi_random_init/{seed}

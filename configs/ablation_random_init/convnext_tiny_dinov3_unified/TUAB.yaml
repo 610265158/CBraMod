@@ -58,14 +58,22 @@ protocol:
   - 46
   selection: validation_selected_checkpoint_once_on_test
 results:
-  ba: {mean: 0.81938, std: 0.00289}
-  pr_auc: {mean: 0.90198, std: 0.00133}
-  roc_auc: {mean: 0.89693, std: 0.00136}
+  protocol: validation_selected_checkpoint_once_on_test
+  seeds: [42, 43, 44, 45, 46]
+  per_seed:
+    42: {epoch: 4, ba: 0.82289, pr_auc: 0.90294, roc_auc: 0.89773}
+    43: {epoch: 4, ba: 0.81854, pr_auc: 0.90095, roc_auc: 0.89488}
+    44: {epoch: 4, ba: 0.82415, pr_auc: 0.90497, roc_auc: 0.89875}
+    45: {epoch: 4, ba: 0.82388, pr_auc: 0.90633, roc_auc: 0.90306}
+    46: {epoch: 4, ba: 0.82524, pr_auc: 0.90711, roc_auc: 0.90296}
+  mean: {ba: 0.82294, pr_auc: 0.90446, roc_auc: 0.89948}
+  std_population: {ba: 0.00232, pr_auc: 0.00225, roc_auc: 0.00315}
 notes: >-
   Matched-initialization control for configs/backbones/convnext_tiny_dinov3_unified/TUAB.yaml.yaml:
   the recipe is identical (only use_pretrained_weights=false differs). Five seeds 42--46,
   validation-selected checkpoint, one final test evaluation per seed; std is the population
-  standard deviation. Primary metric delta (pretrained minus random): +0.56 pp.
+  standard deviation. Primary metric delta (pretrained minus random): +0.31 pp.
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 output:
   model_root: experiments/checkpoints/pretrain_vs_random/convnext_tiny_dinov3_unified_tuab_random_init/{seed}
   log_root: experiments/logs/pretrain_vs_random/convnext_tiny_dinov3_unified_tuab_random_init/{seed}

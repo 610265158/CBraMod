@@ -59,20 +59,20 @@ results:
   protocol: validation_selected_checkpoint_once_on_test
   seeds: [42, 43, 44, 45, 46]
   per_seed:
-    42: {epoch: 4, ba: 0.75382, kappa: 0.70522, f1: 0.76999}
-    43: {epoch: 4, ba: 0.74783, kappa: 0.70101, f1: 0.76750}
-    44: {epoch: 2, ba: 0.75074, kappa: 0.70397, f1: 0.76792}
-    45: {epoch: 3, ba: 0.75466, kappa: 0.70667, f1: 0.77179}
-    46: {epoch: 3, ba: 0.75984, kappa: 0.71336, f1: 0.77455}
-  mean: {ba: 0.75338, kappa: 0.70605, f1: 0.77035}
-  std_population: {ba: 0.00403, kappa: 0.00410, f1: 0.00260}
+    42: {epoch: 3, ba: 0.75333, kappa: 0.70755, f1: 0.77127}
+    43: {epoch: 4, ba: 0.75439, kappa: 0.70629, f1: 0.77064}
+    44: {epoch: 3, ba: 0.75243, kappa: 0.70547, f1: 0.77056}
+    45: {epoch: 2, ba: 0.74952, kappa: 0.70379, f1: 0.76875}
+    46: {epoch: 3, ba: 0.75767, kappa: 0.71195, f1: 0.77524}
+  mean: {ba: 0.75347, kappa: 0.70701, f1: 0.77129}
+  std_population: {ba: 0.00265, kappa: 0.00276, f1: 0.00215}
 notes: >-
   Unified ConvNeXt-Tiny DINOv3 recipe: lr 1e-4, weight decay 5e-4, EMA 0.995,
   grad-norm clip 1.0, warmup 3 epochs, early stop 10, dropout 0.1,
   head_init_std 0.002, gap aggregation. Five seeds 42--46, validation-selected
   checkpoint, one final test evaluation per seed, population standard
-  deviation. Primary metric 0.7111 -> 0.7060 (-0.0051 vs previous per-dataset
-  recipe).
+  deviation. Primary metric 0.7111 -> 0.7070 (-0.0041 vs previous per-dataset recipe).
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 output:
   model_root: experiments/checkpoints/hmc_convnext_tiny_dinov3_p16_gap_lr1e4_wd5e4_ema995_clip1_warm3_5seed_v1/seed{seed}
   log_root: experiments/logs/hmc_convnext_tiny_dinov3_p16_gap_lr1e4_wd5e4_ema995_clip1_warm3_5seed_v1/seed{seed}

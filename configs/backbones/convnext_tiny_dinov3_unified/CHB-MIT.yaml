@@ -60,13 +60,13 @@ results:
   protocol: validation_selected_checkpoint_once_on_test
   seeds: [42, 43, 44, 45, 46]
   per_seed:
-    42: {epoch: 3, ba: 0.78483, pr_auc: 0.48981, roc_auc: 0.89838}
-    43: {epoch: 2, ba: 0.83834, pr_auc: 0.52688, roc_auc: 0.91650}
-    44: {epoch: 2, ba: 0.83768, pr_auc: 0.51028, roc_auc: 0.91915}
-    45: {epoch: 1, ba: 0.65940, pr_auc: 0.52325, roc_auc: 0.92271}
-    46: {epoch: 3, ba: 0.80085, pr_auc: 0.49749, roc_auc: 0.91502}
-  mean: {ba: 0.78422, pr_auc: 0.50954, roc_auc: 0.91435}
-  std_population: {ba: 0.06579, pr_auc: 0.01431, roc_auc: 0.00840}
+    42: {epoch: 2, ba: 0.79505, pr_auc: 0.52102, roc_auc: 0.90959}
+    43: {epoch: 2, ba: 0.77142, pr_auc: 0.51467, roc_auc: 0.91585}
+    44: {epoch: 6, ba: 0.71240, pr_auc: 0.42541, roc_auc: 0.89184}
+    45: {epoch: 2, ba: 0.75957, pr_auc: 0.50673, roc_auc: 0.92260}
+    46: {epoch: 2, ba: 0.83227, pr_auc: 0.51946, roc_auc: 0.91498}
+  mean: {ba: 0.77414, pr_auc: 0.49746, roc_auc: 0.91097}
+  std_population: {ba: 0.03962, pr_auc: 0.03637, roc_auc: 0.01042}
 notes: >-
   Unified ConvNeXt-Tiny DINOv3 recipe with a GAP head (flatten replaced) and
   EMA 0.999 for this dataset. Rationale: with the default EMA 0.995 the GAP
@@ -79,6 +79,8 @@ notes: >-
   GAP+0.995 0.49150 +/- 0.06279, GAP+0.999 0.50954 +/- 0.01430; flatten+0.995
   and GAP+0.999 are statistically indistinguishable (paired t ~ 0.8).
   Runs live under experiments/{checkpoints,logs}/ablation_head/convnext_tiny_dinov3_unified/chb_mit_gap_ema999.
+  Primary metric 0.4734 -> 0.4975 (+0.0241 vs previous per-dataset recipe).
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 output:
   model_root: experiments/checkpoints/ablation_head/convnext_tiny_dinov3_unified/chb_mit_gap_ema999/seed{seed}
   log_root: experiments/logs/ablation_head/convnext_tiny_dinov3_unified/chb_mit_gap_ema999/seed{seed}

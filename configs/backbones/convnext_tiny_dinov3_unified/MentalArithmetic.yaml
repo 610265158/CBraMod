@@ -16,7 +16,7 @@ training:
   warmup_start_factor: 0.1
   clip_value: 1.0
   ema_decay: 0.999
-  num_workers: 0
+  num_workers: 4
   optimizer: AdamW
   label_smoothing: 0.1
   binary_pos_weight: 3.0
@@ -67,18 +67,20 @@ notes: >-
   gives pr_auc 0.75828 +/- 0.03690 versus 0.72538 +/- 0.05865 at EMA 0.995
   (paired +0.03291, t=3.55, df=9, p~0.006; both seed halves agree). With the
   exception the dataset returns to its previous recorded level (0.75983 under
-  the old per-dataset recipe, delta -0.005).
+  the old per-dataset recipe, delta -0.0190).
+  Primary metric 0.7598 -> 0.7409 (-0.0190 vs previous per-dataset recipe).
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 results:
   protocol: validation_selected_checkpoint_once_on_test
   seeds: [42, 43, 44, 45, 46]
   per_seed:
-    42: {epoch: 50, ba: 0.78125, pr_auc: 0.72333, roc_auc: 0.85446}
-    43: {epoch: 50, ba: 0.71181, pr_auc: 0.72592, roc_auc: 0.83348}
-    44: {epoch: 50, ba: 0.76042, pr_auc: 0.77428, roc_auc: 0.89135}
-    45: {epoch: 50, ba: 0.76736, pr_auc: 0.77095, roc_auc: 0.88122}
-    46: {epoch: 50, ba: 0.77083, pr_auc: 0.78114, roc_auc: 0.87196}
-  mean: {ba: 0.75833, pr_auc: 0.75512, roc_auc: 0.86649}
-  std_population: {ba: 0.02421, pr_auc: 0.02513, roc_auc: 0.02049}
+    42: {epoch: 50, ba: 0.75694, pr_auc: 0.73845, roc_auc: 0.83738}
+    43: {epoch: 50, ba: 0.73264, pr_auc: 0.71198, roc_auc: 0.82711}
+    44: {epoch: 50, ba: 0.77083, pr_auc: 0.72965, roc_auc: 0.88368}
+    45: {epoch: 50, ba: 0.79514, pr_auc: 0.76205, roc_auc: 0.88513}
+    46: {epoch: 50, ba: 0.77083, pr_auc: 0.76225, roc_auc: 0.87297}
+  mean: {ba: 0.76528, pr_auc: 0.74088, roc_auc: 0.86125}
+  std_population: {ba: 0.02044, pr_auc: 0.01935, roc_auc: 0.02427}
 output:
   model_root: experiments/checkpoints/mentalarithmetic_convnext_tiny_dinov3_p4_flatten_lr1e4_wd5e4_ema999_clip1_warm3_5seed_v1/seed{seed}
   log_root: experiments/logs/mentalarithmetic_convnext_tiny_dinov3_p4_flatten_lr1e4_wd5e4_ema999_clip1_warm3_5seed_v1/seed{seed}

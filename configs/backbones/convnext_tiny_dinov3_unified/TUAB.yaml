@@ -60,20 +60,20 @@ results:
   protocol: validation_selected_checkpoint_once_on_test
   seeds: [42, 43, 44, 45, 46]
   per_seed:
-    42: {epoch: 1, ba: 0.82484, pr_auc: 0.91049, roc_auc: 0.89671}
-    43: {epoch: 1, ba: 0.82315, pr_auc: 0.90711, roc_auc: 0.89587}
-    44: {epoch: 1, ba: 0.82217, pr_auc: 0.90845, roc_auc: 0.89891}
-    45: {epoch: 1, ba: 0.82126, pr_auc: 0.90622, roc_auc: 0.89462}
-    46: {epoch: 1, ba: 0.82308, pr_auc: 0.90556, roc_auc: 0.89569}
-  mean: {ba: 0.82290, pr_auc: 0.90757, roc_auc: 0.89636}
-  std_population: {ba: 0.00119, pr_auc: 0.00175, roc_auc: 0.00144}
+    42: {epoch: 1, ba: 0.82285, pr_auc: 0.90600, roc_auc: 0.89603}
+    43: {epoch: 1, ba: 0.82026, pr_auc: 0.90776, roc_auc: 0.89930}
+    44: {epoch: 1, ba: 0.82618, pr_auc: 0.91135, roc_auc: 0.90061}
+    45: {epoch: 1, ba: 0.81718, pr_auc: 0.90302, roc_auc: 0.89258}
+    46: {epoch: 1, ba: 0.81968, pr_auc: 0.90579, roc_auc: 0.89411}
+  mean: {ba: 0.82123, pr_auc: 0.90678, roc_auc: 0.89653}
+  std_population: {ba: 0.00306, pr_auc: 0.00274, roc_auc: 0.00303}
 notes: >-
   Unified ConvNeXt-Tiny DINOv3 recipe: lr 1e-4, weight decay 5e-4, EMA 0.995,
   grad-norm clip 1.0, warmup 3 epochs, early stop 10, dropout 0.1,
   head_init_std 0.002, flatten aggregation. Five seeds 42--46,
   validation-selected checkpoint, one final test evaluation per seed,
-  population standard deviation. Primary metric 0.9059 -> 0.9076 (+0.0017 vs
-  previous per-dataset recipe).
+  population standard deviation. Primary metric 0.9059 -> 0.9068 (+0.0009 vs previous per-dataset recipe).
+  Per-seed values re-recorded from the w4 reproduction queue (2026-09-21).
 output:
   model_root: experiments/checkpoints/tuab_convnext_tiny_dinov3_p4_flatten_lr1e4_wd5e4_ema995_clip1_warm3_5seed_v1/seed{seed}
   log_root: experiments/logs/tuab_convnext_tiny_dinov3_p4_flatten_lr1e4_wd5e4_ema995_clip1_warm3_5seed_v1/seed{seed}
